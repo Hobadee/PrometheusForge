@@ -1,0 +1,14 @@
+id: 'run.20251213'
+include: ['task.prepare', 'task.build', 'task.test']
+excludeTags: ['deprecated']
+overrides:
+  - selector:
+      tags: ['test']
+    settings:
+      retryPolicy: { type: 'abort', attempts: 0 }
+  - selector:
+      section: 'setup'
+    settings:
+      plugins:
+        textOutput:
+          outputFormat: 'Console'

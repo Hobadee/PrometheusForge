@@ -1,0 +1,22 @@
+version: 1
+defaults:
+  retryPolicy: { type: 'retry', attempts: 2 }
+plugins:
+  textOutput:
+    outputFormat: 'Console'
+
+tasks:
+  - id: 'task.prepare'
+    name: 'Prepare environment'
+    tags: ['bootstrap']
+    section: 'setup'
+  - id: 'task.build'
+    name: 'Build artifacts'
+    tags: ['build']
+    after: ['task.prepare']
+  - id: 'task.test'
+    name: 'Run tests'
+    tags: ['test']
+    dependencies:
+      - id: 'task.build'
+      - tag: 'smoke'

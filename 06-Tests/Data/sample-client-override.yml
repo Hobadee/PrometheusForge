@@ -1,0 +1,13 @@
+overrides:
+  - selector:
+      tags: ['build']
+    settings:
+      retryPolicy:
+        type: 'retry'
+        attempts: 5
+  - selector:
+      ids: ['task.test']
+    settings:
+      plugins:
+        textOutput:
+          outputFormat: 'Json'
