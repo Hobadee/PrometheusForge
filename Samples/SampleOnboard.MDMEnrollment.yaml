@@ -1,0 +1,37 @@
+name: Mobile Device Management
+tags:
+  - enroll-mdm
+description: MDM enrollment steps
+
+steps:
+  - name: Install MDM Agent
+    tags:
+      - enroll-mdm
+    plugin: runCommand
+    options:
+      command: "powershell -Command Write-Host 'Installing MDM agent for organization: ${organizationName}...'"
+      timeout: 600
+      retries: 2
+      stopOnError: true
+    result: mdmAgentInstalled
+
+  - name: Enroll Device
+    tags:
+      - enroll-mdm
+    when: "${mdmAgentInstalled} == true"
+    plugin: runCommand
+    options:
+      command: "powershell -Command Write-Host 'Enrolling device into MDM service...'"
+      timeout: 900
+      retries: 3
+      stopOnError: true
+    result: deviceEnrolled
+
+  - name: Apply MDM Policies
+    tags:
+      - enroll-mdm
+    when: "${deviceEnrolled} == true"
+    plugin: textOutput
+    options:
+      message: "Applying MDM policies for ${organizationName}..."
+    result: mdmPoliciesApplied

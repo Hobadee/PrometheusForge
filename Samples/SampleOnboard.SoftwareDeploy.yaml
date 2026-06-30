@@ -1,0 +1,60 @@
+name: Software Deployment
+tags:
+  - setup-computer
+  - deploy
+description: Deploy required applications and tools
+
+sections:
+  - name: Core Applications
+    tags:
+      - deploy
+      - core-apps
+    steps:
+      - name: Install Office Suite
+        tags:
+          - deploy
+          - core-apps
+        plugin: runCommand
+        options:
+          command: "powershell -Command Write-Host 'Installing Office 365 for ${userName}...'"
+          timeout: 1800
+          stopOnError: false
+        result: officeInstalled
+
+      - name: Install Productivity Tools
+        tags:
+          - deploy
+          - core-apps
+        when: "${officeInstalled} == true"
+        plugin: runCommand
+        options:
+          command: "powershell -Command Write-Host 'Installing productivity suite...'"
+          timeout: 900
+          stopOnError: false
+        result: productivityToolsInstalled
+
+  - name: Security Software
+    tags:
+      - deploy
+      - security
+    steps:
+      - name: Install Antivirus
+        tags:
+          - deploy
+          - security
+        plugin: runCommand
+        options:
+          command: "powershell -Command Write-Host 'Installing endpoint protection...'"
+          timeout: 600
+          stopOnError: true
+        result: antivirusInstalled
+
+      - name: Configure Firewall
+        tags:
+          - deploy
+          - security
+        when: "${antivirusInstalled} == true"
+        plugin: textOutput
+        options:
+          message: "Configuring Windows Firewall for organization: ${organizationName}"
+        result: firewallConfigured

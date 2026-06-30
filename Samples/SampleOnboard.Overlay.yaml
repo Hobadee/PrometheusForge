@@ -1,0 +1,32 @@
+name: Sample Onboard - Custom Overlay
+version: 1.0
+description: |
+  Example overlay demonstrating tag-based filtering and variable setting.
+  Overlays can only filter sections/steps by tags and define/override variables.
+  They cannot add, remove, or modify the structure of sections and steps.
+
+metadata:
+  author: Eric
+  created: 2024-01-01
+  baseConfig: SampleOnboard.yaml
+
+# Tag-based filtering: Include only sections/steps with these tags
+includeByTags:
+  - create-user
+  - create-accounts
+  - enroll-mdm
+  - setup-computer
+
+# Tag-based filtering: Exclude sections/steps with these tags
+excludeByTags: []
+  # Example: ["hardware"]  would skip hardware configuration
+
+# Variables that can be referenced throughout the workflow
+# These override any defaults in the base configuration
+variables:
+  domainName: "corp.example.com"
+  userName: "john.doe"
+  setupPhase: 1
+  skipSoftwareDeployment: false
+  organizationName: "ACME Corporation"
+  workgroup: "WORKGROUP"

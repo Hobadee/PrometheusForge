@@ -1,0 +1,115 @@
+name: Sample Onboard
+version: 1.0
+description: Basic onboarding workflow example with hierarchical sections, steps, and plugin-based execution
+
+metadata:
+  author: Eric
+  created: 2024-01-01
+
+sections:
+  - name: Setup Phase
+    tags:
+      - setup-computer
+      - initial-config
+    description: Initial system setup and configuration
+    sections:
+      - name: Hardware Configuration
+        tags:
+          - setup-computer
+          - hardware
+        steps:
+          - name: Install Base OS
+            tags:
+              - setup-computer
+            plugin: textOutput
+            options:
+              message: "Installing base operating system..."
+            result: osInstalled
+            
+          - name: Install Drivers
+            tags:
+              - setup-computer
+              - hardware
+            when: "${osInstalled} == true"
+            plugin: runCommand
+            options:
+              command: "powershell -Command Write-Host 'Installing drivers...'"
+              timeout: 600
+              retries: 3
+              stopOnError: true
+            result: driversInstalled
+
+      - name: Network Setup
+        tags:
+          - setup-computer
+          - network
+        when: "${driversInstalled} == true"
+        steps:
+          - name: Configure Network
+            tags:
+              - setup-computer
+              - network
+            plugin: textOutput
+            options:
+              message: "Configuring network adapter..."
+            result: networkConfigured
+            
+          - name: Connect to Domain
+            tags:
+              - setup-computer
+              - network
+            when: "${networkConfigured} == true"
+            plugin: runCommand
+            options:
+              command: "powershell -Command Write-Host 'Joining domain: ${domainName}...'"
+              timeout: 300
+              stopOnError: false
+            result: domainJoined
+
+  - name: User Enrollment
+    tags:
+      - create-user
+      - create-accounts
+      - enroll-mdm
+    description: User account creation and MDM enrollment
+    sections:
+      - name: Account Creation
+        tags:
+          - create-user
+          - create-accounts
+        when: "${domainJoined} == true"
+        steps:
+          - name: Create User Account
+            tags:
+              - create-user
+              - create-accounts
+            plugin: runCommand
+            options:
+              command: "powershell -Command New-ADUser -Name '${userName}' -UserPrincipalName '${userName}@${domainName}'"
+              timeout: 300
+              stopOnError: true
+            result: userCreated
+              
+          - name: Configure User Permissions
+            tags:
+              - create-user
+            when: "${userCreated} == true"
+            plugin: textOutput
+            options:
+              message: "Configuring permissions for user: ${userName}"
+            result: permissionsConfigured
+
+      - name: Mobile Device Management
+        tags:
+          - enroll-mdm
+        when: "${setupPhase} > 0"
+        file: ./SampleOnboard.MDMEnrollment.yaml
+        description: External configuration for MDM enrollment
+
+  - name: Software Deployment
+    tags:
+      - setup-computer
+      - deploy
+    when: "${permissionsConfigured} == true || ${skipSoftwareDeployment} == false"
+    file: ./SampleOnboard.SoftwareDeploy.yaml
+    description: Deploy required applications and tools (external file)

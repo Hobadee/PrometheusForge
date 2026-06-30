@@ -11,7 +11,7 @@
 - Files may be prefixed with numbers to indicate load order (e.g., `01-Task.ps1` loads before `02-Config.ps1`).
 
 # Architecture & behavior notes (important for edits)
-- Plugin model: implement `taskPlugin` interface (see `Classes/Plugins/TaskPlugin.ps1`)
+- Plugin model: implement `taskPluginInterface` interface (see `Classes/Plugins/TaskPluginInterface.ps1`)
 
 # Developer workflows (commands)
 - Import and play interactively in PS7:
@@ -43,3 +43,13 @@ Invoke-Pester
 - The `powershell-yaml` module is required for YAML parsing. Ensure it is installed before running the module or tests.
 - The `Build-Module` command is used to compile the module. Ensure it is available
 - Always ensure `Build-Module; Import-Module .\build\Lifecycle\Lifecycle.psd1 -Force` is run before any testing to ensure the latest changes are loaded.
+
+# Testing
+- Unit tests are written using Pester and are located in the `Tests` directory.
+- Ensure the module is built and imported before running tests:
+
+```powershell
+Build-Module
+Import-Module .\build\Lifecycle\Lifecycle.psd1 -Force
+Invoke-Pester
+```
