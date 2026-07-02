@@ -43,7 +43,7 @@ class TaskPluginInterface {
     # }
 
 
-    [object] Execute([object]$executionData) {
+    [object] Execute([object]$parameters) {
         <#
         .SYNOPSIS
         Executes a task using the plugin.
@@ -54,7 +54,8 @@ class TaskPluginInterface {
         a single JSON object containing all execution data.
 
         .PARAMETER executionData
-        A JSON object containing all execution data including task details and any other relevant information needed for task execution.
+        An object containing all execution data including task details and any other relevant information needed for task execution.
+        This will be a subset of the YAML data used to drive task execution, as parsed by `ConvertFrom-Yaml`.
 
         .NOTES
         Derived plugins must implement this method to provide task execution functionality.
@@ -63,7 +64,7 @@ class TaskPluginInterface {
     }
 
 
-    [object] RunTask([object]$executionData) {
+    [object] RunTask([object]$parameters) {
         <#
         .SYNOPSIS
         Runs a task using the plugin after validating execution data.
@@ -77,19 +78,49 @@ class TaskPluginInterface {
         .PARAMETER executionData
         A JSON object containing all execution data including task details and any other relevant information needed for task execution.
 
+        .OUTPUTS
+        An object containing the result of the task execution, including success status, any returned object, error information, and timing metadata.
+
         .NOTES
         This is a concrete method!  We want to always ensure that execution data
         is validated before attempting to execute a task, this concrete method ensures
         derived plugins do not have to repeat this validation logic.
+
+        Possible TODOs:
+        - Accept additional arguments for task execution beyond the executionData JSON object (such as error handling/retries)
         #>
-        if (-not $this.ValidateExecutionData($executionData)) {
+        if (-not $this.ValidateExecutionData($parameters)) {
             throw [System.ArgumentException]::new("Invalid execution data")
         }
-        return $this.Execute($executionData)
+
+
+        $error = $null
+        $startTime = [datetime]::Now
+        try {
+            $rtn = $this.Execute($parameters)
+            $success = $true
+        }
+        catch {
+            $error = $_
+            $success = $false
+            $rtn = $null
+        }
+        $endTime = [datetime]::Now
+
+        $result = @{
+            Success = $success
+            object = $rtn
+            error = $error
+            startTime = $startTime
+            endTime = $endTime
+            executionTime = ($endTime - $startTime).TotalSeconds
+        }
+
+        return $result
     }
 
 
-    [bool] ValidateExecutionData([object]$executionData) {
+    [bool] ValidateExecutionData([object]$parameters) {
         <#
         .SYNOPSIS
         Validates the execution data for the plugin.
@@ -106,12 +137,12 @@ class TaskPluginInterface {
         This base implementation checks that executionData is valid JSON.
         Derived plugins may extend this method to add custom validation logic.
         #>
-        if ($null -eq $executionData) {
+        if ($null -eq $parameters) {
             return $false
         }
 
         try {
-            $executionData | ConvertFrom-Json -ErrorAction Stop | Out-Null
+            $parameters | ConvertFrom-Json -ErrorAction Stop | Out-Null
             return $true
         } catch {
             return $false
@@ -126,8 +157,8 @@ class TaskPluginInterface {
         Name = "Globally unique plugin name (string)"
         Version = "Plugin version (string)"
         #>
-    [hashtable] PluginInfo() {
-        throw [System.NotImplementedException]::new("GetPluginInfo method must be implemented by derived plugin")
+    static [hashtable] PluginInfo() {
+        throw [System.NotImplementedException]::new("PluginInfo method must be implemented by derived plugin")
     }
 
 }

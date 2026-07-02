@@ -48,19 +48,22 @@ class configuration {
 
 
     # Validation methods
-    [void] ValidateKey([string] $key) {
+    [void] ValidateKey([object] $key) {
         <#
         .SYNOPSIS
         Validates that a key is a valid string
 
         .PARAMETER key
-        The key to validate
+        The key to validate. Must be a non-null, non-empty string.
 
         .NOTES
         This method can be extended in the future with additional validation rules.
+        Since this is potentially the end-location for user input via YAML, we need to accept [object] instead of
+        [string], since [string] will cast the type and ruin validation.  This would be bad if the user threw an array
+        in the YAML where a variable name was supposed to go.
         #>
-        if ($null -eq $key) {
-            throw [System.ArgumentNullException]::new("key", "Key cannot be null")
+        if ([string]::IsNullOrEmpty($key)) {
+            throw [System.ArgumentNullException]::new("key", "Key cannot be null or empty")
         }
         if ($key -isnot [string]) {
             throw [System.ArgumentException]::new("Key must be a string", "key")
@@ -69,7 +72,7 @@ class configuration {
 
 
     # Key/Value Store Methods
-    [void] Set([string] $key, [object] $value) {
+    [void] Set([object] $key, [object] $value) {
         <#
         .SYNOPSIS
         Sets a configuration key/value pair
@@ -88,7 +91,7 @@ class configuration {
     }
 
 
-    [object] Get([string] $key) {
+    [object] Get([object] $key) {
         <#
         .SYNOPSIS
         Gets a configuration value by key
@@ -107,7 +110,7 @@ class configuration {
     }
 
 
-    [bool] HasKey([string] $key) {
+    [bool] HasKey([object] $key) {
         <#
         .SYNOPSIS
         Checks if a configuration key exists
@@ -123,7 +126,7 @@ class configuration {
     }
 
 
-    [void] Unset([string] $key) {
+    [void] Unset([object] $key) {
         <#
         .SYNOPSIS
         Removes a configuration key/value pair

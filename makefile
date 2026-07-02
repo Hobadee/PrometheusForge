@@ -44,19 +44,35 @@ else
 endif
 
 
+SHELL_CMD = \
+try { \
+    Import-Module ./$(ODIR)/$(ONAME).psd1 -ErrorAction Stop \
+} catch { \
+    $$err = $$Error[0] | Select-Object *; \
+    Write-Output $$err; \
+    try { \
+        Write-Output ($$err.ScriptStackTrace -split [System.Environment]::NewLine)[0] | ConvertTo-SourceLineNumber \
+    } catch {} \
+}
+#        Write-Output ($$err.Exception.Message -split [System.Environment]::NewLine)[0] | ConvertTo-SourceLineNumber \
+
+
 all: build-module
 
-shell: build-module doShell
+shell: doShell
+# shell: build-module doShell
 
-test: build-module doTest
+test: doTest
+# test: build-module doTest
 
-test-function: build-module doTestFunction
+test-function: doTestFunction
+# test-function: build-module doTestFunction
 
 build-module:
 	$(CMD_PWSH) -c 'Build-Module'
 
 doShell:
-	$(CMD_PWSH) -noe -c 'try {Import-Module ./$(ODIR)/$(ONAME).psd1 -ErrorAction Stop} catch {$$Error[0] | Select-Object *}'
+	$(CMD_PWSH) -noe -c '$(SHELL_CMD)'
 
 doTest:
 	$(CMD_PWSH) -c 'Import-Module ./$(ODIR)/$(ONAME).psd1;Invoke-Pester;exit'

@@ -18,15 +18,38 @@ class taskPluginRegistry {
 
 
     static [taskPluginRegistry] $Instance = $null  # Singleton object; Explicitly initialize to $null
-    static [System.Collections.Generic.Dictionary[string, Type]] $PluginRegistry = $null  # List of registered plugins; Explicitly initialize to $null
+    [System.Collections.Generic.Dictionary[string, [Type]]] $PluginRegistry  # List of registered plugins
 
 
     # Singleton handler
     static [taskPluginRegistry] GetInstance() {
+        <#
+        .SYNOPSIS
+        Gets the singleton instance of the taskPluginRegistry class.
+
+        .DESCRIPTION
+        This static method returns the single instance of the taskPluginRegistry class, creating it if it does not already exist.
+        It also ensures that the plugin registry dictionary is initialized.
+        .#>
         if ($null -eq [taskPluginRegistry]::Instance) {
             [taskPluginRegistry]::Instance = [taskPluginRegistry]::new()
         }
         return [taskPluginRegistry]::Instance
+    }
+
+
+    taskPluginRegistry() {
+        <#
+        .SYNOPSIS
+        Constructor for the taskPluginRegistry class.
+
+        .DESCRIPTION
+        Initializes the plugin registry dictionary for the singleton instance.
+
+        .NOTES
+        No way of enforcing `private` constructor in PowerShell, but this is intended to be used only via GetInstance().
+        #>
+        $this.PluginRegistry = [System.Collections.Generic.Dictionary[string, [Type]]]::new()
     }
 
 
@@ -52,19 +75,11 @@ class taskPluginRegistry {
                 throw [ArgumentException]::New("The provided type does not implement taskPluginInterface.")
         }
 
-        # Validate the plugin
-        $this.ValidatePlugin($plugin)
-
         if($this.IsPluginValid($plugin)) {
             # Plugin is valid, continue with registration
-            $this.PluginRegistry[$plugin.PluginInfo().name] = $pluginType
+            $this.PluginRegistry[$plugin::PluginInfo().name] = $pluginType
         } else {
             throw [ArgumentException]::New("Plugin is not valid and cannot be registered.")
-        }
-
-        # Add each field name to the registry, mapping it to the plugin type
-        foreach ($field in $pluginType::fieldNames()) {
-            $this.PluginRegistry[$field] = $pluginType
         }
     }
 
@@ -90,12 +105,12 @@ class taskPluginRegistry {
 
         $errors = [System.Collections.Generic.List[string]]::new()
 
-        if ([string]::IsNullOrEmpty($plugin.PluginInfo().name)) {
+        if ([string]::IsNullOrEmpty($plugin::PluginInfo().name)) {
             $errors.Add("Plugin name cannot be null or empty.")
         }
 
         # Validate that the plugin name doesn't already exist in the registry
-        if ($this.PluginRegistry.Values -contains $plugin.PluginInfo().name) {
+        if ($this.PluginRegistry.ContainsKey($plugin::PluginInfo().name)) {
             $errors.Add("A plugin with the same name is already registered.")
         }
 
@@ -139,7 +154,7 @@ class taskPluginRegistry {
     # }
 
 
-    [Type]getPlugin([string] $pluginName) {
+    [Type]GetPlugin([string] $pluginName) {
         <#
         .SYNOPSIS
         Retrieves a plugin by name from the registry.
@@ -152,9 +167,9 @@ class taskPluginRegistry {
         The name of the plugin to retrieve.
 
         .EXAMPLE
-        $plugin = $this.getPlugin("textOutput")
+        $plugin = $this.GetPlugin("textOutput")
         #>
-        if (-not $this.PluginRegistry.ContainsValue($pluginName)) {
+        if (-not $this.PluginRegistry.ContainsKey($pluginName)) {
             throw [ArgumentException]::New("Plugin '$pluginName' not found in registry.")
         }
         return $this.PluginRegistry[$pluginName]
@@ -166,7 +181,7 @@ class taskPluginRegistry {
     # }
 
 
-    [array]getPluginNames() {
+    [array]GetPluginNames() {
         <#
         .SYNOPSIS
         Retrieves the names of all registered plugins.
@@ -176,10 +191,10 @@ class taskPluginRegistry {
         registered in the plugin registry.
 
         .EXAMPLE
-        $pluginNames = $this.getPluginNames()
+        $pluginNames = $this.GetPluginNames()
         #>
         $pluginNames = @()
-        $pluginNames += $this.PluginRegistry.Values | ForEach-Object { $_.PluginInfo().name }
+        $pluginNames += $this.PluginRegistry.Values | ForEach-Object { $_::PluginInfo().name }
         return $pluginNames
     }
 

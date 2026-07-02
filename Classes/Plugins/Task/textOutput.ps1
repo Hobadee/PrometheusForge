@@ -25,6 +25,22 @@ class textOutput : TaskPluginInterface {
             version = "1.0.0"
         }
     }
+
+
+    [textOutput] Execute([object]$parameters) {
+        <#
+        .SYNOPSIS
+        Executes the textOutput plugin functionality.
+
+        .DESCRIPTION
+        This method contains the logic that the textOutput plugin performs
+        when invoked by the task management system. Implement the necessary
+        behavior for the plugin here.
+        #>
+        $str = $parameters.message
+        [console]::WriteLine($str)
+        return $this
+    }
     
 }
 

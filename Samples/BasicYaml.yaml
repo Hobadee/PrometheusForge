@@ -1,0 +1,46 @@
+name: Sample Onboard
+version: 1.0
+description: Basic onboarding workflow example with hierarchical sections, steps, and plugin-based execution
+
+metadata:
+  author: Eric
+  created: 2024-01-01
+
+sections:
+  - name: Setup Phase
+    tags:
+      - setup-computer
+      - initial-config
+    description: Initial system setup and configuration
+    sections:
+      - name: Hardware Configuration
+        tags:
+          - setup-computer
+          - hardware
+        description: Configure and set up hardware components
+        steps:
+          - name: Install Base OS
+            tags:
+              - setup-computer
+            plugin: textOutput
+              command: "powershell -Command Write-Host 'Installing drivers...'"
+#              message: "Installing base operating system..."
+            result: osInstalled
+
+          - name: Install Drivers
+            tags:
+              - setup-computer
+              - hardware
+#            when: "${osInstalled} == true"
+            plugin: runCommand
+            options:
+              command: "powershell -Command Write-Host 'Installing drivers...'"
+              timeout: 600
+              retries: 3
+              stopOnError: true
+            result: driversInstalled
+      - name: Software Configuration
+        tags:
+          - setup-computer
+          - software
+        description: Install and configure necessary software

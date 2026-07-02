@@ -6,7 +6,105 @@ metadata:
   author: Eric
   created: 2024-01-01
 
-sections:
+
+items:
+  - type: section
+    name: Documentation
+    items:
+      - type: step
+        name: Generate random password
+        plugin: passwordGenerator
+        result: password
+      - type: step
+        name: Generate user PIN
+        plugin: passwordGenerator
+        parameters:
+          - length: 6
+            includeNumbers: true
+            includeLowercase: false
+            includeUppercase: false
+            includeSpecial: false
+        result: PIN
+  - type: section
+    name: Pre-Creation
+    description: Various pre-creation steps that need to happen.
+    items:
+      - type: section
+        name: Purchase Hardware
+        tags:
+          - Purchase
+        items:
+          - type: step
+            name: Laptop
+            tags:
+              - Laptop
+          - type: step
+            name: YubiKey
+            tags:
+              - YubiKey
+          - type: step
+            name: Phone
+            tags:
+              - Phone
+      - type: step
+        name: Purchase Google Fi phone line
+        tags:
+          - Purchase
+          - Google Fi
+      - type: step
+        name: Purchase Zoom license
+        tags:
+          - Purchase
+          - Zoom
+      - type: step
+        name: Pre-Creation Complete
+        description: A "milestone" marker for task management systems
+        tags:
+          - milestone
+  - type: section
+    name: User Creation/Accounts Setup
+    items:
+      - type: section
+        name: Create user in Okta
+        items:
+          - type: step
+            name: Assign generated password
+      - type: section
+        name: Assign user Okta applications
+        tags:
+          - Software
+        items:
+          - type: step
+            name: Google
+            tags:
+              - Google
+          - type: step
+            name: Office365
+            tags:
+              - Office
+          - type: step
+            name: Zoom
+            tags:
+              - Zoom
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   - name: Setup Phase
     tags:
       - setup-computer
@@ -22,7 +120,7 @@ sections:
             tags:
               - setup-computer
             plugin: textOutput
-            options:
+            parameters:
               message: "Installing base operating system..."
             result: osInstalled
             
@@ -32,7 +130,7 @@ sections:
               - hardware
             when: "${osInstalled} == true"
             plugin: runCommand
-            options:
+            parameters:
               command: "powershell -Command Write-Host 'Installing drivers...'"
               timeout: 600
               retries: 3
@@ -50,7 +148,7 @@ sections:
               - setup-computer
               - network
             plugin: textOutput
-            options:
+            parameters:
               message: "Configuring network adapter..."
             result: networkConfigured
             
@@ -60,7 +158,7 @@ sections:
               - network
             when: "${networkConfigured} == true"
             plugin: runCommand
-            options:
+            parameters:
               command: "powershell -Command Write-Host 'Joining domain: ${domainName}...'"
               timeout: 300
               stopOnError: false
@@ -84,7 +182,7 @@ sections:
               - create-user
               - create-accounts
             plugin: runCommand
-            options:
+            parameters:
               command: "powershell -Command New-ADUser -Name '${userName}' -UserPrincipalName '${userName}@${domainName}'"
               timeout: 300
               stopOnError: true
@@ -95,7 +193,7 @@ sections:
               - create-user
             when: "${userCreated} == true"
             plugin: textOutput
-            options:
+            parameters:
               message: "Configuring permissions for user: ${userName}"
             result: permissionsConfigured
 
