@@ -1,44 +1,44 @@
-class configuration {
+class Configuration {
     <#
     .SYNOPSIS
-    Singleton class to store global configuration information for the lifecycle run
+    Singleton class to store global Configuration information for the lifecycle run
 
     .DESCRIPTION
-    This class provides a singleton instance that maintains configuration state across the application.
-    It includes a key/value store for arbitrary configuration data and manages include/exclude tag collections.
+    This class provides a singleton instance that maintains Configuration state across the application.
+    It includes a key/value store for arbitrary Configuration data and manages include/exclude tag collections.
 
     .NOTES
-    This class is intended to be used as a singleton. Access via [configuration]::GetInstance().
-    All configuration is global for the duration of the run.
+    This class is intended to be used as a singleton. Access via [Configuration]::GetInstance().
+    All Configuration is global for the duration of the run.
     #>
 
-    static [configuration] $Instance = $null  # Singleton object; Explicitly initialize to $null
+    static [Configuration] $Instance = $null  # Singleton object; Explicitly initialize to $null
 
     static [System.Collections.Generic.Dictionary[string, object]] $KeyValueStore = $null  # Key/value store; Explicitly initialize to $null
     static [tags] $IncludeTags = $null  # Tags to include; Explicitly initialize to $null
     static [tags] $ExcludeTags = $null  # Tags to exclude; Explicitly initialize to $null
 
 
-    # TODO: Consider adding methods for exporting/importing configuration state
+    # TODO: Consider adding methods for exporting/importing Configuration state
     # TODO: Consider adding methods for validation hooks
     # TODO: Consider adding change notifications/callbacks
-    # TODO: Consider adding configuration file loading/saving
+    # TODO: Consider adding Configuration file loading/saving
 
 
     # Singleton handler
-    static [configuration] GetInstance() {
-        if ($null -eq [configuration]::Instance) {
-            [configuration]::Instance = [configuration]::new()
+    static [Configuration] GetInstance() {
+        if ($null -eq [Configuration]::Instance) {
+            [Configuration]::Instance = [Configuration]::new()
         }
-        return [configuration]::Instance
+        return [Configuration]::Instance
     }
 
 
     # Constructor
-    configuration() {
-        [configuration]::KeyValueStore = [System.Collections.Generic.Dictionary[string, object]]::new()
-        [configuration]::IncludeTags = [tags]::new()
-        [configuration]::ExcludeTags = [tags]::new()
+    Configuration() {
+        [Configuration]::KeyValueStore = [System.Collections.Generic.Dictionary[string, object]]::new()
+        [Configuration]::IncludeTags = [tags]::new()
+        [Configuration]::ExcludeTags = [tags]::new()
     }
 
 
@@ -75,29 +75,29 @@ class configuration {
     [void] Set([object] $key, [object] $value) {
         <#
         .SYNOPSIS
-        Sets a configuration key/value pair
+        Sets a Configuration key/value pair
 
         .PARAMETER key
-        The configuration key (must be a string)
+        The Configuration key (must be a string)
 
         .PARAMETER value
-        The configuration value (can be any object type)
+        The Configuration value (can be any object type)
 
         .NOTES
         If the key already exists, its value will be overwritten.
         #>
         $this.ValidateKey($key)
-        [configuration]::KeyValueStore[$key] = $value
+        [Configuration]::KeyValueStore[$key] = $value
     }
 
 
     [object] Get([object] $key) {
         <#
         .SYNOPSIS
-        Gets a configuration value by key
+        Gets a Configuration value by key
 
         .PARAMETER key
-        The configuration key to retrieve
+        The Configuration key to retrieve
 
         .OUTPUTS
         [object] The value associated with the key, or $null if the key doesn't exist
@@ -106,39 +106,39 @@ class configuration {
         Returns $null if the key doesn't exist. Use HasKey() to check for existence first.
         #>
         $this.ValidateKey($key)
-        return [configuration]::KeyValueStore[$key]
+        return [Configuration]::KeyValueStore[$key]
     }
 
 
     [bool] HasKey([object] $key) {
         <#
         .SYNOPSIS
-        Checks if a configuration key exists
+        Checks if a Configuration key exists
 
         .PARAMETER key
-        The configuration key to check
+        The Configuration key to check
 
         .OUTPUTS
         [bool] True if the key exists, false otherwise
         #>
         $this.ValidateKey($key)
-        return [configuration]::KeyValueStore.ContainsKey($key)
+        return [Configuration]::KeyValueStore.ContainsKey($key)
     }
 
 
     [void] Unset([object] $key) {
         <#
         .SYNOPSIS
-        Removes a configuration key/value pair
+        Removes a Configuration key/value pair
 
         .PARAMETER key
-        The configuration key to remove
+        The Configuration key to remove
 
         .NOTES
         If the key doesn't exist, this method completes silently without error.
         #>
         $this.ValidateKey($key)
-        [configuration]::KeyValueStore.Remove($key)
+        [Configuration]::KeyValueStore.Remove($key)
     }
 
 
@@ -156,7 +156,7 @@ class configuration {
         .PARAMETER tag
         The tag to add
         #>
-        [configuration]::IncludeTags.AddTag($tag)
+        [Configuration]::IncludeTags.AddTag($tag)
     }
 
 
@@ -168,7 +168,7 @@ class configuration {
         .PARAMETER tag
         The tag to remove
         #>
-        [configuration]::IncludeTags.RemoveTag($tag)
+        [Configuration]::IncludeTags.RemoveTag($tag)
     }
 
 
@@ -183,7 +183,7 @@ class configuration {
         .OUTPUTS
         [bool] True if the tag exists in include tags
         #>
-        return [configuration]::IncludeTags.HasTag($tag)
+        return [Configuration]::IncludeTags.HasTag($tag)
     }
 
 
@@ -195,7 +195,7 @@ class configuration {
         .OUTPUTS
         [string[]] Array of all include tags
         #>
-        return [configuration]::IncludeTags.GetTags()
+        return [Configuration]::IncludeTags.GetTags()
     }
 
 
@@ -208,7 +208,7 @@ class configuration {
         .PARAMETER tag
         The tag to add
         #>
-        [configuration]::ExcludeTags.AddTag($tag)
+        [Configuration]::ExcludeTags.AddTag($tag)
     }
 
 
@@ -220,7 +220,7 @@ class configuration {
         .PARAMETER tag
         The tag to remove
         #>
-        [configuration]::ExcludeTags.RemoveTag($tag)
+        [Configuration]::ExcludeTags.RemoveTag($tag)
     }
 
 
@@ -235,7 +235,7 @@ class configuration {
         .OUTPUTS
         [bool] True if the tag exists in exclude tags
         #>
-        return [configuration]::ExcludeTags.HasTag($tag)
+        return [Configuration]::ExcludeTags.HasTag($tag)
     }
 
 
@@ -247,7 +247,7 @@ class configuration {
         .OUTPUTS
         [string[]] Array of all exclude tags
         #>
-        return [configuration]::ExcludeTags.GetTags()
+        return [Configuration]::ExcludeTags.GetTags()
     }
     
 }

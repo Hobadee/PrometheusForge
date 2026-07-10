@@ -25,3 +25,17 @@ This project required the `powershell-yaml` module from [github.com/cloudbase/po
 ```
 Install-Module powershell-yaml
 ```
+
+# Notes
+We should allow unlimited overlays.  Overlays should simply overwrite anything previous at the various keys and values, or add new keys.`
+Method of deleting keys/subkeys should be given by specifying parent key and giving a null plugin or something.  (Needs to be
+an actual nullifyer so we can kill children and don't dive into them)
+
+Okay - overlays may be harder than I thought.  An overlay that edits or deletes should be easier, but an overlay that adds is a problem.
+Adding items makes the exact positioning abiguous.  It may be possible to do a specifiction such as "after: item A" or something, but
+then we need to create a position solver.
+
+
+# Potential Names
+- NABIB (Not Ansible But Inspired By)
+

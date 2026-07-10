@@ -154,31 +154,48 @@ class taskPluginRegistry {
     # }
 
 
-    [Type]GetPlugin([string] $pluginName) {
+    [Object]GetPlugin([string] $pluginName){
         <#
         .SYNOPSIS
-        Retrieves a plugin by name from the registry.
-
-        .DESCRIPTION
-        This method searches the plugin registry for a plugin with the specified name
-        and returns the plugin type if found.
+        Returns an instance of a plugin
 
         .PARAMETER pluginName
-        The name of the plugin to retrieve.
+        The name of the plugin to retrieve
 
-        .EXAMPLE
-        $plugin = $this.GetPlugin("textOutput")
+        .NOTES
+        Returns a fresh plugin instance with default state.
+        To set parameters, call SetParameters() on the returned instance.
         #>
+
         if (-not $this.PluginRegistry.ContainsKey($pluginName)) {
             throw [ArgumentException]::New("Plugin '$pluginName' not found in registry.")
         }
-        return $this.PluginRegistry[$pluginName]
+        $plugin = [Activator]::CreateInstance($pluginName)
+        return $plugin
     }
 
+    [Object]GetPluginWithParameters([string] $pluginName, [object] $parameters){
+        <#
+        .SYNOPSIS
+        Returns an instance of a plugin with parameters pre-configured
 
-    # getPlugins() {
-    #     return this.plugins;
-    # }
+        .PARAMETER pluginName
+        The name of the plugin to retrieve
+
+        .PARAMETER parameters
+        The parameters to validate and set on the plugin instance
+
+        .NOTES
+        This is a convenience method that creates a plugin instance and immediately
+        calls SetParameters() on it. This performs early parameter validation,
+        allowing errors to be caught before the plugin is used.
+        If validation fails, an exception is thrown and the plugin is not returned.
+        #>
+
+        $plugin = $this.GetPlugin($pluginName)
+        $plugin.SetParameters($parameters)
+        return $plugin
+    }
 
 
     [array]GetPluginNames() {

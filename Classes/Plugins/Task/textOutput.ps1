@@ -1,12 +1,14 @@
-class textOutput : TaskPluginInterface {
+class TextOutput : TaskPluginInterface {
 
-    textOutput() : base(){
+    [string] $message
+
+    TextOutput() : base(){
         <#
         .SYNOPSIS
-        Constructor for the textOutput plugin class
+        Constructor for the TextOutput plugin class
 
         .DESCRIPTION
-        This constructor initializes the textOutput plugin by calling the base class constructor.
+        This constructor initializes the TextOutput plugin by calling the base class constructor.
         It sets up any necessary state for the plugin to function within the task management system.
         #>
     }
@@ -21,28 +23,44 @@ class textOutput : TaskPluginInterface {
         the name and other extensible properties used by the task management system.
         #>
         return @{
-            name = "textOutput"
+            name = "TextOutput"
             version = "1.0.0"
         }
     }
 
-
-    [textOutput] Execute([object]$parameters) {
+    [void] ValidateParameters([object]$params) {
         <#
         .SYNOPSIS
-        Executes the textOutput plugin functionality.
+        Validates the parameters for the TextOutput plugin.
 
         .DESCRIPTION
-        This method contains the logic that the textOutput plugin performs
-        when invoked by the task management system. Implement the necessary
-        behavior for the plugin here.
+        Ensures that the 'message' parameter is present and not null/empty.
         #>
-        $str = $parameters.message
-        [console]::WriteLine($str)
+        if ($null -eq $params) {
+            throw [System.ArgumentException]::new("Parameters cannot be null")
+        }
+
+        if ([string]::IsNullOrEmpty($params.message)) {
+            throw [System.ArgumentException]::new("Parameters must contain a 'message' property")
+        }
+    }
+
+    [TextOutput] Execute() {
+        <#
+        .SYNOPSIS
+        Executes the TextOutput plugin functionality.
+
+        .DESCRIPTION
+        Outputs the stored message parameter to the console.
+
+        .OUTPUTS
+        The instance of the TextOutput class after execution.
+        #>
+        [console]::WriteLine($this.parameters.message)
         return $this
     }
     
 }
 
-# Register the textOutput plugin with the task plugin system
-[taskPluginRegistry]::GetInstance().RegisterPlugin([textOutput])
+# Register the TextOutput plugin with the task plugin system
+[taskPluginRegistry]::GetInstance().RegisterPlugin([TextOutput])

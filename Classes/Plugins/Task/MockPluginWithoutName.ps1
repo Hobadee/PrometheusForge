@@ -8,7 +8,13 @@ class MockPluginWithoutName : TaskPluginInterface {
         }
     }
     
-    [object] Execute([object]$parameters) {
+    [void] ValidateParameters([object]$params) {
+        # Mock plugins do minimal validation
+    }
+
+    [object] Execute() {
         return @{ result = "executed" }
     }
 }
+
+# DO NOT LOAD!  Used for unit testing only!

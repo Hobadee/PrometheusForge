@@ -1,4 +1,4 @@
-class passwordGenerator : TaskPluginInterface {
+class PasswordGenerator : TaskPluginInterface {
 
     [int]$length = 16
     [bool]$includeLowercase = $true
@@ -7,13 +7,13 @@ class passwordGenerator : TaskPluginInterface {
     [bool]$includeSpecial = $false
     [string]$generatedPassword = ""
 
-    passwordGenerator() : base(){
+    PasswordGenerator() : base(){
         <#
         .SYNOPSIS
-        Constructor for the passwordGenerator plugin class
+        Constructor for the PasswordGenerator plugin class
 
         .DESCRIPTION
-        This constructor initializes the passwordGenerator plugin by calling the base class constructor.
+        This constructor initializes the PasswordGenerator plugin by calling the base class constructor.
         It sets up default values for password generation options.
         #>
     }
@@ -28,8 +28,64 @@ class passwordGenerator : TaskPluginInterface {
         the name and other extensible properties used by the task management system.
         #>
         return @{
-            name = "passwordGenerator"
+            name = "PasswordGenerator"
             version = "1.0.0"
+        }
+    }
+
+    [void] ValidateParameters([object]$params) {
+        <#
+        .SYNOPSIS
+        Validates and extracts password generation parameters.
+
+        .DESCRIPTION
+        Validates that parameters are valid and extracts password generation options.
+        Applies validated options to instance variables (early validation model).
+
+        .PARAMETER params
+        An object containing optional password generation options:
+        - length: The desired password length (must be >= 1)
+        - includeLowercase: Include a-z characters
+        - includeUppercase: Include A-Z characters
+        - includeNumbers: Include 0-9 characters
+        - includeSpecial: Include special characters
+
+        .NOTES
+        I'm not a huge fan of double-storing parameters - I would rather directly reference the $this.parameters object for accessing parameter values
+        however this is what AI generated and I am leaving it as-is for now, even though it duplicates parameter storage.
+        #>
+        
+        if ($null -ne $params.length) {
+            try {
+                $this.length = [int]$params.length
+                if ($this.length -lt 1) {
+                    throw [System.ArgumentException]::new("Password length must be at least 1")
+                }
+            }
+            catch [System.InvalidCastException] {
+                throw [System.ArgumentException]::new("Parameter 'length' must be a valid integer")
+            }
+        }
+        
+        if ($null -ne $params.includeLowercase) {
+            $this.includeLowercase = [bool]$params.includeLowercase
+        }
+        
+        if ($null -ne $params.includeUppercase) {
+            $this.includeUppercase = [bool]$params.includeUppercase
+        }
+        
+        if ($null -ne $params.includeNumbers) {
+            $this.includeNumbers = [bool]$params.includeNumbers
+        }
+        
+        if ($null -ne $params.includeSpecial) {
+            $this.includeSpecial = [bool]$params.includeSpecial
+        }
+        
+        # Validate that at least one character class is enabled
+        if (-not ($this.includeLowercase -or $this.includeUppercase -or $this.includeNumbers -or $this.includeSpecial)) {
+            throw [System.ArgumentException]::new("At least one character class must be enabled (lowercase, uppercase, numbers, or special)")
         }
     }
 
@@ -82,7 +138,7 @@ class passwordGenerator : TaskPluginInterface {
         $charSet = $this.GetCharacterSet()
         
         if ([string]::IsNullOrEmpty($charSet)) {
-            throw [System.ArgumentException]::new("At least one character class must be enabled (lowercase, uppercase, numbers, or special characters)")
+            throw [System.ArgumentException]::new("At least one character class must be enabled")
         }
         
         if ($this.length -lt 1) {
@@ -100,47 +156,18 @@ class passwordGenerator : TaskPluginInterface {
         return $password
     }
 
-    [passwordGenerator] Execute([object]$parameters) {
+    [PasswordGenerator] Execute() {
         <#
         .SYNOPSIS
-        Executes the passwordGenerator plugin functionality.
+        Executes the PasswordGenerator plugin functionality.
 
         .DESCRIPTION
-        This method generates a random password based on configuration options
-        provided in the executionData. The generated password is stored in the
-        generatedPassword property and the plugin object is returned.
-
-        .PARAMETER executionData
-        An object containing password generation options:
-        - length: The desired password length (default: 16)
-        - includeLowercase: Include a-z characters (default: true)
-        - includeUppercase: Include A-Z characters (default: true)
-        - includeNumbers: Include 0-9 characters (default: true)
-        - includeSpecial: Include special characters (default: false)
+        Generates a random password based on configuration options that were
+        previously validated and stored via SetParameters() / ValidateParameters().
+        The generated password is stored in the generatedPassword property.
         #>
         
-        # Parse executionData and apply options
-        if ($null -ne $parameters.length) {
-            $this.length = [int]$parameters.length
-        }
-        
-        if ($null -ne $parameters.includeLowercase) {
-            $this.includeLowercase = [bool]$parameters.includeLowercase
-        }
-        
-        if ($null -ne $parameters.includeUppercase) {
-            $this.includeUppercase = [bool]$parameters.includeUppercase
-        }
-        
-        if ($null -ne $parameters.includeNumbers) {
-            $this.includeNumbers = [bool]$parameters.includeNumbers
-        }
-        
-        if ($null -ne $parameters.includeSpecial) {
-            $this.includeSpecial = [bool]$parameters.includeSpecial
-        }
-        
-        # Generate the password
+        # Generate the password using pre-validated and stored options
         $this.generatedPassword = $this.GenerateRandomPassword()
         
         return $this
@@ -148,5 +175,5 @@ class passwordGenerator : TaskPluginInterface {
     
 }
 
-# Register the passwordGenerator plugin with the task plugin system
-[taskPluginRegistry]::GetInstance().RegisterPlugin([passwordGenerator])
+# Register the PasswordGenerator plugin with the task plugin system
+[taskPluginRegistry]::GetInstance().RegisterPlugin([PasswordGenerator])

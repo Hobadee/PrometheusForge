@@ -5,99 +5,165 @@ class TaskPluginInterface {
 
     .DESCRIPTION
     This class defines the interface that all task plugins must implement.
-    It provides abstract methods for initialization, execution, and validation, as well as a property for the plugin name.
-    Derived plugins must implement these methods and property to be compatible with the task management system.
+    It provides abstract methods for parameter validation and execution.
+    Derived plugins must implement these methods to be compatible with the task management system.
+
+    EXECUTION MODEL:
+    - Each task receives a fresh plugin instance (per-task instantiation pattern).
+    - This prevents cross-contamination between tasks and ensures a clean state for each execution.
+    - Plugins needing shared resources (database connections, caches, etc.) can implement a singleton pattern internally.
+    
+    PARAMETER FLOW:
+    1. Plugin instance is created via [taskPluginRegistry]::GetInstance().GetPlugin($name)
+    2. Parameters are set via SetParameters($params) — this triggers ValidateParameters()
+    3. Validation happens early (fail-fast): errors are caught during setup, not during execution
+    4. Execute() is called with no arguments; it uses stored parameters in $this.parameters
+    5. RunTask() orchestrates this: calls Execute(), handles errors, captures timing metadata
 
     .NOTES
-    Okay, this is technically an abstract class rather than a true interface, but we are
-    using it as an interface to define the contract that all task plugins must follow.
+    This is technically an abstract class rather than a true interface, but we use it to
+    define the contract that all task plugins must follow.
     #>
 
 
-    #
-    # Class Constructors
-    #
+    # Instance state
+    [object] $parameters = $null
+
+
     TaskPluginInterface() {
-        # Constructor for the TaskPluginInterface class
-        # Derived classes may implement their own constructor as needed
+        <#
+        .SYNOPSIS
+        Constructor for the TaskPluginInterface class.
+
+        .DESCRIPTION
+        Initializes a new instance of the TaskPluginInterface class.
+        Optionally derived classes can pass parameters to initialize upfront.
+        #>
+    }
+    TaskPluginInterface([object]$initialParameters) {
+        <#
+        .SYNOPSIS
+        Constructor for the TaskPluginInterface class with initial parameters.
+
+        .DESCRIPTION
+        Initializes a new instance of the TaskPluginInterface class and sets the initial parameters.
+        This triggers parameter validation via SetParameters().
+
+        .PARAMETER initialParameters
+        The initial parameters object to set and validate.
+        #>
+        $this.SetParameters($initialParameters)
     }
 
 
-    # We may need an "Initialize" method in the future, but for now it's an unnecessary complication
-    # [void] Initialize([object]$config) {
-    #     <#
-    #     .SYNOPSIS
-    #     Initializes the plugin with the provided configuration.
+    #
+    # Public Methods for Parameter Management
+    #
+    [void] SetParameters([object]$params) {
+        <#
+        .SYNOPSIS
+        Sets and validates execution parameters for the plugin.
 
-    #     .DESCRIPTION
-    #     This method is intended to be implemented by derived plugin classes
-    #     to perform any necessary setup using the provided configuration object.
+        .DESCRIPTION
+        This method validates the provided parameters using the abstract ValidateParameters method,
+        then stores them for use during execution. Validation happens upfront (fail-fast model):
+        errors are caught during parameter setup, not during task execution.
 
-    #     .PARAMETER config
-    #     The configuration object containing initialization parameters for the plugin.
+        .PARAMETER params
+        The parameters object to set and validate. This is typically a JSON object parsed from YAML.
 
-    #     .NOTES
-    #     This method DOES NOT need to be implemented if the plugin does not require any initialization.
-    #     #>
-    #     throw [System.NotImplementedException]::new("Initialize method must be implemented by derived plugin")
-    # }
+        .NOTES
+        Derived plugins must implement ValidateParameters() to perform plugin-specific validation.
+        This method is called automatically if parameters are passed to the constructor.
+        #>
+        $this.ValidateParameters($params)
+        $this.parameters = $params
+    }
 
 
-    [object] Execute([object]$parameters) {
+    #
+    # Abstract/Virtual Methods (Derived classes must implement)
+    #
+    [void] ValidateParameters([object]$params) {
+        <#
+        .SYNOPSIS
+        Validates execution parameters for the plugin.
+
+        .DESCRIPTION
+        This abstract method must be implemented by derived plugin classes to validate
+        parameters specific to their execution model. Validation happens during SetParameters(),
+        allowing errors to be caught early (fail-fast).
+
+        Derived classes should:
+        - Check for required parameters
+        - Validate parameter types
+        - Check parameter constraints
+        - Throw descriptive exceptions if validation fails
+
+        .PARAMETER params
+        The parameters object to validate.
+
+        .NOTES
+        This method is called by SetParameters() before parameters are stored.
+        #>
+        throw [System.NotImplementedException]::new("ValidateParameters method must be implemented by derived plugin")
+    }
+
+    [object] Execute() {
         <#
         .SYNOPSIS
         Executes a task using the plugin.
 
         .DESCRIPTION
-        This method is intended to be implemented by derived plugin classes
-        to perform the work associated with a task. The method receives
-        a single JSON object containing all execution data.
-
-        .PARAMETER executionData
-        An object containing all execution data including task details and any other relevant information needed for task execution.
-        This will be a subset of the YAML data used to drive task execution, as parsed by `ConvertFrom-Yaml`.
+        This abstract method must be implemented by derived plugin classes to perform the work
+        associated with a task. The method should use the stored $this.parameters instance variable
+        to access execution parameters.
 
         .NOTES
         Derived plugins must implement this method to provide task execution functionality.
+        Parameters should NOT be passed to this method; use $this.parameters instead.
+        If parameters are not set before Execute() is called, this method should throw an appropriate error.
         #>
         throw [System.NotImplementedException]::new("Execute method must be implemented by derived plugin")
     }
 
 
-    [object] RunTask([object]$parameters) {
+    [object] RunTask() {
         <#
         .SYNOPSIS
-        Runs a task using the plugin after validating execution data.
+        Executes the task and returns execution metadata.
 
         .DESCRIPTION
-        This method first validates the provided execution data using
-        the ValidateExecutionData method. If the data is invalid,
-        an exception is thrown. Otherwise, the method proceeds to
-        execute the task by calling the Execute method.
-
-        .PARAMETER executionData
-        A JSON object containing all execution data including task details and any other relevant information needed for task execution.
+        This method orchestrates task execution by calling Execute() and capturing
+        execution metadata (success status, errors, timing). This is a concrete method
+        that should be called instead of Execute() directly.
 
         .OUTPUTS
-        An object containing the result of the task execution, including success status, any returned object, error information, and timing metadata.
+        A hashtable containing:
+        - Success: Boolean indicating if execution succeeded
+        - object: The return value from Execute() (if successful)
+        - error: The exception that was thrown (if failed)
+        - startTime: DateTime when execution started
+        - endTime: DateTime when execution ended
+        - executionTime: Execution duration in seconds
 
         .NOTES
-        This is a concrete method!  We want to always ensure that execution data
-        is validated before attempting to execute a task, this concrete method ensures
-        derived plugins do not have to repeat this validation logic.
-
-        Possible TODOs:
-        - Accept additional arguments for task execution beyond the executionData JSON object (such as error handling/retries)
+        Internal framework code should call this method, not Execute() directly.
+        Parameters must be set via SetParameters() before calling this method.
         #>
-        if (-not $this.ValidateExecutionData($parameters)) {
-            throw [System.ArgumentException]::new("Invalid execution data")
-        }
 
-
+        # Variable Setup
         $error = $null
+
+        # Pre-flight Checks
+        if ($null -eq $this.parameters) {
+            throw [System.InvalidOperationException]::new("Parameters must be set via SetParameters() before calling Execute()")
+        }
+        
+        # Execute
         $startTime = [datetime]::Now
         try {
-            $rtn = $this.Execute($parameters)
+            $rtn = $this.Execute()
             $success = $true
         }
         catch {
@@ -107,6 +173,7 @@ class TaskPluginInterface {
         }
         $endTime = [datetime]::Now
 
+        # Build result and return
         $result = @{
             Success = $success
             object = $rtn
@@ -120,44 +187,25 @@ class TaskPluginInterface {
     }
 
 
-    [bool] ValidateExecutionData([object]$parameters) {
+    static [hashtable] PluginInfo() {
         <#
         .SYNOPSIS
-        Validates the execution data for the plugin.
+        Returns metadata about the plugin, including its name and version.
 
         .DESCRIPTION
-        This method verifies that the provided execution data is valid JSON.
-        Derived plugin classes may override this method to perform additional validation
-        specific to their requirements.
+        This static method provides information about the plugin. It must be implemented
+        by derived plugin classes to return a hashtable containing at least the Name and Version.
 
-        .PARAMETER executionData
-        A JSON object containing all execution data including task details and any other relevant information needed for task execution.
+        .OUTPUTS
+        A hashtable with the following required keys:
+        - Name: Globally unique plugin name (string)
+        - Version: Plugin version (string)
 
-        .NOTES
-        This base implementation checks that executionData is valid JSON.
-        Derived plugins may extend this method to add custom validation logic.
+        The following are recommended keys:
+        - Description: A brief description of the plugin (string)
+        - Author: The author of the plugin (string)
+        - License: The license under which the plugin is distributed (string)
         #>
-        if ($null -eq $parameters) {
-            return $false
-        }
-
-        try {
-            $parameters | ConvertFrom-Json -ErrorAction Stop | Out-Null
-            return $true
-        } catch {
-            return $false
-        }
-    }
-
-
-    # Abstract method: Get plugin information
-    # Returns: A hashtable containing plugin metadata such as name and version
-        <#
-        Current Hashtable specification requires at least the following fields:
-        Name = "Globally unique plugin name (string)"
-        Version = "Plugin version (string)"
-        #>
-    static [hashtable] PluginInfo() {
         throw [System.NotImplementedException]::new("PluginInfo method must be implemented by derived plugin")
     }
 

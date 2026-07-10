@@ -1,0 +1,21 @@
+name: Sample Onboard
+version: 1.0
+description: Basic onboarding workflow example with hierarchical sections, steps, and plugin-based execution
+
+metadata:
+  author: Eric
+  created: 2024-01-01
+
+items:
+  - type: step
+    name: step 1
+    foo: bar 1
+  - type: section
+    name: section 1
+    somevalue: section 1 value
+  - type: step
+    name: step 3.5
+    note: Position is ambiguous - where are we in the order?!
+  - type: step
+    name: step 5
+    

@@ -4,41 +4,41 @@ Using Module "../../../build/Lifecycle/Lifecycle.psd1"
 Describe 'Configuration Singleton Pattern' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [configuration]::Instance = $null
-        [configuration]::KeyValueStore = $null
-        [configuration]::IncludeTags = $null
-        [configuration]::ExcludeTags = $null
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
     }
 
     Context 'GetInstance' {
         It 'Should create a new instance on first call' {
-            $instance1 = [configuration]::GetInstance()
+            $instance1 = [Configuration]::GetInstance()
             $instance1 | Should -Not -BeNullOrEmpty
         }
 
         It 'Should return the same instance on subsequent calls' {
-            $instance1 = [configuration]::GetInstance()
-            $instance2 = [configuration]::GetInstance()
+            $instance1 = [Configuration]::GetInstance()
+            $instance2 = [Configuration]::GetInstance()
             $instance1 | Should -Be $instance2
         }
 
         It 'Should initialize KeyValueStore as empty dictionary' {
-            [configuration]::GetInstance()
+            [Configuration]::GetInstance()
             $expectedType = [System.Collections.Generic.Dictionary[string, object]]
-            [configuration]::KeyValueStore | Should -BeOfType $expectedType
-            [configuration]::KeyValueStore.Count | Should -Be 0
+            [Configuration]::KeyValueStore | Should -BeOfType $expectedType
+            [Configuration]::KeyValueStore.Count | Should -Be 0
         }
 
         It 'Should initialize IncludeTags as tags object' {
-            [configuration]::GetInstance()
+            [Configuration]::GetInstance()
             $expectedType = [tags]
-            [configuration]::IncludeTags | Should -BeOfType $expectedType
+            [Configuration]::IncludeTags | Should -BeOfType $expectedType
         }
 
         It 'Should initialize ExcludeTags as tags object' {
-            [configuration]::GetInstance()
+            [Configuration]::GetInstance()
             $expectedType = [tags]
-            [configuration]::ExcludeTags | Should -BeOfType $expectedType
+            [Configuration]::ExcludeTags | Should -BeOfType $expectedType
         }
     }
 }
@@ -46,11 +46,11 @@ Describe 'Configuration Singleton Pattern' {
 Describe 'Key/Value Store Operations' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [configuration]::Instance = $null
-        [configuration]::KeyValueStore = $null
-        [configuration]::IncludeTags = $null
-        [configuration]::ExcludeTags = $null
-        $config = [configuration]::GetInstance()
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
+        $config = [Configuration]::GetInstance()
     }
 
     Context 'Set and Get' {
@@ -137,11 +137,11 @@ Describe 'Key/Value Store Operations' {
 Describe 'Key Validation' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [configuration]::Instance = $null
-        [configuration]::KeyValueStore = $null
-        [configuration]::IncludeTags = $null
-        [configuration]::ExcludeTags = $null
-        $config = [configuration]::GetInstance()
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
+        $config = [Configuration]::GetInstance()
     }
 
     Context 'ValidateKey' {
@@ -214,11 +214,11 @@ Describe 'Key Validation' {
 Describe 'Include Tag Operations' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [configuration]::Instance = $null
-        [configuration]::KeyValueStore = $null
-        [configuration]::IncludeTags = $null
-        [configuration]::ExcludeTags = $null
-        $config = [configuration]::GetInstance()
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
+        $config = [Configuration]::GetInstance()
     }
 
     Context 'AddIncludeTag' {
@@ -286,11 +286,11 @@ Describe 'Include Tag Operations' {
 Describe 'Exclude Tag Operations' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [configuration]::Instance = $null
-        [configuration]::KeyValueStore = $null
-        [configuration]::IncludeTags = $null
-        [configuration]::ExcludeTags = $null
-        $config = [configuration]::GetInstance()
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
+        $config = [Configuration]::GetInstance()
     }
 
     Context 'AddExcludeTag' {
@@ -358,11 +358,11 @@ Describe 'Exclude Tag Operations' {
 Describe 'Tag Isolation' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [configuration]::Instance = $null
-        [configuration]::KeyValueStore = $null
-        [configuration]::IncludeTags = $null
-        [configuration]::ExcludeTags = $null
-        $config = [configuration]::GetInstance()
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
+        $config = [Configuration]::GetInstance()
     }
 
     Context 'Include and Exclude Tags Independence' {
@@ -394,15 +394,15 @@ Describe 'Tag Isolation' {
 Describe 'Configuration State Persistence' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [configuration]::Instance = $null
-        [configuration]::KeyValueStore = $null
-        [configuration]::IncludeTags = $null
-        [configuration]::ExcludeTags = $null
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
     }
 
     Context 'State Across Multiple Operations' {
         It 'Should maintain state across multiple Set/Get operations' {
-            $config = [configuration]::GetInstance()
+            $config = [Configuration]::GetInstance()
             $config.Set('key1', 'value1')
             $config.Set('key2', 42)
             $config.AddIncludeTag('tag1')
@@ -413,11 +413,11 @@ Describe 'Configuration State Persistence' {
         }
 
         It 'Should persist state across GetInstance calls' {
-            $config1 = [configuration]::GetInstance()
+            $config1 = [Configuration]::GetInstance()
             $config1.Set('persistKey', 'persistValue')
             $config1.AddIncludeTag('persistTag')
             
-            $config2 = [configuration]::GetInstance()
+            $config2 = [Configuration]::GetInstance()
             $config2.Get('persistKey') | Should -Be 'persistValue'
             $config2.HasIncludeTag('persistTag') | Should -BeTrue
         }
