@@ -154,7 +154,7 @@ class taskPluginRegistry {
     # }
 
 
-    [Object]GetPlugin([string] $pluginName){
+    static [Object]GetPlugin([string] $pluginName){
         <#
         .SYNOPSIS
         Returns an instance of a plugin
@@ -167,14 +167,16 @@ class taskPluginRegistry {
         To set parameters, call SetParameters() on the returned instance.
         #>
 
-        if (-not $this.PluginRegistry.ContainsKey($pluginName)) {
+        $me = [taskPluginRegistry]::GetInstance()
+
+        if (-not $me.PluginRegistry.ContainsKey($pluginName)) {
             throw [ArgumentException]::New("Plugin '$pluginName' not found in registry.")
         }
         $plugin = [Activator]::CreateInstance($pluginName)
         return $plugin
     }
 
-    [Object]GetPluginWithParameters([string] $pluginName, [object] $parameters){
+    static [Object]GetPluginWithParameters([string] $pluginName, [object] $parameters){
         <#
         .SYNOPSIS
         Returns an instance of a plugin with parameters pre-configured
@@ -192,13 +194,13 @@ class taskPluginRegistry {
         If validation fails, an exception is thrown and the plugin is not returned.
         #>
 
-        $plugin = $this.GetPlugin($pluginName)
+        $plugin = [taskPluginRegistry]::GetPlugin($pluginName)
         $plugin.SetParameters($parameters)
         return $plugin
     }
 
 
-    [array]GetPluginNames() {
+    static [array]GetPluginNames() {
         <#
         .SYNOPSIS
         Retrieves the names of all registered plugins.
@@ -210,8 +212,11 @@ class taskPluginRegistry {
         .EXAMPLE
         $pluginNames = $this.GetPluginNames()
         #>
+
+        $me = [taskPluginRegistry]::GetInstance()
+
         $pluginNames = @()
-        $pluginNames += $this.PluginRegistry.Values | ForEach-Object { $_::PluginInfo().name }
+        $pluginNames += $me.PluginRegistry.Values | ForEach-Object { $_::PluginInfo().name }
         return $pluginNames
     }
 

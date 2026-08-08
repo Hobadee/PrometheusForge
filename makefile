@@ -51,8 +51,10 @@ try { \
     $$err = $$Error[0] | Select-Object *; \
     Write-Output $$err; \
     try { \
-        Write-Output ($$err.ScriptStackTrace -split [System.Environment]::NewLine)[0] | ConvertTo-SourceLineNumber \
-    } catch {} \
+        $$trace = ($$err.ScriptStackTrace -split [System.Environment]::NewLine)[0]; \
+        Write-Output $$trace; \
+        Write-Output $$(ConvertTo-SourceLineNumber -PositionMessage $$trace) \
+    } catch {Write-Output "Failed to convert script stack trace to source line number."} \
 }
 #        Write-Output ($$err.Exception.Message -split [System.Environment]::NewLine)[0] | ConvertTo-SourceLineNumber \
 

@@ -1,6 +1,7 @@
 <!-- .github/copilot-instructions.md - guidance for AI coding agents -->
 # Quick context
 - Repo: `Lifecycle` — a PowerShell 7+ module that implements a class-based onboarding/offboarding checklist engine driven by YAML configs.
+- A working project-status file is maintained at `PROJECT_STATUS.md` for session handoffs, progress tracking, and future-agent context. Review and update it before finishing a session.
 - Key entry points: `Invoke-Lifecycle` (run a checklist), `Test-Config` (parse YAML).
 - Module is built from multiple independant files using the `Build-Module` command and follows the PoshCode conventions.
 

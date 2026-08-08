@@ -14,7 +14,7 @@ class TaskPluginInterface {
     - Plugins needing shared resources (database connections, caches, etc.) can implement a singleton pattern internally.
     
     PARAMETER FLOW:
-    1. Plugin instance is created via [taskPluginRegistry]::GetInstance().GetPlugin($name)
+    1. Plugin instance is created via [taskPluginRegistry]::GetPlugin($name)
     2. Parameters are set via SetParameters($params) — this triggers ValidateParameters()
     3. Validation happens early (fail-fast): errors are caught during setup, not during execution
     4. Execute() is called with no arguments; it uses stored parameters in $this.parameters
@@ -175,7 +175,7 @@ class TaskPluginInterface {
 
         # Build result and return
         $result = @{
-            Success = $success
+            success = $success
             object = $rtn
             error = $error
             startTime = $startTime

@@ -3,211 +3,246 @@ version: 1.0
 description: Basic onboarding workflow example with hierarchical sections, steps, and plugin-based execution
 
 metadata:
-  author: Eric
-  created: 2024-01-01
+  author: Eric Kincl
+  created: 2026-07-10
 
+variables:
+  domainName: "corp.example.com"
+  # See SampleOnboard.Overlay.yaml for an example of how to override these variables in an overlay
 
-items:
+root:
   - type: section
-    name: Documentation
-    items:
-      - type: step
-        name: Generate random password
-        plugin: passwordGenerator
-        result: password
-      - type: step
-        name: Generate user PIN
-        plugin: passwordGenerator
-        parameters:
-          - length: 6
-            includeNumbers: true
-            includeLowercase: false
-            includeUppercase: false
-            includeSpecial: false
-        result: PIN
-  - type: section
-    name: Pre-Creation
-    description: Various pre-creation steps that need to happen.
+    name: root
     items:
       - type: section
-        name: Purchase Hardware
-        tags:
-          - Purchase
+        name: Documentation
         items:
           - type: step
-            name: Laptop
-            tags:
-              - Laptop
+            name: Generate random password
+            plugin: PasswordGenerator
+            result: password
+            onError: abort
+            retry:
+              - retries: 5
+                delay: 10
+            parameters:
+              - length: 16
           - type: step
-            name: YubiKey
-            tags:
-              - YubiKey
-          - type: step
-            name: Phone
-            tags:
-              - Phone
-      - type: step
-        name: Purchase Google Fi phone line
-        tags:
-          - Purchase
-          - Google Fi
-      - type: step
-        name: Purchase Zoom license
-        tags:
-          - Purchase
-          - Zoom
-      - type: step
-        name: Pre-Creation Complete
-        description: A "milestone" marker for task management systems
-        tags:
-          - milestone
-  - type: section
-    name: User Creation/Accounts Setup
-    items:
+            name: Generate user PIN
+            plugin: PasswordGenerator
+            parameters:
+              - length: 6
+                includeNumbers: true
+                includeLowercase: false
+                includeUppercase: false
+                includeSpecial: false
+            result: PIN
       - type: section
-        name: Create user in Okta
+        name: Pre-Creation
+        description: Various pre-creation steps that need to happen.
         items:
-          - type: step
-            name: Assign generated password
-      - type: section
-        name: Assign user Okta applications
-        tags:
-          - Software
-        items:
-          - type: step
-            name: Google
+          - type: section
+            name: Purchase Hardware
             tags:
-              - Google
+              - Purchase
+            items:
+              - type: step
+                name: Laptop
+                plugin: TextOutput
+                parameters:
+                  - message: Purchasing laptop for {{fullName}}...
+                tags:
+                  - Laptop
+              - type: step
+                name: YubiKey
+                plugin: TextOutput
+                parameters:
+                  - message: Purchasing YubiKey for {{fullName}}...
+                tags:
+                  - YubiKey
+              - type: step
+                name: Phone
+                plugin: TextOutput
+                parameters:
+                  - message: Purchasing phone for {{fullName}}...
+                tags:
+                  - Phone
           - type: step
-            name: Office365
+            name: Purchase Google Fi phone line
+            plugin: TextOutput
+            parameters:
+              - message: Purchasing Google Fi phone line for {{fullName}}...
             tags:
-              - Office
+              - Purchase
+              - Google Fi
           - type: step
-            name: Zoom
+            name: Purchase Zoom license
+            plugin: TextOutput
+            parameters:
+              - message: Purchasing Zoom license for {{fullName}}...
             tags:
+              - Purchase
               - Zoom
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  - name: Setup Phase
-    tags:
-      - setup-computer
-      - initial-config
-    description: Initial system setup and configuration
-    sections:
-      - name: Hardware Configuration
+          - type: step
+            name: Pre-Creation Complete
+            description: A "milestone" marker for task management systems
+            plugin: TextOutput
+            parameters:
+              - message: "Pre-creation steps complete for {{fullName}}."
+            tags:
+              - milestone
+      - type: section
+        name: User Creation/Accounts Setup
+        items:
+          - type: section
+            name: Create user in Okta
+            items:
+              - type: step
+                name: Assign generated password
+                plugin: TextOutput
+                parameters:
+                  - message: Password for {{fullName}} is {{password}}
+          - type: section
+            name: Assign user Okta applications
+            tags:
+              - Software
+            items:
+              - type: step
+                name: Google
+                plugin: TextOutput
+                parameters:
+                  - message: Assigning Google applications to {{fullName}}...
+                tags:
+                  - Google
+              - type: step
+                name: Office365
+                plugin: TextOutput
+                parameters:
+                  - message: Assigning Office365 applications to {{fullName}}...
+                tags:
+                  - Office
+              - type: step
+                name: Zoom
+                plugin: TextOutput
+                parameters:
+                  - message: Assigning Zoom applications to {{fullName}}...
+                tags:
+                  - Zoom
+      - type: section
+        name: Setup Phase
         tags:
           - setup-computer
-          - hardware
-        steps:
-          - name: Install Base OS
-            tags:
-              - setup-computer
-            plugin: textOutput
-            parameters:
-              message: "Installing base operating system..."
-            result: osInstalled
-            
-          - name: Install Drivers
+          - initial-config
+        description: Initial system setup and configuration
+        items:
+          - type: section
+            name: Hardware Configuration
             tags:
               - setup-computer
               - hardware
-            when: "${osInstalled} == true"
-            plugin: runCommand
-            parameters:
-              command: "powershell -Command Write-Host 'Installing drivers...'"
-              timeout: 600
-              retries: 3
-              stopOnError: true
-            result: driversInstalled
-
-      - name: Network Setup
-        tags:
-          - setup-computer
-          - network
-        when: "${driversInstalled} == true"
-        steps:
-          - name: Configure Network
+            items:
+              - type: step
+                name: Install Base OS
+                tags:
+                  - setup-computer
+                plugin: TextOutput
+                parameters:
+                  - message: "Installing base operating system..."
+                result: osInstalled
+              # - type: step
+              #   name: Install Drivers
+              #   tags:
+              #     - setup-computer
+              #     - hardware
+              #   when: "${osInstalled} == true"
+              #   plugin: RunCommand
+              #   parameters:
+              #     command: "powershell -Command Write-Host 'Installing drivers...'"
+              #     timeout: 600
+              #   onError: abort
+              #   retry:
+              #     - retries: 3
+              #       delay: 0
+              #   result: driversInstalled
+          - type: section
+            name: Network Setup
+            when: "{{driversInstalled}} == true"
             tags:
               - setup-computer
               - network
-            plugin: textOutput
-            parameters:
-              message: "Configuring network adapter..."
-            result: networkConfigured
-            
-          - name: Connect to Domain
-            tags:
-              - setup-computer
-              - network
-            when: "${networkConfigured} == true"
-            plugin: runCommand
-            parameters:
-              command: "powershell -Command Write-Host 'Joining domain: ${domainName}...'"
-              timeout: 300
-              stopOnError: false
-            result: domainJoined
-
-  - name: User Enrollment
-    tags:
-      - create-user
-      - create-accounts
-      - enroll-mdm
-    description: User account creation and MDM enrollment
-    sections:
-      - name: Account Creation
+            items:
+              - type: step
+                name: Configure Network
+                tags:
+                  - setup-computer
+                  - network
+                plugin: TextOutput
+                parameters:
+                  - message: "Configuring network adapter..."
+                result: networkConfigured
+              # - type: step
+              #   name: Connect to Domain
+              #   tags:
+              #     - setup-computer
+              #     - network
+              #   when: "${networkConfigured} == true"
+              #   plugin: runCommand
+              #   parameters:
+              #     command: "powershell -Command Write-Host 'Joining domain: ${domainName}...'"
+              #     timeout: 300
+              #     stopOnError: false
+              #   result: domainJoined
+      - type: section
+        name: User Enrollment
         tags:
           - create-user
           - create-accounts
-        when: "${domainJoined} == true"
-        steps:
-          - name: Create User Account
+          - enroll-mdm
+        description: User account creation and MDM enrollment
+        items:
+          - type: section
+            name: Account Creation
             tags:
               - create-user
               - create-accounts
-            plugin: runCommand
-            parameters:
-              command: "powershell -Command New-ADUser -Name '${userName}' -UserPrincipalName '${userName}@${domainName}'"
-              timeout: 300
-              stopOnError: true
-            result: userCreated
-              
-          - name: Configure User Permissions
+            items:
+              - type: step
+                name: Create User Account
+                tags:
+                  - create-user
+                  - create-accounts
+                plugin: TextOutput
+                parameters:
+                  - message: "Creating user account..."
+                result: userCreated
+              - type: step
+                name: Configure User Permissions
+                tags:
+                  - create-user
+                plugin: TextOutput
+                parameters:
+                  - message: "Configuring user permissions..."
+                result: permissionsConfigured
+          - type: section
+            name: Mobile Device Management
             tags:
-              - create-user
-            when: "${userCreated} == true"
-            plugin: textOutput
-            parameters:
-              message: "Configuring permissions for user: ${userName}"
-            result: permissionsConfigured
-
-      - name: Mobile Device Management
+              - enroll-mdm
+            description: External configuration for MDM enrollment
+            items:
+              - type: step
+                name: Enroll in MDM
+                plugin: TextOutput
+                parameters:
+                  - message: "Enrolling device in MDM..."
+      - type: section
+        name: Software Deployment
         tags:
-          - enroll-mdm
-        when: "${setupPhase} > 0"
-        file: ./SampleOnboard.MDMEnrollment.yaml
-        description: External configuration for MDM enrollment
-
-  - name: Software Deployment
-    tags:
-      - setup-computer
-      - deploy
-    when: "${permissionsConfigured} == true || ${skipSoftwareDeployment} == false"
-    file: ./SampleOnboard.SoftwareDeploy.yaml
-    description: Deploy required applications and tools (external file)
+          - setup-computer
+          - deploy
+        description: Deploy required applications and tools
+        items:
+          - type: step
+            name: Deploy Applications
+            plugin: TextOutput
+            parameters:
+              - message: "Deploying required applications..."

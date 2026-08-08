@@ -24,9 +24,7 @@ excludeByTags: []
 # Variables that can be referenced throughout the workflow
 # These override any defaults in the base configuration
 variables:
-  domainName: "corp.example.com"
-  userName: "john.doe"
-  setupPhase: 1
-  skipSoftwareDeployment: false
-  organizationName: "ACME Corporation"
-  workgroup: "WORKGROUP"
+  userName: "jdoe"
+  fullName: "John Doe"
+  #setupPhase: 1
+  #skipSoftwareDeployment: false

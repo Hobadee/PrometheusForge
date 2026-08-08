@@ -39,3 +39,5 @@ then we need to create a position solver.
 # Potential Names
 - NABIB (Not Ansible But Inspired By)
 
+# TODO
+- We need a way of backtracing an item hierarchy and printing it out to the user nicely
