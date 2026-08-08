@@ -8,6 +8,7 @@ metadata:
 
 variables:
   domainName: "corp.example.com"
+  globalMethod: "Info"
   # See SampleOnboard.Overlay.yaml for an example of how to override these variables in an overlay
 
 root:
@@ -50,28 +51,28 @@ root:
                 name: Laptop
                 plugin: TextOutput
                 parameters:
-                  - message: Purchasing laptop for {{fullName}}...
+                  - message: Purchasing laptop for {{ fullName }}...
                 tags:
                   - Laptop
               - type: step
                 name: YubiKey
                 plugin: TextOutput
                 parameters:
-                  - message: Purchasing YubiKey for {{fullName}}...
+                  - message: Purchasing YubiKey for {{ fullName }}...
                 tags:
                   - YubiKey
               - type: step
                 name: Phone
                 plugin: TextOutput
                 parameters:
-                  - message: Purchasing phone for {{fullName}}...
+                  - message: Purchasing phone for {{ fullName }}...
                 tags:
                   - Phone
           - type: step
             name: Purchase Google Fi phone line
             plugin: TextOutput
             parameters:
-              - message: Purchasing Google Fi phone line for {{fullName}}...
+              - message: Purchasing Google Fi phone line for {{ fullName }}...
             tags:
               - Purchase
               - Google Fi
@@ -79,7 +80,8 @@ root:
             name: Purchase Zoom license
             plugin: TextOutput
             parameters:
-              - message: Purchasing Zoom license for {{fullName}}...
+              - message: Purchasing Zoom license for {{ fullName }}...
+                method: "{{globalMethod}}"
             tags:
               - Purchase
               - Zoom
@@ -88,7 +90,8 @@ root:
             description: A "milestone" marker for task management systems
             plugin: TextOutput
             parameters:
-              - message: "Pre-creation steps complete for {{fullName}}."
+              - message: Pre-creation steps complete for {{ fullName }}.
+                method: "{{globalMethod}}"
             tags:
               - milestone
       - type: section
@@ -101,7 +104,8 @@ root:
                 name: Assign generated password
                 plugin: TextOutput
                 parameters:
-                  - message: Password for {{fullName}} is {{password}}
+                  - message: Password for {{ fullName }} is {{ password.object.generatedPassword }}
+                    #method: Verbose
           - type: section
             name: Assign user Okta applications
             tags:
@@ -111,21 +115,24 @@ root:
                 name: Google
                 plugin: TextOutput
                 parameters:
-                  - message: Assigning Google applications to {{fullName}}...
+                  - message: Assigning Google applications to {{ fullName }}...
+                    #method: Debug
                 tags:
                   - Google
               - type: step
                 name: Office365
                 plugin: TextOutput
                 parameters:
-                  - message: Assigning Office365 applications to {{fullName}}...
+                  - message: Assigning Office365 applications to {{ fullName }}...
+                    method: "{{globalMethod}}"
                 tags:
                   - Office
               - type: step
                 name: Zoom
                 plugin: TextOutput
                 parameters:
-                  - message: Assigning Zoom applications to {{fullName}}...
+                  - message: Assigning Zoom applications to {{ fullName }}...
+                    method: "{{globalMethod}}"
                 tags:
                   - Zoom
       - type: section

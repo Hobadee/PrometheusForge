@@ -3,6 +3,8 @@
 Last updated: 2026-08-08
 
 ## Recent Changes
+- Fixed template expansion for sample-style YAML parameter lists by teaching `TemplateEngine.ExpandTopLevelValues()` to traverse `IList` inputs and expand each top-level element in place.
+- Added regression coverage for list-shaped parameters in both `TemplateEngine` unit tests and `Invoke-Lifecycle` end-to-end tests.
 - Implemented MVP templating runtime with a new `TemplateEngine` class and load-order file `Classes/03-TemplateEngine.ps1`.
 - Wired `ItemStep` constructor to expand top-level string plugin parameters before `SetParameters()` validation.
 - Added nested variable path support for templates (e.g., `{{ pin.object.generatedPassword }}`) resolved from `Configuration` values.
@@ -180,6 +182,17 @@ it's parents return ID and using that to nest itself when it creates itself in
 some external system.
 
 This is a VERY LOW priority.
+
+### Log Plugin
+Plugin similar to TextOutput, but called "Log" instead.
+
+MVP will just have different log levels that just prefix the output with the
+level name.  Colored output based on type would be nice as well.  Log levels
+passed as either name or number.
+
+Later versions should log to a location based on URI.  Try to support as many
+URI locations as possible.  Basic is just a file, but if we could log to a real
+logserver as well, that would be awesome.
 
 
 ## Test Status

@@ -131,4 +131,32 @@ variables:
         $stepResult.success | Should -BeTrue
         $stepResult.object.parameters.message | Should -Be 'User=overlay-user Department=base-department'
     }
+
+    It 'expands templated step parameters when YAML parameters use the sample list syntax' {
+        $yamlPath = Join-Path $TestDrive 'workflow.yaml'
+        @'
+name: Test workflow
+variables:
+  fullName: Ada Lovelace
+root:
+  - type: section
+    name: Root section
+    items:
+      - type: step
+        name: Templated output
+        plugin: TextOutput
+        result: outputResult
+        parameters:
+          - message: "User={{fullName}}"
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $result = Invoke-Lifecycle -FilePath $yamlPath
+
+        $result | Should -BeTrue
+
+        $configuration = Test-Configuration
+        $stepResult = $configuration.Get('outputResult')
+        $stepResult.success | Should -BeTrue
+        $stepResult.object.parameters.message | Should -Be 'User=Ada Lovelace'
+    }
 }

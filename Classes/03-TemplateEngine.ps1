@@ -75,6 +75,7 @@ class TemplateEngine {
         Applies ExpandString to top-level string members only.
         Supported input shapes:
         - IDictionary/hashtable: each top-level value
+            - IList/arrays: each top-level element, with contained maps/objects expanded in place
         - PSCustomObject: each top-level property value
         - string: treated as a direct ExpandString call
 
@@ -104,6 +105,14 @@ class TemplateEngine {
                 if ($inputObject[$key] -is [string]) {
                     $inputObject[$key] = [TemplateEngine]::ExpandString($inputObject[$key], $configuration)
                 }
+            }
+
+            return $inputObject
+        }
+
+        if ($inputObject -is [System.Collections.IList]) {
+            for ($index = 0; $index -lt $inputObject.Count; $index++) {
+                $inputObject[$index] = [TemplateEngine]::ExpandTopLevelValues($inputObject[$index], $configuration)
             }
 
             return $inputObject

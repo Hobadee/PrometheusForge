@@ -88,5 +88,24 @@ Describe 'TemplateEngine' {
             $expanded.retries | Should -Be 3
             $expanded.nested.label | Should -Be '{{department}}'
         }
+
+        It 'expands top-level string values inside sample-style parameter lists' {
+            $configuration = [Configuration]::GetInstance()
+            $configuration.Set('fullName', 'Ada Lovelace')
+
+            $parameters = [System.Collections.Generic.List[object]]::new()
+            $parameters.Add([pscustomobject]@{
+                message = 'Hello {{fullName}}'
+                nested = [pscustomobject]@{
+                    label = '{{fullName}}'
+                }
+            })
+
+            $expanded = [TemplateEngine]::ExpandTopLevelValues($parameters, $configuration)
+
+            $expanded.Count | Should -Be 1
+            $expanded[0].message | Should -Be 'Hello Ada Lovelace'
+            $expanded[0].nested.label | Should -Be '{{fullName}}'
+        }
     }
 }

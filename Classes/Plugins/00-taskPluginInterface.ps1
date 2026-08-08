@@ -12,6 +12,8 @@ class TaskPluginInterface {
     - Each task receives a fresh plugin instance (per-task instantiation pattern).
     - This prevents cross-contamination between tasks and ensures a clean state for each execution.
     - Plugins needing shared resources (database connections, caches, etc.) can implement a singleton pattern internally.
+      Note: Singleton patterns need to be implemented carefully - they should not rely on the plugin instance itself
+      being a singleton, but rather manage shared resources internally.
     
     PARAMETER FLOW:
     1. Plugin instance is created via [taskPluginRegistry]::GetPlugin($name)

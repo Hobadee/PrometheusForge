@@ -124,6 +124,7 @@ class ItemStep : ItemInterface {
         if ($null -ne $this.plugin) {
             try{
                 $configuration = [Configuration]::GetInstance()
+                # Run parameters through the template engine to expand any top-level string values before passing to the plugin
                 $expandedParameters = [TemplateEngine]::ExpandTopLevelValues($config.parameters, $configuration)
                 $this.plugin.SetParameters($expandedParameters)
             }
