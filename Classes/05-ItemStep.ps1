@@ -123,7 +123,9 @@ class ItemStep : ItemInterface {
         # Set parameters on the plugin instance (this triggers validation)
         if ($null -ne $this.plugin) {
             try{
-                $this.plugin.SetParameters($config.parameters)
+                $configuration = [Configuration]::GetInstance()
+                $expandedParameters = [TemplateEngine]::ExpandTopLevelValues($config.parameters, $configuration)
+                $this.plugin.SetParameters($expandedParameters)
             }
             catch{
                 $err = $_

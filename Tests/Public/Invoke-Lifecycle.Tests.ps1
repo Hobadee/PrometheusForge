@@ -95,4 +95,40 @@ root:
             Invoke-Lifecycle -FilePath $yamlPath -Overlay $missingOverlayPath
         } | Should -Throw -ExceptionType ([System.IO.FileNotFoundException])
     }
+
+    It 'expands templated step parameters using base and overlay variables' {
+        $yamlPath = Join-Path $TestDrive 'workflow.yaml'
+        @'
+name: Test workflow
+variables:
+  userName: base-user
+  department: base-department
+root:
+  - type: section
+    name: Root section
+    items:
+      - type: step
+        name: Templated output
+        plugin: TextOutput
+        result: outputResult
+        parameters:
+          message: "User={{userName}} Department={{department}}"
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $overlayPath = Join-Path $TestDrive 'overlay.yaml'
+        @'
+name: overlay
+variables:
+  userName: overlay-user
+'@ | Set-Content -Path $overlayPath -Encoding utf8
+
+        $result = Invoke-Lifecycle -FilePath $yamlPath -Overlay $overlayPath
+
+        $result | Should -BeTrue
+
+        $configuration = Test-Configuration
+        $stepResult = $configuration.Get('outputResult')
+        $stepResult.success | Should -BeTrue
+        $stepResult.object.parameters.message | Should -Be 'User=overlay-user Department=base-department'
+    }
 }

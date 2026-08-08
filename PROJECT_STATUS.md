@@ -3,6 +3,13 @@
 Last updated: 2026-08-08
 
 ## Recent Changes
+- Implemented MVP templating runtime with a new `TemplateEngine` class and load-order file `Classes/03-TemplateEngine.ps1`.
+- Wired `ItemStep` constructor to expand top-level string plugin parameters before `SetParameters()` validation.
+- Added nested variable path support for templates (e.g., `{{ pin.object.generatedPassword }}`) resolved from `Configuration` values.
+- Implemented unresolved-template fallback to empty string for MVP.
+- Added private unit coverage in `Tests/Private/Classes/TemplateEngine.tests.ps1`.
+- Extended `Tests/Private/Classes/Items.tests.ps1` with ItemStep templating integration tests.
+- Extended `Tests/Public/Invoke-Lifecycle.Tests.ps1` with an end-to-end templating test validating base+overlay variable resolution.
 - Fixed a PowerShell class binder edge case in `ItemSection.ProcessCurrentItem()` and `ProcessAllItems()` by widening the `Process()` family return types to `[object]` and keeping boolean values at runtime.
 - Renamed the item execution API from `DoItem()` to `Process()` across `ItemInterface`, `ItemSection`, and `ItemStep`.
 - Split `ItemSection` execution semantics so `Process()` executes only the current child item, `ProcessCurrentItem()` exposes that behavior explicitly, and `ProcessAllItems()` preserves full-section traversal.
@@ -27,7 +34,7 @@ Last updated: 2026-08-08
 **Suggested Implementation Order**
 
 1. [x] Rename `DoItem`
-2. Templating system (MVP scope)
+2. [x] Templating system (MVP scope)
 3. Item addon overlays
 4. Item replacement overlays (stretch)
 
@@ -50,11 +57,23 @@ Implemented in `Invoke-Lifecycle`:
 
 
 ### Templating system
-We need to be able to use variables.  This will require a templating system.
-Variables may be set via ingested YAML, or may be set later via return values.
-Variables are stored in our `Configuration` class, and should be simple to
-retrieve from there already - the hard part is parsing fields and inserting
-the requested variable.
+MVP implemented for variable templating in step parameters.
+
+Implemented scope:
+- `{{ variable_name }}` and nested paths like `{{ a.b.c }}`
+- Expansion in top-level string values inside `ItemStep` plugin parameters
+- Expansion runs before plugin parameter validation (`SetParameters`)
+- Missing/unresolved variables resolve to empty string in MVP
+
+Deferred scope:
+- `when` expression templating/evaluation
+- Recursive expansion in nested parameter objects/arrays
+- Templating for tags/plugins/retry/file-loading
+- Advanced template functions (`if`, `foreach`, etc.)
+
+Notes:
+- Variables continue to come from `Configuration`, including base YAML and ordered overlays.
+- End-to-end test coverage now verifies overlay precedence + template expansion together.
 
 Locations we WILL want to use variables:
 - ItemStep Parameters
@@ -106,6 +125,11 @@ configuration into the current `ItemSection` index.  (Ingested items should
 follow the root item config, and will thus *ALWAYS* have a `root` item we
 can ingest as a section at the current ItemSection index.)
 
+Note: We will need to do this at runtime so we can later add support for `when`
+directives.  We can create some sort of new `ItemLazy` that is a placeholder
+for another lazy-loaded item.  We then polymorph it into the appropriate object
+type when we load it later.
+
 
 ### Item replacement overlays
 Stretch goal - replace items/sections with imported items sections
@@ -135,6 +159,28 @@ process the item that is currently selected by the index.
 AI appears to have issues building/loading the module.  It's frequently
 failing, causing issues doing actual tasks in a timely manner.  Investigate and
 repair.
+
+I asked it to fix itself, and it did a few changes to copilot-instructions, but
+there may still be issues.  Low priority unless we see this happening more.
+
+### Template Configuration
+Passing a `Configuration` object directly to the template engine feels wrong
+somehow.  Leaving it for now so we can get to MVP, but this likely needs to be
+refactored and some better, more stable, means of communication between the two
+needs to be devised.  Read up on my GOF patterns and see what can be put in
+place here.
+
+This is a VERY LOW priority.
+
+### Place Finding
+Stretch goal - steps should be able to find where they are in the hirearchy,
+drilling down and getting a list of all parents.  This can help for nesting
+into their parent objects when doing something, for example, a child grabbing
+it's parents return ID and using that to nest itself when it creates itself in
+some external system.
+
+This is a VERY LOW priority.
+
 
 ## Test Status
 - `Tests/Private/Classes/Items.tests.ps1` passes after the binder fix.

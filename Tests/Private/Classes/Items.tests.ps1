@@ -124,3 +124,113 @@ Describe 'ItemSection - Collection Behavior' {
         }
     }
 }
+
+Describe 'ItemStep - Template Expansion' {
+    BeforeEach {
+        [Configuration]::Instance = $null
+        [Configuration]::KeyValueStore = $null
+        [Configuration]::IncludeTags = $null
+        [Configuration]::ExcludeTags = $null
+    }
+
+    Context 'Constructor Parameter Expansion' {
+        It 'expands top-level string parameters before plugin validation' {
+            $configuration = [Configuration]::GetInstance()
+            $configuration.Set('userName', 'Ada')
+
+            $stepConfig = @{
+                type = 'step'
+                name = 'templated output'
+                plugin = 'TextOutput'
+                parameters = @{
+                    message = 'Hello {{userName}}'
+                }
+            }
+
+            $step = [ItemStep]::new($stepConfig)
+
+            $step.plugin.parameters.message | Should -Be 'Hello Ada'
+        }
+
+        It 'expands nested path tokens in top-level string parameters' {
+            $configuration = [Configuration]::GetInstance()
+            $configuration.Set('pin', @{
+                object = [pscustomobject]@{
+                    generatedPassword = 'A1!'
+                }
+            })
+
+            $stepConfig = @{
+                type = 'step'
+                name = 'nested template output'
+                plugin = 'TextOutput'
+                parameters = @{
+                    message = 'Generated: {{pin.object.generatedPassword}}'
+                }
+            }
+
+            $step = [ItemStep]::new($stepConfig)
+
+            $step.plugin.parameters.message | Should -Be 'Generated: A1!'
+        }
+
+        It 'maps missing variables to empty strings' {
+            [Configuration]::GetInstance() | Out-Null
+
+            $stepConfig = @{
+                type = 'step'
+                name = 'missing template output'
+                plugin = 'TextOutput'
+                parameters = @{
+                    message = 'User={{missingUser}}'
+                }
+            }
+
+            $step = [ItemStep]::new($stepConfig)
+
+            $step.plugin.parameters.message | Should -Be 'User='
+        }
+
+        It 'does not recurse into nested parameter objects in MVP mode' {
+            $configuration = [Configuration]::GetInstance()
+            $configuration.Set('department', 'IT')
+
+            $stepConfig = @{
+                type = 'step'
+                name = 'non-recursive expansion'
+                plugin = 'TextOutput'
+                parameters = @{
+                    message = 'Department {{department}}'
+                    nested = @{
+                        label = '{{department}}'
+                    }
+                }
+            }
+
+            $step = [ItemStep]::new($stepConfig)
+
+            $step.plugin.parameters.message | Should -Be 'Department IT'
+            $step.plugin.parameters.nested.label | Should -Be '{{department}}'
+        }
+
+        It 'preserves non-string top-level parameters' {
+            $configuration = [Configuration]::GetInstance()
+            $configuration.Set('passwordLength', '24')
+
+            $stepConfig = @{
+                type = 'step'
+                name = 'password config'
+                plugin = 'PasswordGenerator'
+                parameters = @{
+                    length = 24
+                    includeSpecial = $true
+                }
+            }
+
+            $step = [ItemStep]::new($stepConfig)
+
+            $step.plugin.parameters.length | Should -Be 24
+            $step.plugin.parameters.includeSpecial | Should -BeTrue
+        }
+    }
+}
