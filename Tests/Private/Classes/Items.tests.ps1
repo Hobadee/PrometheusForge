@@ -7,9 +7,17 @@ class TestItemForItemSection : ItemInterface {
     TestItemForItemSection([object]$config) : base($config) {
     }
 
-    [bool] DoItem() {
+    [object] Process() {
         $this.WasRun = $true
         return $this.ReturnValue
+    }
+
+    [object] ProcessCurrentItem() {
+        return $this.Process()
+    }
+
+    [object] ProcessAllItems() {
+        return $this.Process()
     }
 }
 
@@ -52,7 +60,7 @@ Describe 'ItemSection - Collection Behavior' {
     }
 
     Context 'Current item execution' {
-        It 'Should invoke DoItem on the current item (default index 0)' {
+        It 'Should invoke Process on the current item (default index 0)' {
             $section = [ItemSection]::new([pscustomobject]@{ name = 'root'; type = 'section' })
             $first = [TestItemForItemSection]::new([pscustomobject]@{ name = 'first' })
             $second = [TestItemForItemSection]::new([pscustomobject]@{ name = 'second' })
@@ -60,7 +68,7 @@ Describe 'ItemSection - Collection Behavior' {
             $section.Add($first)
             $section.Add($second)
 
-            $result = $section.InvokeCurrentItem()
+            $result = $section.ProcessCurrentItem()
 
             $result | Should -BeTrue
             $first.WasRun | Should -BeTrue
@@ -76,7 +84,7 @@ Describe 'ItemSection - Collection Behavior' {
             $section.Add($second)
             $section.SetCurrentIndex(1)
 
-            $result = $section.InvokeCurrentItem()
+            $result = $section.ProcessCurrentItem()
 
             $result | Should -BeTrue
             $first.WasRun | Should -BeFalse
@@ -95,7 +103,24 @@ Describe 'ItemSection - Collection Behavior' {
             $section = [ItemSection]::new([pscustomobject]@{ name = 'root'; type = 'section' })
 
             $exceptionType = [System.InvalidOperationException]
-            { $section.InvokeCurrentItem() } | Should -Throw -ExceptionType $exceptionType
+            { $section.ProcessCurrentItem() } | Should -Throw -ExceptionType $exceptionType
+        }
+    }
+
+    Context 'Full section execution' {
+        It 'Should invoke all child items in order' {
+            $section = [ItemSection]::new([pscustomobject]@{ name = 'root'; type = 'section' })
+            $first = [TestItemForItemSection]::new([pscustomobject]@{ name = 'first' })
+            $second = [TestItemForItemSection]::new([pscustomobject]@{ name = 'second' })
+
+            $section.Add($first)
+            $section.Add($second)
+
+            $result = $section.ProcessAllItems()
+
+            $result | Should -BeTrue
+            $first.WasRun | Should -BeTrue
+            $second.WasRun | Should -BeTrue
         }
     }
 }

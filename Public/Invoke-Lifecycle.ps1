@@ -131,7 +131,7 @@ function Invoke-Lifecycle {
 
     $items = [ItemFactory]::Create($itemConfig)
 
-    $items.DoItem() | Out-Null
+    $items.Process() | Out-Null
 
     return $true
 }

@@ -8,7 +8,7 @@ class ItemStep : ItemInterface {
         During construction it validates step metadata, resolves a plugin from taskPluginRegistry,
         and forwards step parameters to the plugin for plugin-specific validation.
 
-        During execution (DoItem), ItemStep invokes the plugin, applies retry logic, optionally
+        During execution (Process), ItemStep invokes the plugin, applies retry logic, optionally
         stores the execution result in shared configuration state, and enforces error behavior
         controlled by onError.
 
@@ -28,7 +28,7 @@ class ItemStep : ItemInterface {
         - result        : string (configuration key to store execution result)
 
         .OUTPUTS
-        System.Boolean from DoItem indicating whether plugin execution succeeded.
+        System.Boolean from Process indicating whether plugin execution succeeded.
 
     .NOTES
         The parameters object is intentionally removed from this.config after constructor validation
@@ -73,7 +73,7 @@ class ItemStep : ItemInterface {
     .DESCRIPTION
     Stores execution-related step settings after constructor normalization.
     The original parameters node is removed once applied to the plugin.
-    Typical fields consumed by DoItem are retry, onError, result, and name.
+    Typical fields consumed by Process are retry, onError, result, and name.
     #>
     [object]$config = $null
 
@@ -138,7 +138,7 @@ class ItemStep : ItemInterface {
     }
 
 
-    [bool] DoItem(){
+    [object] Process(){
         <#
         .SYNOPSIS
         Executes the step plugin with retry and error handling.
@@ -163,14 +163,14 @@ class ItemStep : ItemInterface {
 
         .NOTES
         RunTask is expected to return an object/hashtable containing at least a success field.
-        When RunTask throws, DoItem captures the exception and treats it as a failed attempt.
+        When RunTask throws, Process captures the exception and treats it as a failed attempt.
 
         .EXAMPLE
         Example behavior when retries are configured:
         - retry.retries = 5
         - retry.delay = 2
 
-        DoItem attempts up to 5 executions, waiting 2 seconds between failed attempts,
+        Process attempts up to 5 executions, waiting 2 seconds between failed attempts,
         then either throws (onError=abort) or returns $false (onError=fail).
         #>
 

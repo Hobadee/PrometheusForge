@@ -1,8 +1,13 @@
 # Project Status
 
-Last updated: 2026-08-07
+Last updated: 2026-08-08
 
 ## Recent Changes
+- Fixed a PowerShell class binder edge case in `ItemSection.ProcessCurrentItem()` and `ProcessAllItems()` by widening the `Process()` family return types to `[object]` and keeping boolean values at runtime.
+- Renamed the item execution API from `DoItem()` to `Process()` across `ItemInterface`, `ItemSection`, and `ItemStep`.
+- Split `ItemSection` execution semantics so `Process()` executes only the current child item, `ProcessCurrentItem()` exposes that behavior explicitly, and `ProcessAllItems()` preserves full-section traversal.
+- Updated `Invoke-Lifecycle` to call `ItemSection.ProcessAllItems()` so top-level workflows still process every child item.
+- Updated `Tests/Private/Classes/Items.tests.ps1` to cover both current-item and full-section execution paths using the renamed `Process` API.
 - Consolidated collection behavior into `ItemSection` so sections own and manage their child items directly.
 - Added `ItemSection.Add()` as the primary list mutation method.
 - Added iteration support via `ItemSection.GetEnumerator()`.
@@ -21,9 +26,10 @@ Last updated: 2026-08-07
 
 **Suggested Implementation Order**
 
-1. Templating system (MVP scope)
-2. Item addon overlays
-3. Item replacement overlays (stretch)
+1. [x] Rename `DoItem`
+2. Templating system (MVP scope)
+3. Item addon overlays
+4. Item replacement overlays (stretch)
 
 Rationale:
 - Variable overlays are the smallest, safest next change and unlock immediate value by populating `Configuration` from YAML.
@@ -113,10 +119,27 @@ reference.  Implementation would need to scan for duplicates, and overlaying
 would become more difficult, as we would need to search/replace items rather
 than simply inserting at current location as we scan.
 
+### Rename `DoItem`
+"DoItem" (in `ItemInterface`) implies a single item.  This doesn't make much
+sense for `ItemSection`, which should by default process everything in one go.
+With that being said, it makes sense to have an option in the class to do a
+single item at a time, even if we don't expect to use it.
+
+We should probably refactor everything from `DoItem` to `Process`, as this
+would make more sense in the context of single-item "Steps", or multi-item
+"Sections".  We can then have `Process` be the default, and something like
+`ProcessStep` be a special function in the `ItemSection` class to simply
+process the item that is currently selected by the index.
+
+### Issues with AI builds
+AI appears to have issues building/loading the module.  It's frequently
+failing, causing issues doing actual tasks in a timely manner.  Investigate and
+repair.
 
 ## Test Status
-- Latest targeted run: `Tests/Public/Invoke-Lifecycle.Tests.ps1` passing (4 passed, 0 failed).
-- Latest full suite run: 136 passed, 3 failed (existing failures in `Tests/Private/Classes/Items.tests.ps1` under "Current item execution" calling `InvokeCurrentItem`).
+- `Tests/Private/Classes/Items.tests.ps1` passes after the binder fix.
+- Source-level rename completed for `DoItem` → `Process` across the module and tests.
+- Verification is no longer blocked for the focused collection test file.
 
 ## Notes
 - The old standalone `Items` wrapper class has been removed; any future collection helpers can be added directly to `ItemSection`.

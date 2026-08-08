@@ -58,6 +58,8 @@ Invoke-Pester
 - The tests directory has 2 top level directories; Public and Private.  Tests for public functions go in the `Public` directory, and tests for internal/private functions or classes go in the `Private` directory.
   Tests inside the respective public or private directories should follow the directory structure of the code being tested.  For example, if testing `Classes/Plugins/TaskPluginInterface.ps1`,
   the test should be located at `Tests/Private/Classes/Plugins/TaskPluginInterface.Tests.ps1` (or `Public` if testing a public function).
+- When debugging test failures, prefer the built module from `build/Lifecycle/Lifecycle.psd1` and run `Build-Module; Import-Module .\build\Lifecycle\Lifecycle.psd1 -Force` before Pester so you are testing the same code that the module loader sees.
+- If a failure only appears in one shell path, compare raw PowerShell vs `make` from WSL. The repo commands may work manually in PowerShell while `make` in WSL exercises a different shell/runtime boundary.
 
 ```powershell
 Build-Module
@@ -101,3 +103,10 @@ $dict | Should -BeOfType $expectedType
 $exceptionType = [System.ArgumentNullException]
 { ... } | Should -Throw -ExceptionType $exceptionType
 ```
+
+## PowerShell Class Binder Quirk
+PowerShell class methods can throw `InvalidCastException` when a typed call site expects `System.Object` but the invoked method returns `[bool]` through the class binder.
+
+We hit this in `ItemSection.ProcessCurrentItem()` / `ProcessAllItems()` when invoking child `Process()` methods. The working fix was to widen the `Process()` family return type to `[object]` while still returning Boolean values at runtime.
+
+If this error reappears, check class-to-class method calls first, especially chained calls like `return $this.GetCurrentItem().Process()`, and prefer a local variable plus an `[object]` return type when the binder gets involved.

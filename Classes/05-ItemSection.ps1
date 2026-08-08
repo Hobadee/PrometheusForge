@@ -19,7 +19,7 @@ class ItemSection : ItemInterface, System.Collections.IEnumerable {
     - items : optional enumerable of child item configuration nodes
 
     .OUTPUTS
-    System.Boolean from DoItem.
+    System.Boolean from Process, ProcessCurrentItem, and ProcessAllItems.
     System.Int32 from Count.
     ItemInterface from GetCurrentItem.
     System.Collections.IEnumerator from GetEnumerator.
@@ -204,13 +204,32 @@ class ItemSection : ItemInterface, System.Collections.IEnumerable {
     }
 
 
-    [bool] DoItem() {
+    [bool] ProcessCurrentItem() {
+        <#
+        .SYNOPSIS
+        Executes the currently selected child item.
+
+        .DESCRIPTION
+        Resolves the child at currentIndex via GetCurrentItem() and invokes its Process() method.
+
+        .OUTPUTS
+        System.Boolean. Returns the selected child's Process() result.
+
+        .NOTES
+        Throws InvalidOperationException when the section contains no child items.
+        #>
+        $currentItem = [object]$this.GetCurrentItem()
+        return [bool]$currentItem.Process()
+    }
+
+
+    [bool] ProcessAllItems() {
         <#
         .SYNOPSIS
         Executes all child items in order.
 
         .DESCRIPTION
-        Iterates through the internal child list and calls DoItem() on each child.
+        Iterates through the internal child list and calls Process() on each child.
         Child return values are not aggregated; this method returns $true after iteration.
 
         .OUTPUTS
@@ -223,12 +242,28 @@ class ItemSection : ItemInterface, System.Collections.IEnumerable {
         .EXAMPLE
         Invoke all child items for a section:
         $section = [ItemSection]::new($config)
-        $ok = $section.DoItem()
+        $ok = $section.ProcessAllItems()
         # $ok is $true when all child calls complete without terminating errors.
         #>
         foreach ($item in $this.items) {
-            $item.DoItem()
+            ([object]$item).Process()
         }
         return $true
+    }
+
+
+    [object] Process() {
+        <#
+        .SYNOPSIS
+        Executes the currently selected child item.
+
+        .DESCRIPTION
+        ItemSection's default Process() behavior is current-item execution based on currentIndex.
+        Use ProcessAllItems() when the entire section should be processed in sequence.
+
+        .OUTPUTS
+        System.Boolean. Returns the selected child's Process() result.
+        #>
+        return $this.ProcessAllItems()
     }
 }

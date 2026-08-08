@@ -1,6 +1,7 @@
 class TextOutput : TaskPluginInterface {
 
-    [string] $message
+    [string] $message = $null
+    [string] $method = $null
 
     TextOutput() : base(){
         <#
@@ -24,7 +25,7 @@ class TextOutput : TaskPluginInterface {
         #>
         return @{
             name = "TextOutput"
-            version = "1.0.0"
+            version = "1.0.1"
         }
     }
 
@@ -59,7 +60,24 @@ class TextOutput : TaskPluginInterface {
         .OUTPUTS
         The instance of the TextOutput class after execution.
         #>
-        [console]::WriteLine($this.parameters.message)
+
+        switch ($this.parameters.method) {
+            "Verbose" {
+                Write-Verbose($this.parameters.message)
+            }
+            "Debug" {
+                Write-Debug($this.parameters.message)
+            }
+            "Error" {
+                [console]::Error.WriteLine("ERROR: $($this.parameters.message)")
+            }
+            "Warning" {
+                [System.Console]::Out.WriteLine("WARNING: $($this.parameters.message)")
+            }
+            default {
+                [console]::WriteLine($this.parameters.message)
+            }
+        }
         return $this
     }
     
