@@ -1,4 +1,4 @@
-class ItemFactory {
+﻿class ItemFactory {
 
     static [ItemInterface] Create([object]$config){
         <#
@@ -26,7 +26,7 @@ class ItemFactory {
                 throw [System.ArgumentException]::new("Import items must include a sourcePlugin value.", 'sourcePlugin')
             }
 
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $expandedUri = [TemplateEngine]::ExpandString([string]$config.uri, $configuration)
 
             if ([string]::IsNullOrWhiteSpace($config.uri)) {
@@ -87,3 +87,4 @@ class ItemFactory {
         throw [System.ArgumentException]::new("Unknown item type: $($config.type)")
     }
 }
+

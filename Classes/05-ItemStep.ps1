@@ -1,4 +1,4 @@
-class ItemStep : ItemInterface {
+﻿class ItemStep : ItemInterface {
     <#
     .SYNOPSIS
         Represents one executable checklist step backed by a task plugin.
@@ -123,7 +123,7 @@ class ItemStep : ItemInterface {
         # Set parameters on the plugin instance (this triggers validation)
         if ($null -ne $this.plugin) {
             try{
-                $configuration = [Configuration]::GetInstance()
+                $configuration = [Variables]::GetInstance()
                 # Run parameters through the template engine to expand any top-level string values before passing to the plugin
                 $expandedParameters = [TemplateEngine]::ExpandTopLevelValues($config.parameters, $configuration)
                 $this.plugin.SetParameters($expandedParameters)
@@ -157,7 +157,7 @@ class ItemStep : ItemInterface {
         5. On final failure, apply onError policy:
            - abort: throw exception
            - fail : return $false
-        6. If config.result is set, store full result object in Configuration singleton.
+        6. If config.result is set, store full result object in Variables singleton.
 
         .OUTPUTS
         System.Boolean
@@ -234,7 +234,7 @@ class ItemStep : ItemInterface {
         # Check if we need to store the result
         if ($this.config.result -and $this.config.result -is [string]){
             # Store the result
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set($this.config.result, $res)
         }
 
@@ -242,3 +242,4 @@ class ItemStep : ItemInterface {
     }
 
 }
+

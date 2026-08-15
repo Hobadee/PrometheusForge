@@ -1,4 +1,4 @@
-Using Module "../../../../build/Lifecycle/Lifecycle.psd1"
+﻿Using Module "../../../../build/Lifecycle/Lifecycle.psd1"
 
 class ItemFactoryImportTemplateSource : sourcePluginInterface {
     static [string] $LastUri = $null
@@ -65,10 +65,10 @@ class ItemFactoryImportVariablesSource : sourcePluginInterface {
 
 Describe 'ItemFactory' {
     BeforeEach {
-        [Configuration]::Instance = $null
-        [Configuration]::KeyValueStore = $null
-        [Configuration]::IncludeTags = $null
-        [Configuration]::ExcludeTags = $null
+        [Variables]::Instance = $null
+        [Variables]::KeyValueStore = $null
+        [Variables]::IncludeTags = $null
+        [Variables]::ExcludeTags = $null
         [ItemFactoryImportTemplateSource]::LastUri = $null
 
         $registry = [sourcePluginRegistry]::GetInstance()
@@ -81,7 +81,7 @@ Describe 'ItemFactory' {
     }
 
     It 'expands templated import URIs before loading the source plugin' {
-        $configuration = [Configuration]::GetInstance()
+        $configuration = [Variables]::GetInstance()
         $sourceUri = ([uri]::new((Join-Path $TestDrive 'template-expanded-path.yaml'))).AbsoluteUri
         $configuration.Set('importPath', $sourceUri)
 
@@ -96,8 +96,8 @@ Describe 'ItemFactory' {
         [ItemFactoryImportTemplateSource]::LastUri | Should -Be $sourceUri
     }
 
-    It 'loads imported variables into Configuration before returning the imported item' {
-        $configuration = [Configuration]::GetInstance()
+    It 'loads imported variables into Variables before returning the imported item' {
+        $configuration = [Variables]::GetInstance()
 
         $config = [pscustomobject]@{
             type = 'import'
@@ -111,3 +111,4 @@ Describe 'ItemFactory' {
         $configuration.Get('importedSettings').department | Should -Be 'Research'
     }
 }
+

@@ -1,14 +1,14 @@
-class TemplateEngine {
+﻿class TemplateEngine {
     <#
     .SYNOPSIS
-    Expands lightweight template tokens from Configuration values.
+    Expands lightweight template tokens from Variables values.
 
     .DESCRIPTION
     TemplateEngine provides static helpers for MVP variable templating in Lifecycle step parameters.
     Supported token syntax is `{{ variableName }}` and nested paths like `{{ a.b.c }}`.
 
     Resolution behavior:
-    - Root values are retrieved from the Configuration singleton key/value store.
+    - Root values are retrieved from the Variables singleton key/value store.
     - Nested segments are resolved across hashtables/dictionaries and object properties.
     - Unresolved or null values resolve to an empty string when rendering templates.
 
@@ -20,7 +20,7 @@ class TemplateEngine {
     This class is intentionally static-only and has no instance state.
     #>
 
-    static [string] ExpandString([string]$template, [Configuration]$configuration) {
+    static [string] ExpandString([string]$template, [Variables]$configuration) {
         <#
         .SYNOPSIS
         Expands template tokens within a single string.
@@ -34,7 +34,7 @@ class TemplateEngine {
         The input string that may contain zero or more template tokens.
 
         .PARAMETER configuration
-        The Configuration instance used as the variable source.
+        The Variables instance used as the variable source.
 
         .OUTPUTS
         [string] The rendered string after token substitution.
@@ -66,7 +66,7 @@ class TemplateEngine {
         )
     }
 
-    static [object] ExpandTopLevelValues([object]$inputObject, [Configuration]$configuration) {
+    static [object] ExpandTopLevelValues([object]$inputObject, [Variables]$configuration) {
         <#
         .SYNOPSIS
         Expands templated top-level string values in an object.
@@ -86,7 +86,7 @@ class TemplateEngine {
         The object whose top-level values may contain template tokens.
 
         .PARAMETER configuration
-        The Configuration instance used as the variable source.
+        The Variables instance used as the variable source.
 
         .OUTPUTS
         [object] The same logical input shape with top-level string values expanded.
@@ -135,14 +135,14 @@ class TemplateEngine {
         return $inputObject
     }
 
-    static [object] ResolvePath([string]$path, [Configuration]$configuration) {
+    static [object] ResolvePath([string]$path, [Variables]$configuration) {
         <#
         .SYNOPSIS
         Resolves a template variable path to a value.
 
         .DESCRIPTION
         Resolves a dot-delimited variable path such as `pin.object.generatedPassword`.
-        The first segment is looked up in Configuration, and remaining segments are
+        The first segment is looked up in Variables, and remaining segments are
         traversed through dictionaries/hashtables or object properties.
 
         Returns $null when any segment is unresolved or when inputs are invalid.
@@ -151,7 +151,7 @@ class TemplateEngine {
         The variable path to resolve.
 
         .PARAMETER configuration
-        The Configuration instance used as the root lookup source.
+        The Variables instance used as the root lookup source.
 
         .OUTPUTS
         [object] The resolved value, or $null when not found.
@@ -209,3 +209,4 @@ class TemplateEngine {
         return $currentValue
     }
 }
+

@@ -42,6 +42,20 @@ class RegistryMockPluginNoName : sourcePluginInterface {
     }
 }
 
+class RegistryMockPluginDuplicateName : sourcePluginInterface {
+    RegistryMockPluginDuplicateName([string] $URI) : base($URI) {}
+
+    static [hashtable] PluginInfo() {
+        return @{ Name = 'RegistryMockPlugin'; Version = '1.0.0' }
+    }
+
+    [bool] ValidateURI() { return $true }
+
+    [void] doLoad() {
+        $this.LoadedConfig = @{ version = 1.0; variables = @{} }
+    }
+}
+
 Describe 'sourcePluginRegistry Auto-Registration' {
     # Reset and re-register to simulate the effect of module load regardless of test run order.
     BeforeAll {
@@ -119,10 +133,18 @@ Describe 'sourcePluginRegistry Plugin Registration' {
             { $registry.RegisterPlugin([RegistryMockPluginNoName]) } | Should -Throw -ExceptionType $exType
         }
 
-        It 'Should throw when registering a duplicate plugin name' {
+        It 'Should throw when registering a different plugin type with the same name' {
             $registry.RegisterPlugin([RegistryMockPlugin])
             $exType = [System.ArgumentException]
-            { $registry.RegisterPlugin([RegistryMockPlugin]) } | Should -Throw -ExceptionType $exType
+            { $registry.RegisterPlugin([RegistryMockPluginDuplicateName]) } | Should -Throw -ExceptionType $exType
+        }
+
+        It 'Should not throw when registering the same plugin type twice' {
+            $registry.RegisterPlugin([RegistryMockPlugin])
+            { $registry.RegisterPlugin([RegistryMockPlugin]) } | Should -Not -Throw
+            $registry.PluginRegistry.Count | Should -Be 1
+            $registry.PluginRegistry['RegistryMockPlugin'] | Should -BeOfType [Type]
+            $registry.PluginRegistry['RegistryMockPlugin'].Name | Should -Be 'RegistryMockPlugin'
         }
 
         It 'Should throw when registering a null type' {

@@ -1,4 +1,4 @@
-Using Module "../../../../../build/Lifecycle/Lifecycle.psd1"
+﻿Using Module "../../../../../build/Lifecycle/Lifecycle.psd1"
 
 Describe 'PasswordGenerator Plugin - Basic Functionality' {
     Context 'Constructor and Initialization' {
@@ -288,7 +288,7 @@ Describe 'PasswordGenerator Plugin - Password Generation' {
 }
 
 Describe 'PasswordGenerator Plugin - Execute Method' {
-    Context 'Execute with Default Configuration' {
+    Context 'Execute with Default Variables' {
         It 'Should execute and return the plugin instance' {
             $plugin = [PasswordGenerator]::new()
             $plugin.SetParameters([pscustomobject]@{ length = 16 })
@@ -600,3 +600,4 @@ Describe 'PasswordGenerator Plugin - Integration and Edge Cases' {
         }
     }
 }
+

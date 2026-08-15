@@ -62,9 +62,10 @@ Describe 'Plugin Registration' {
             { $registry.RegisterPlugin([MockPluginWithNullName]) } | Should -Throw -ExceptionType ([ArgumentException])
         }
 
-        It 'Should throw when registering a duplicate plugin name' {
+        It 'Should ignore re-registering the same plugin type' {
             $registry.RegisterPlugin([MockValidPlugin])
-            { $registry.RegisterPlugin([MockValidPlugin]) } | Should -Throw -ExceptionType ([ArgumentException])
+            { $registry.RegisterPlugin([MockValidPlugin]) } | Should -Not -Throw
+            $registry.PluginRegistry.Count | Should -Be 1
         }
     }
 }

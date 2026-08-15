@@ -1,9 +1,53 @@
-BeforeAll {
+﻿BeforeAll {
+    Remove-Module Lifecycle -ErrorAction SilentlyContinue
     $modulePath = Join-Path $PSScriptRoot '..\..\build\Lifecycle\Lifecycle.psd1'
     Import-Module $modulePath -Force
 }
 
 Describe 'Invoke-Lifecycle' {
+    It 'runs the items when FilePath is an absolute YAML path' {
+        $yamlPath = Join-Path $TestDrive 'workflow-absolute.yaml'
+        @'
+name: Test workflow absolute
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    items:
+      - type: step
+        name: Write output
+        plugin: TextOutput
+        parameters:
+          message: hello from absolute path
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $result = Invoke-Lifecycle -FilePath $yamlPath
+
+        $result | Should -BeTrue
+    }
+
+    It 'runs the items when FilePath is a relative YAML path' {
+        $yamlPath = Join-Path $TestDrive 'workflow-relative.yaml'
+        @'
+name: Test workflow relative
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    items:
+      - type: step
+        name: Write output
+        plugin: TextOutput
+        parameters:
+          message: hello from relative path
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $relativePath = [System.IO.Path]::GetRelativePath((Get-Location).Path, $yamlPath)
+        $result = Invoke-Lifecycle -FilePath $relativePath
+
+        $result | Should -BeTrue
+    }
+
     It 'runs the items from a readable YAML file' {
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         @'
@@ -72,7 +116,7 @@ variables:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Configuration
+        $configuration = Test-Variables
         $configuration.Get('userName') | Should -Be 'overlay-two-user'
         $configuration.Get('department') | Should -Be 'IT'
         $configuration.Get('retries') | Should -Be 3
@@ -133,7 +177,7 @@ variables:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Configuration
+        $configuration = Test-Variables
         $stepResult = $configuration.Get('outputResult')
         $stepResult.success | Should -BeTrue
         $stepResult.object.parameters.message | Should -Be 'User=overlay-user Department=base-department'
@@ -162,7 +206,7 @@ root:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Configuration
+        $configuration = Test-Variables
         $stepResult = $configuration.Get('outputResult')
         $stepResult.success | Should -BeTrue
         $stepResult.object.parameters.message | Should -Be 'User=Ada Lovelace'
@@ -210,7 +254,7 @@ root:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Configuration
+        $configuration = Test-Variables
         $configuration.Get('importedResult').success | Should -BeTrue
         $configuration.Get('tailResult').success | Should -BeTrue
     }
@@ -252,8 +296,9 @@ root:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Configuration
+        $configuration = Test-Variables
         $configuration.Get('importedVariableResult').success | Should -BeTrue
         $configuration.Get('importedVariableResult').object.parameters.message | Should -Be 'User=Ada Lovelace'
     }
 }
+

@@ -1,4 +1,4 @@
-class sourcePluginInterface {
+﻿class sourcePluginInterface {
     <#
     .SYNOPSIS
     Base class for source plugins that load configuration data from an external source.
@@ -32,7 +32,7 @@ class sourcePluginInterface {
             throw [System.ArgumentNullException]::new('URI', 'URI cannot be null or empty')
         }
 
-        $this.URI = [URI]::new($URI)
+        $this.URI = [URI]::new($URI, [System.UriKind]::RelativeOrAbsolute)
 
         if (-not $this.ValidateURI()) {
             throw [System.ArgumentException]::new('URI is not valid', 'URI')
@@ -58,11 +58,11 @@ class sourcePluginInterface {
         The configuration object to be set.
         #>
         if($null -eq $config){
-            throw [System.ArgumentNullException]::new('config', 'Configuration object cannot be null')
+            throw [System.ArgumentNullException]::new('config', 'Variables object cannot be null')
         }
 
         if($null -ne $this.LoadedConfig){
-            throw [System.InvalidOperationException]::new('Configuration object has already been set and cannot be overwritten.')
+            throw [System.InvalidOperationException]::new('Variables object has already been set and cannot be overwritten.')
         }
 
         $this.LoadedConfig = $config
@@ -204,3 +204,4 @@ class sourcePluginInterface {
         throw [System.NotImplementedException]::new('PluginInfo must be implemented by derived source plugins')
     }
 }
+

@@ -1,49 +1,49 @@
-class Configuration {
+﻿class Variables {
     <#
     .SYNOPSIS
-    Singleton class to store global Configuration information for the lifecycle run
+    Singleton class to store global Variables information for the lifecycle run
 
     .DESCRIPTION
-    This class provides a singleton instance that maintains Configuration state across the application.
-    It includes a key/value store for arbitrary Configuration data and manages include/exclude tag collections.
+    This class provides a singleton instance that maintains Variables state across the application.
+    It includes a key/value store for arbitrary Variables data and manages include/exclude tag collections.
 
     .NOTES
-    This class is intended to be used as a singleton. Access via [Configuration]::GetInstance().
-    All Configuration is global for the duration of the run.
+    This class is intended to be used as a singleton. Access via [Variables]::GetInstance().
+    All Variables is global for the duration of the run.
     #>
 
-    static [Configuration] $Instance = $null  # Singleton object; Explicitly initialize to $null
+    static [Variables] $Instance = $null  # Singleton object; Explicitly initialize to $null
 
     static [System.Collections.Generic.Dictionary[string, object]] $KeyValueStore = $null  # Key/value store; Explicitly initialize to $null
     static [tags] $IncludeTags = $null  # Tags to include; Explicitly initialize to $null
     static [tags] $ExcludeTags = $null  # Tags to exclude; Explicitly initialize to $null
 
 
-    # TODO: Consider adding methods for exporting/importing Configuration state
+    # TODO: Consider adding methods for exporting/importing Variables state
     # TODO: Consider adding methods for validation hooks
     # TODO: Consider adding change notifications/callbacks
-    # TODO: Consider adding Configuration file loading/saving
+    # TODO: Consider adding Variables file loading/saving
 
 
     # Singleton handler
-    static [Configuration] GetInstance() {
-        if ($null -eq [Configuration]::Instance) {
-            [Configuration]::Instance = [Configuration]::new()
+    static [Variables] GetInstance() {
+        if ($null -eq [Variables]::Instance) {
+            [Variables]::Instance = [Variables]::new()
         }
-        return [Configuration]::Instance
+        return [Variables]::Instance
     }
 
 
     # Constructor
-    Configuration() {
-        [Configuration]::KeyValueStore = [System.Collections.Generic.Dictionary[string, object]]::new()
-        [Configuration]::IncludeTags = [tags]::new()
-        [Configuration]::ExcludeTags = [tags]::new()
+    Variables() {
+        [Variables]::KeyValueStore = [System.Collections.Generic.Dictionary[string, object]]::new()
+        [Variables]::IncludeTags = [tags]::new()
+        [Variables]::ExcludeTags = [tags]::new()
     }
 
 
     #########################
-    # Configuration Handler #
+    # Variables Handler #
     #########################
 
 
@@ -75,29 +75,29 @@ class Configuration {
     [void] Set([object] $key, [object] $value) {
         <#
         .SYNOPSIS
-        Sets a Configuration key/value pair
+        Sets a Variables key/value pair
 
         .PARAMETER key
-        The Configuration key (must be a string)
+        The Variables key (must be a string)
 
         .PARAMETER value
-        The Configuration value (can be any object type)
+        The Variables value (can be any object type)
 
         .NOTES
         If the key already exists, its value will be overwritten.
         #>
         $this.ValidateKey($key)
-        [Configuration]::KeyValueStore[$key] = $value
+        [Variables]::KeyValueStore[$key] = $value
     }
 
 
     [void] SetMany([object] $entries) {
         <#
         .SYNOPSIS
-        Sets multiple Configuration key/value pairs in one operation.
+        Sets multiple Variables key/value pairs in one operation.
 
         .PARAMETER entries
-        A dictionary/map of keys and values to apply to Configuration.
+        A dictionary/map of keys and values to apply to Variables.
 
         .NOTES
         If entries is $null, this method is a no-op.
@@ -108,7 +108,7 @@ class Configuration {
         }
 
         if ($entries -isnot [System.Collections.IDictionary]) {
-            throw [System.ArgumentException]::new("Configuration.SetMany expects a dictionary/map.", "entries")
+            throw [System.ArgumentException]::new("Variables.SetMany expects a dictionary/map.", "entries")
         }
 
         foreach ($key in $entries.Keys) {
@@ -120,10 +120,10 @@ class Configuration {
     [object] Get([object] $key) {
         <#
         .SYNOPSIS
-        Gets a Configuration value by key
+        Gets a Variables value by key
 
         .PARAMETER key
-        The Configuration key to retrieve
+        The Variables key to retrieve
 
         .OUTPUTS
         [object] The value associated with the key, or $null if the key doesn't exist
@@ -132,44 +132,44 @@ class Configuration {
         Returns $null if the key doesn't exist. Use HasKey() to check for existence first.
         #>
         $this.ValidateKey($key)
-        return [Configuration]::KeyValueStore[$key]
+        return [Variables]::KeyValueStore[$key]
     }
 
 
     [bool] HasKey([object] $key) {
         <#
         .SYNOPSIS
-        Checks if a Configuration key exists
+        Checks if a Variables key exists
 
         .PARAMETER key
-        The Configuration key to check
+        The Variables key to check
 
         .OUTPUTS
         [bool] True if the key exists, false otherwise
         #>
         $this.ValidateKey($key)
-        return [Configuration]::KeyValueStore.ContainsKey($key)
+        return [Variables]::KeyValueStore.ContainsKey($key)
     }
 
 
     [void] Unset([object] $key) {
         <#
         .SYNOPSIS
-        Removes a Configuration key/value pair
+        Removes a Variables key/value pair
 
         .PARAMETER key
-        The Configuration key to remove
+        The Variables key to remove
 
         .NOTES
         If the key doesn't exist, this method completes silently without error.
         #>
         $this.ValidateKey($key)
-        [Configuration]::KeyValueStore.Remove($key)
+        [Variables]::KeyValueStore.Remove($key)
     }
 
 
     #############################
-    # End Configuration Handler #
+    # End Variables Handler #
     #############################
 
 
@@ -182,7 +182,7 @@ class Configuration {
         .PARAMETER tag
         The tag to add
         #>
-        [Configuration]::IncludeTags.AddTag($tag)
+        [Variables]::IncludeTags.AddTag($tag)
     }
 
 
@@ -194,7 +194,7 @@ class Configuration {
         .PARAMETER tag
         The tag to remove
         #>
-        [Configuration]::IncludeTags.RemoveTag($tag)
+        [Variables]::IncludeTags.RemoveTag($tag)
     }
 
 
@@ -209,7 +209,7 @@ class Configuration {
         .OUTPUTS
         [bool] True if the tag exists in include tags
         #>
-        return [Configuration]::IncludeTags.HasTag($tag)
+        return [Variables]::IncludeTags.HasTag($tag)
     }
 
 
@@ -221,7 +221,7 @@ class Configuration {
         .OUTPUTS
         [string[]] Array of all include tags
         #>
-        return [Configuration]::IncludeTags.GetTags()
+        return [Variables]::IncludeTags.GetTags()
     }
 
 
@@ -234,7 +234,7 @@ class Configuration {
         .PARAMETER tag
         The tag to add
         #>
-        [Configuration]::ExcludeTags.AddTag($tag)
+        [Variables]::ExcludeTags.AddTag($tag)
     }
 
 
@@ -246,7 +246,7 @@ class Configuration {
         .PARAMETER tag
         The tag to remove
         #>
-        [Configuration]::ExcludeTags.RemoveTag($tag)
+        [Variables]::ExcludeTags.RemoveTag($tag)
     }
 
 
@@ -261,7 +261,7 @@ class Configuration {
         .OUTPUTS
         [bool] True if the tag exists in exclude tags
         #>
-        return [Configuration]::ExcludeTags.HasTag($tag)
+        return [Variables]::ExcludeTags.HasTag($tag)
     }
 
 
@@ -273,7 +273,8 @@ class Configuration {
         .OUTPUTS
         [string[]] Array of all exclude tags
         #>
-        return [Configuration]::ExcludeTags.GetTags()
+        return [Variables]::ExcludeTags.GetTags()
     }
     
 }
+

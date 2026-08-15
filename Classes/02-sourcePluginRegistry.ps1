@@ -32,6 +32,15 @@ class sourcePluginRegistry {
         }
 
         if ($this.PluginRegistry.ContainsKey($info.Name)) {
+            
+            # Fixes a module-load regression behind the public tests by making
+            # plugin registry re-registration idempotent for the same plugin
+            # type while still rejecting conflicting names
+            $existingType = $this.PluginRegistry[$info.Name]
+            if ($existingType -eq $pluginType) {
+                return
+            }
+
             throw [System.ArgumentException]::new("A source plugin named '$($info.Name)' is already registered.")
         }
 

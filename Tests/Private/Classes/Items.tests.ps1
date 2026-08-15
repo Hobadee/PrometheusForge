@@ -1,4 +1,4 @@
-Using Module "../../../build/Lifecycle/Lifecycle.psd1"
+﻿Using Module "../../../build/Lifecycle/Lifecycle.psd1"
 
 class TestItemForItemSection : ItemInterface {
     [bool] $WasRun = $false
@@ -127,15 +127,15 @@ Describe 'ItemSection - Collection Behavior' {
 
 Describe 'ItemStep - Template Expansion' {
     BeforeEach {
-        [Configuration]::Instance = $null
-        [Configuration]::KeyValueStore = $null
-        [Configuration]::IncludeTags = $null
-        [Configuration]::ExcludeTags = $null
+        [Variables]::Instance = $null
+        [Variables]::KeyValueStore = $null
+        [Variables]::IncludeTags = $null
+        [Variables]::ExcludeTags = $null
     }
 
     Context 'Constructor Parameter Expansion' {
         It 'expands top-level string parameters before plugin validation' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('userName', 'Ada')
 
             $stepConfig = @{
@@ -153,7 +153,7 @@ Describe 'ItemStep - Template Expansion' {
         }
 
         It 'expands nested path tokens in top-level string parameters' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('pin', @{
                 object = [pscustomobject]@{
                     generatedPassword = 'A1!'
@@ -175,7 +175,7 @@ Describe 'ItemStep - Template Expansion' {
         }
 
         It 'maps missing variables to empty strings' {
-            [Configuration]::GetInstance() | Out-Null
+            [Variables]::GetInstance() | Out-Null
 
             $stepConfig = @{
                 type = 'step'
@@ -192,7 +192,7 @@ Describe 'ItemStep - Template Expansion' {
         }
 
         It 'does not recurse into nested parameter objects in MVP mode' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('department', 'IT')
 
             $stepConfig = @{
@@ -214,7 +214,7 @@ Describe 'ItemStep - Template Expansion' {
         }
 
         It 'preserves non-string top-level parameters' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('passwordLength', '24')
 
             $stepConfig = @{
@@ -234,3 +234,4 @@ Describe 'ItemStep - Template Expansion' {
         }
     }
 }
+

@@ -75,9 +75,23 @@ class taskPluginRegistry {
                 throw [ArgumentException]::New("The provided type does not implement taskPluginInterface.")
         }
 
+        $pluginName = $plugin::PluginInfo().name
+
+        # Fixes a module-load regression behind the public tests by making
+        # plugin registry re-registration idempotent for the same plugin
+        # type while still rejecting conflicting names
+        if ($this.PluginRegistry.ContainsKey($pluginName)) {
+            $existingType = $this.PluginRegistry[$pluginName]
+            if ($existingType -eq $pluginType) {
+                return
+            }
+
+            throw [ArgumentException]::New("A plugin with the same name is already registered.")
+        }
+
         if($this.IsPluginValid($plugin)) {
             # Plugin is valid, continue with registration
-            $this.PluginRegistry[$plugin::PluginInfo().name] = $pluginType
+            $this.PluginRegistry[$pluginName] = $pluginType
         } else {
             throw [ArgumentException]::New("Plugin is not valid and cannot be registered.")
         }

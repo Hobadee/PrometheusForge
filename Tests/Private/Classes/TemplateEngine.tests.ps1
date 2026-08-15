@@ -1,16 +1,16 @@
-Using Module "../../../build/Lifecycle/Lifecycle.psd1"
+﻿Using Module "../../../build/Lifecycle/Lifecycle.psd1"
 
 Describe 'TemplateEngine' {
     BeforeEach {
-        [Configuration]::Instance = $null
-        [Configuration]::KeyValueStore = $null
-        [Configuration]::IncludeTags = $null
-        [Configuration]::ExcludeTags = $null
+        [Variables]::Instance = $null
+        [Variables]::KeyValueStore = $null
+        [Variables]::IncludeTags = $null
+        [Variables]::ExcludeTags = $null
     }
 
     Context 'ExpandString' {
         It 'expands a single token' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('userName', 'ada')
 
             $result = [TemplateEngine]::ExpandString('hello {{userName}}', $configuration)
@@ -19,7 +19,7 @@ Describe 'TemplateEngine' {
         }
 
         It 'expands multiple tokens in one string' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('firstName', 'Ada')
             $configuration.Set('lastName', 'Lovelace')
 
@@ -29,7 +29,7 @@ Describe 'TemplateEngine' {
         }
 
         It 'expands nested paths from mixed hashtable and object values' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('pin', @{
                 object = [pscustomobject]@{
                     generatedPassword = 'P@55'
@@ -42,7 +42,7 @@ Describe 'TemplateEngine' {
         }
 
         It 'replaces missing values with empty strings' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
 
             $result = [TemplateEngine]::ExpandString('missing={{doesNotExist}}', $configuration)
 
@@ -52,7 +52,7 @@ Describe 'TemplateEngine' {
 
     Context 'ExpandTopLevelValues' {
         It 'expands only top-level string values in hashtables' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('userName', 'ada')
 
             $parameters = @{
@@ -71,7 +71,7 @@ Describe 'TemplateEngine' {
         }
 
         It 'expands only top-level string properties in pscustomobjects' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('department', 'IT')
 
             $parameters = [pscustomobject]@{
@@ -90,7 +90,7 @@ Describe 'TemplateEngine' {
         }
 
         It 'expands top-level string values inside sample-style parameter lists' {
-            $configuration = [Configuration]::GetInstance()
+            $configuration = [Variables]::GetInstance()
             $configuration.Set('fullName', 'Ada Lovelace')
 
             $parameters = [System.Collections.Generic.List[object]]::new()
@@ -109,3 +109,4 @@ Describe 'TemplateEngine' {
         }
     }
 }
+

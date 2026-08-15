@@ -1,4 +1,4 @@
-function Invoke-Lifecycle {
+﻿function Invoke-Lifecycle {
     <#
     .SYNOPSIS
     Loads and executes a lifecycle checklist from a YAML file.
@@ -13,7 +13,7 @@ function Invoke-Lifecycle {
 
     .PARAMETER Overlay
     One or more overlay YAML files. Overlay files are processed in the order provided,
-    and each overlay's `variables` keys overwrite previously set values in Configuration.
+    and each overlay's `variables` keys overwrite previously set values in Variables.
 
     .OUTPUTS
     System.Boolean
@@ -40,7 +40,7 @@ function Invoke-Lifecycle {
     Write-Verbose "Loading configuration from '$($mainPlugin.URI.LocalPath)'."
     $cfg = $mainPlugin.Load()
 
-    $configuration = [Configuration]::GetInstance()
+    $configuration = [Variables]::GetInstance()
     $configuration.SetMany($cfg.variables)
 
     if ($null -ne $Overlay) {
@@ -65,3 +65,4 @@ function Invoke-Lifecycle {
 
     return $true
 }
+
