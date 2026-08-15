@@ -91,6 +91,32 @@ class Configuration {
     }
 
 
+    [void] SetMany([object] $entries) {
+        <#
+        .SYNOPSIS
+        Sets multiple Configuration key/value pairs in one operation.
+
+        .PARAMETER entries
+        A dictionary/map of keys and values to apply to Configuration.
+
+        .NOTES
+        If entries is $null, this method is a no-op.
+        Keys are validated through Set(). Existing keys are overwritten.
+        #>
+        if ($null -eq $entries) {
+            return
+        }
+
+        if ($entries -isnot [System.Collections.IDictionary]) {
+            throw [System.ArgumentException]::new("Configuration.SetMany expects a dictionary/map.", "entries")
+        }
+
+        foreach ($key in $entries.Keys) {
+            $this.Set($key, $entries[$key])
+        }
+    }
+
+
     [object] Get([object] $key) {
         <#
         .SYNOPSIS

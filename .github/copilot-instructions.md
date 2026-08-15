@@ -15,6 +15,7 @@
 # Architecture & behavior notes (important for edits)
 - Plugin model: implement `taskPluginInterface` interface (see `Classes/Plugins/TaskPluginInterface.ps1`)
 - YAML parsing requires the `powershell-yaml` module (see `Lifecycle.Onboarding.psd1` RequiredModules). If missing, install with `Install-Module powershell-yaml`.
+- Factory methods (construction and type lookup) belong in a dedicated `*Factory` class, not in the registry. Registries handle registration and membership checks only. Example: `sourcePluginRegistry` registers types; `sourcePluginFactory` constructs instances.
 
 # Developer workflows (commands)
 - Import and play interactively in PS7:

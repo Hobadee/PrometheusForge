@@ -96,6 +96,26 @@ Describe 'Key/Value Store Operations' {
             $config.Set('idempotentKey', 'value')
             $config.Get('idempotentKey') | Should -Be 'value'
         }
+
+        It 'Should set multiple values from a dictionary' {
+            $config.SetMany(@{
+                keyA = 'valueA'
+                keyB = 42
+            })
+
+            $config.Get('keyA') | Should -Be 'valueA'
+            $config.Get('keyB') | Should -Be 42
+        }
+
+        It 'Should do nothing when SetMany receives null' {
+            $config.SetMany($null)
+            [Configuration]::KeyValueStore.Count | Should -Be 0
+        }
+
+        It 'Should throw when SetMany receives a non-dictionary value' {
+            $exceptionType = [System.ArgumentException]
+            { $config.SetMany([pscustomobject]@{ key = 'value' }) } | Should -Throw -ExceptionType $exceptionType
+        }
     }
 
     Context 'HasKey' {

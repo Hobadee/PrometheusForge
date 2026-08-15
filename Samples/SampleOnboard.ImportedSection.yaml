@@ -1,0 +1,13 @@
+name: Imported Sample Section
+version: 1.0
+description: Sample content loaded through the yamlSource import path
+
+root:
+  type: section
+  name: Imported Sample Section
+  items:
+    - type: step
+      name: Imported welcome message
+      plugin: TextOutput
+      parameters:
+        - message: Imported workflow content for {{ fullName }}.

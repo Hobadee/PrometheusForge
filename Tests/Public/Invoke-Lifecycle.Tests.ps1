@@ -8,6 +8,7 @@ Describe 'Invoke-Lifecycle' {
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         @'
 name: Test workflow
+version: 1.0
 root:
   - type: section
     name: Root section
@@ -34,6 +35,7 @@ root:
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         @'
 name: Test workflow
+version: 1.0
 variables:
   userName: base-user
   retries: 1
@@ -51,6 +53,7 @@ root:
         $overlayOnePath = Join-Path $TestDrive 'overlay-1.yaml'
         @'
 name: overlay one
+version: 1.0
 variables:
   userName: overlay-one-user
   department: IT
@@ -59,6 +62,7 @@ variables:
         $overlayTwoPath = Join-Path $TestDrive 'overlay-2.yaml'
         @'
 name: overlay two
+version: 1.0
 variables:
   userName: overlay-two-user
   retries: 3
@@ -78,6 +82,7 @@ variables:
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         @'
 name: Test workflow
+version: 1.0
 root:
   - type: section
     name: Root section
@@ -100,6 +105,7 @@ root:
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         @'
 name: Test workflow
+version: 1.0
 variables:
   userName: base-user
   department: base-department
@@ -118,6 +124,7 @@ root:
         $overlayPath = Join-Path $TestDrive 'overlay.yaml'
         @'
 name: overlay
+version: 1.0
 variables:
   userName: overlay-user
 '@ | Set-Content -Path $overlayPath -Encoding utf8
@@ -136,6 +143,7 @@ variables:
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         @'
 name: Test workflow
+version: 1.0
 variables:
   fullName: Ada Lovelace
 root:
@@ -158,5 +166,94 @@ root:
         $stepResult = $configuration.Get('outputResult')
         $stepResult.success | Should -BeTrue
         $stepResult.object.parameters.message | Should -Be 'User=Ada Lovelace'
+    }
+
+    It 'imports another YAML file as a section item when the item type is import' {
+        $yamlPath = Join-Path $TestDrive 'workflow.yaml'
+        $importedPath = Join-Path $TestDrive 'imported.yaml'
+        @'
+name: Imported workflow
+version: 1.0
+root:
+  - type: section
+    name: Imported section
+    items:
+      - type: step
+        name: Imported step
+        plugin: TextOutput
+        result: importedResult
+        parameters:
+          message: imported
+'@ | Set-Content -Path $importedPath -Encoding utf8
+
+        $importUri = [System.Uri]::new($importedPath).AbsoluteUri
+        @"
+name: Test workflow
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    items:
+      - type: import
+        name: Imported workflow
+        sourcePlugin: yamlSource
+        uri: "$importUri"
+      - type: step
+        name: Tail step
+        plugin: TextOutput
+        result: tailResult
+        parameters:
+          message: trailing
+"@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $result = Invoke-Lifecycle -FilePath $yamlPath
+
+        $result | Should -BeTrue
+
+        $configuration = Test-Configuration
+        $configuration.Get('importedResult').success | Should -BeTrue
+        $configuration.Get('tailResult').success | Should -BeTrue
+    }
+
+    It 'loads variables from an imported YAML file before creating later sibling steps' {
+        $yamlPath = Join-Path $TestDrive 'workflow-with-imported-variables.yaml'
+        $importedPath = Join-Path $TestDrive 'imported-with-variables.yaml'
+        @'
+name: Imported workflow
+version: 1.0
+variables:
+  importedUser: Ada Lovelace
+root:
+  type: section
+  name: Imported section
+'@ | Set-Content -Path $importedPath -Encoding utf8
+
+        $importUri = [System.Uri]::new($importedPath).AbsoluteUri
+        @"
+name: Test workflow
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    items:
+      - type: import
+        name: Imported workflow
+        sourcePlugin: yamlSource
+        uri: "$importUri"
+      - type: step
+        name: Tail step
+        plugin: TextOutput
+        result: importedVariableResult
+        parameters:
+          message: "User={{importedUser}}"
+"@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $result = Invoke-Lifecycle -FilePath $yamlPath
+
+        $result | Should -BeTrue
+
+        $configuration = Test-Configuration
+        $configuration.Get('importedVariableResult').success | Should -BeTrue
+        $configuration.Get('importedVariableResult').object.parameters.message | Should -Be 'User=Ada Lovelace'
     }
 }

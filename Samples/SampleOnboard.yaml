@@ -9,6 +9,7 @@ metadata:
 variables:
   domainName: "corp.example.com"
   globalMethod: "Info"
+  sampleImportPath: "./Samples/SampleOnboard.ImportedSection.yaml"
   # See SampleOnboard.Overlay.yaml for an example of how to override these variables in an overlay
 
 root:
@@ -38,6 +39,10 @@ root:
                 includeUppercase: false
                 includeSpecial: false
             result: PIN
+      - type: import
+        name: Imported Sample Content
+        sourcePlugin: yamlSource
+        uri: "{{sampleImportPath}}"
       - type: section
         name: Pre-Creation
         description: Various pre-creation steps that need to happen.

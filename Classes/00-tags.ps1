@@ -11,11 +11,12 @@ class tags {
     This class is designed to be reusable across the application for any tag collection management needs.
     #>
 
-    [System.Collections.Generic.List[string]] $TagList = [System.Collections.Generic.List[string]]::new()
+    [System.Collections.Generic.List[string]] $TagList = $null
 
     # Constructor
     tags() {
         # Initialize with empty tag list
+        $this.TagList = [System.Collections.Generic.List[string]]::new()
     }
 
     # TODO: Consider adding case-sensitivity options
