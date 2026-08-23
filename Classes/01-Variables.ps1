@@ -1,7 +1,7 @@
 ﻿class Variables {
     <#
     .SYNOPSIS
-    Singleton class to store global Variables information for the lifecycle run
+    Singleton class to store global Variables information for the workflow run
 
     .DESCRIPTION
     This class provides a singleton instance that maintains Variables state across the application.

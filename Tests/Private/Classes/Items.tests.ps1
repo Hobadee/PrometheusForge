@@ -1,4 +1,4 @@
-﻿Using Module "../../../build/Lifecycle/Lifecycle.psd1"
+﻿Using Module "../../../build/PrometheusForge/PrometheusForge.psd1"
 
 class TestItemForItemSection : ItemInterface {
     [bool] $WasRun = $false

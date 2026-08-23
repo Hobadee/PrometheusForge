@@ -1,11 +1,11 @@
 #
-# Module manifest for module 'module'
+# Module manifest for module 'PrometheusForge'
 #
 
 @{
 
 # Script module or binary module file associated with this manifest.
-RootModule = 'Lifecycle.psm1'
+RootModule = 'PrometheusForge.psm1'
 
 
 # Minimum version of the PowerShell engine required by this module
@@ -16,7 +16,7 @@ CompatiblePSEditions = @('Core', 'Desktop')
 # Module information
 ModuleVersion = '0.0.1' # Version
 GUID = 'cac2bc38-949c-4152-9b80-860604a6fae8' # Create a GUID and store here!
-Description = 'Employee lifecycle manager' # Create a description
+Description = 'Prometheus Forge workflow engine' # Create a description
 
 
 # Author information
@@ -94,7 +94,7 @@ PrivateData = @{
     	Prerelease = ''
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @('Onboarding','Lifecycle','Checklists')
+        Tags = @('Onboarding','Workflow','Checklists')
 
         # A URL to the license for this module.
         # LicenseUri = ''

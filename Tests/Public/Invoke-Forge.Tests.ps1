@@ -1,10 +1,10 @@
 ﻿BeforeAll {
-    Remove-Module Lifecycle -ErrorAction SilentlyContinue
-    $modulePath = Join-Path $PSScriptRoot '..\..\build\Lifecycle\Lifecycle.psd1'
+    Remove-Module PrometheusForge -ErrorAction SilentlyContinue
+    $modulePath = Join-Path $PSScriptRoot '..\..\build\PrometheusForge\PrometheusForge.psd1'
     Import-Module $modulePath -Force
 }
 
-Describe 'Invoke-Lifecycle' {
+Describe 'Invoke-Forge' {
     It 'runs the items when FilePath is an absolute YAML path' {
         $yamlPath = Join-Path $TestDrive 'workflow-absolute.yaml'
         @'
@@ -21,7 +21,7 @@ root:
           message: hello from absolute path
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Lifecycle -FilePath $yamlPath
+        $result = Invoke-Forge -FilePath $yamlPath
 
         $result | Should -BeTrue
     }
@@ -43,7 +43,7 @@ root:
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
         $relativePath = [System.IO.Path]::GetRelativePath((Get-Location).Path, $yamlPath)
-        $result = Invoke-Lifecycle -FilePath $relativePath
+        $result = Invoke-Forge -FilePath $relativePath
 
         $result | Should -BeTrue
     }
@@ -64,7 +64,7 @@ root:
           message: hello from lifecycle
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Lifecycle -FilePath $yamlPath
+        $result = Invoke-Forge -FilePath $yamlPath
 
         $result | Should -BeTrue
     }
@@ -72,7 +72,7 @@ root:
     It 'throws when the YAML file does not exist' {
         $missingPath = Join-Path $TestDrive 'missing.yaml'
 
-        { Invoke-Lifecycle -FilePath $missingPath } | Should -Throw -ExceptionType ([System.IO.FileNotFoundException])
+        { Invoke-Forge -FilePath $missingPath } | Should -Throw -ExceptionType ([System.IO.FileNotFoundException])
     }
 
     It 'loads base variables and applies overlays in provided order' {
@@ -112,7 +112,7 @@ variables:
   retries: 3
 '@ | Set-Content -Path $overlayTwoPath -Encoding utf8
 
-        $result = Invoke-Lifecycle -FilePath $yamlPath -Overlay $overlayOnePath, $overlayTwoPath
+        $result = Invoke-Forge -FilePath $yamlPath -Overlay $overlayOnePath, $overlayTwoPath
 
         $result | Should -BeTrue
 
@@ -141,7 +141,7 @@ root:
         $missingOverlayPath = Join-Path $TestDrive 'overlay-missing.yaml'
 
         {
-            Invoke-Lifecycle -FilePath $yamlPath -Overlay $missingOverlayPath
+            Invoke-Forge -FilePath $yamlPath -Overlay $missingOverlayPath
         } | Should -Throw -ExceptionType ([System.IO.FileNotFoundException])
     }
 
@@ -173,7 +173,7 @@ variables:
   userName: overlay-user
 '@ | Set-Content -Path $overlayPath -Encoding utf8
 
-        $result = Invoke-Lifecycle -FilePath $yamlPath -Overlay $overlayPath
+        $result = Invoke-Forge -FilePath $yamlPath -Overlay $overlayPath
 
         $result | Should -BeTrue
 
@@ -202,7 +202,7 @@ root:
           - message: "User={{fullName}}"
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Lifecycle -FilePath $yamlPath
+        $result = Invoke-Forge -FilePath $yamlPath
 
         $result | Should -BeTrue
 
@@ -250,7 +250,7 @@ root:
           message: trailing
 "@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Lifecycle -FilePath $yamlPath
+        $result = Invoke-Forge -FilePath $yamlPath
 
         $result | Should -BeTrue
 
@@ -292,7 +292,7 @@ root:
           message: "User={{importedUser}}"
 "@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Lifecycle -FilePath $yamlPath
+        $result = Invoke-Forge -FilePath $yamlPath
 
         $result | Should -BeTrue
 

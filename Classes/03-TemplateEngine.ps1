@@ -4,7 +4,7 @@
     Expands lightweight template tokens from Variables values.
 
     .DESCRIPTION
-    TemplateEngine provides static helpers for MVP variable templating in Lifecycle step parameters.
+    TemplateEngine provides static helpers for MVP variable templating in workflow step parameters.
     Supported token syntax is `{{ variableName }}` and nested paths like `{{ a.b.c }}`.
 
     Resolution behavior:

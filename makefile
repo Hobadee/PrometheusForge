@@ -1,5 +1,5 @@
-ODIR=build/Lifecycle
-ONAME=Lifecycle
+ODIR=build/PrometheusForge
+ONAME=PrometheusForge
 
 ifeq ($(OS),Windows_NT)
 	# Generic Windows settings

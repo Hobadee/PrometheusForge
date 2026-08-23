@@ -1,4 +1,4 @@
-﻿function Invoke-Lifecycle {
+﻿function Invoke-Forge {
     <#
     .SYNOPSIS
     Loads and executes a lifecycle checklist from a YAML file.
@@ -20,10 +20,10 @@
     Returns $true when the workflow items complete successfully.
 
     .EXAMPLE
-    Invoke-Lifecycle -FilePath ./Samples/SampleOnboard.yaml
+    Invoke-Forge -FilePath ./Samples/SampleOnboard.yaml
 
     .EXAMPLE
-    Invoke-Lifecycle -FilePath ./Samples/SampleOnboard.yaml -Overlay ./Samples/OverlayA.yaml, ./Samples/OverlayB.yaml
+    Invoke-Forge -FilePath ./Samples/SampleOnboard.yaml -Overlay ./Samples/OverlayA.yaml, ./Samples/OverlayB.yaml
 
     .NOTES
     This function supports standard PowerShell common parameters such as -Verbose and -Debug.

@@ -1,17 +1,17 @@
-# Lifecycle.Onboarding
+# Prometheus Forge
 
 PowerShell 7+ module: onboarding/offboarding checklist engine following Module-Builder layout.
 
 Usage (quick):
 
 ```powershell
-Import-Module .\Lifecycle.Onboarding.psm1
-Invoke-Onboarding -ConfigPath .\examples\sample-master.yml -RunPath .\examples\sample-run.yml
+Import-Module .\PrometheusForge.psd1
+Invoke-Forge -FilePath .\Samples\SampleOnboard.yaml
 ```
 
 Precedence: Base Config → Client-level Config → Run (instance-level) overrides.
 
-See `Invoke-Lifecycle` help for options.
+See `Invoke-Forge` help for options.
 
 Defaults and behavior:
 
