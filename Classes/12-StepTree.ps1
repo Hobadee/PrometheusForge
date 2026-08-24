@@ -66,7 +66,11 @@ class StepTree : System.Collections.IEnumerable{
         # Special handling for Import
         if($config.type -eq "import"){
             # Import steps are not added to the Steps collection, but we will still create a StepTree node for them
-            Write-Debug "Import: '$($config.name)'"
+            Write-Debug "Import: '$($config.name)'@'$($config.uri)'"
+            foreach ($child in [SourceFactory]::Create($config)) {
+                Write-Debug "Adding imported child StepTree node '$($child.name)' to parent '$($this.name)'"
+                $this.Add($child)
+            }
         }
 
         $this.children = [System.Collections.Generic.List[StepTree]]::new()
@@ -77,8 +81,6 @@ class StepTree : System.Collections.IEnumerable{
                 #$this.Add([StepTreeFactory]::Create($itemConfig))
 
                 Write-Debug "Adding child StepTree node '$($stepConfig.name)' to parent '$($this.name)'"
-                $json=ConvertTo-Json $stepConfig -Depth 10
-                Write-Debug "Child StepTree node config: $json"
 
                 $this.Add([StepTree]::new($stepConfig))
             }
@@ -158,7 +160,7 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
-        Write-Verbose "[StepTree] '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed."
+        Write-Debug "[StepTree] '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed."
 
         if ($stepFailure -gt 0) {
             return $false

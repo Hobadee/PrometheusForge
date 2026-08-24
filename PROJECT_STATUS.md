@@ -108,9 +108,6 @@ While I don't *EXPECT* the need for `StepTreeSection` to need to connect to the
 concrete implementations in `Steps` to be `StepTreeAction`s, but I still want
 everything done at the `StepTreeInterface` level.
 
-#### Design Decisions
-- 
-
 #### Notes from the designer:
 Replace items/sections with imported items/sections
 
@@ -140,6 +137,14 @@ of time.  Come to think of it, this wouldn't really be possible.
 
 Lets just add a "Note" field or something - if no "note" field, just print out
 the name.  If a "note" field does exist, template and print that instead.
+
+
+#### Move imports to be a special plugin class?
+Since I have already implemented lazy-loading for plugins, I think it could be
+a good idea to use that existing code for "imports" - refactor imports as a
+special plugin that mostly just uses the regular `taskPlugin` infrastructure,
+but has a few special hooks in the StepTree to pull the `$res` object the
+plugin generates and insert it during `Process()`
 
 
 ### Templating system
