@@ -22,6 +22,7 @@
         }
 
         if ($config.type -eq "import") {
+            # TODO: Are these a bunch of dupe checks that are also done in the config loader? If so, we should remove them from here and just rely on the loader to validate the config.
             if ([string]::IsNullOrWhiteSpace($config.sourcePlugin)) {
                 throw [System.ArgumentException]::new("Import items must include a sourcePlugin value.", 'sourcePlugin')
             }

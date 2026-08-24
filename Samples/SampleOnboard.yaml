@@ -39,10 +39,7 @@ root:
                 includeUppercase: false
                 includeSpecial: false
             result: PIN
-      - type: import
-        name: Imported Sample Content
-        sourcePlugin: yamlSource
-        uri: "{{sampleImportPath}}"
+            defer_binding: true
       - type: section
         name: Pre-Creation
         description: Various pre-creation steps that need to happen.
@@ -99,6 +96,10 @@ root:
                 method: "{{globalMethod}}"
             tags:
               - milestone
+      - type: import
+        name: Imported Sample Content
+        sourcePlugin: yamlSource
+        uri: "{{sampleImportPath}}"
       - type: section
         name: User Creation/Accounts Setup
         items:

@@ -25,6 +25,6 @@ excludeByTags: []
 # These override any defaults in the base configuration
 variables:
   userName: "jdoe"
-  fullName: "John Doe"
+  fullName: "John Doe - Pulled from Overlay Variables"
   #setupPhase: 1
   #skipSoftwareDeployment: false

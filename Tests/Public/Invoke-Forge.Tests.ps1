@@ -116,7 +116,7 @@ variables:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Variables
+        $configuration = [Variables]::GetInstance()
         $configuration.Get('userName') | Should -Be 'overlay-two-user'
         $configuration.Get('department') | Should -Be 'IT'
         $configuration.Get('retries') | Should -Be 3
@@ -177,7 +177,7 @@ variables:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Variables
+        $configuration = [Variables]::GetInstance()
         $stepResult = $configuration.Get('outputResult')
         $stepResult.success | Should -BeTrue
         $stepResult.object.parameters.message | Should -Be 'User=overlay-user Department=base-department'
@@ -206,7 +206,7 @@ root:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Variables
+        $configuration = [Variables]::GetInstance()
         $stepResult = $configuration.Get('outputResult')
         $stepResult.success | Should -BeTrue
         $stepResult.object.parameters.message | Should -Be 'User=Ada Lovelace'
@@ -254,7 +254,7 @@ root:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Variables
+        $configuration = [Variables]::GetInstance()
         $configuration.Get('importedResult').success | Should -BeTrue
         $configuration.Get('tailResult').success | Should -BeTrue
     }
@@ -296,7 +296,7 @@ root:
 
         $result | Should -BeTrue
 
-        $configuration = Test-Variables
+        $configuration = [Variables]::GetInstance()
         $configuration.Get('importedVariableResult').success | Should -BeTrue
         $configuration.Get('importedVariableResult').object.parameters.message | Should -Be 'User=Ada Lovelace'
     }
