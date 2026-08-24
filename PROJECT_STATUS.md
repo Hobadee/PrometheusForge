@@ -1,8 +1,10 @@
 ﻿# Project Status
 
-Last updated: 2026-08-15
+Last updated: 2026-08-23
 
 ## Recent Changes
+- Refactored `Steps` storage to match registry design: dictionary is now instance-scoped (`$this.Steps`) under the singleton instance instead of static class storage.
+- Superseded prior `Steps` static-storage null-access workaround with an instance-scoped dictionary refactor.
 - Renamed the project and PowerShell module to Prometheus Forge, including the public `Invoke-Forge` entry point, module manifest, build output, tests, and documentation.
 - Added explicit public coverage in `Tests/Public/Invoke-Forge.Tests.ps1` for running YAML workflows via both absolute and relative `-FilePath` values.
 - Added private registry coverage to assert duplicate registration of the same source plugin type is idempotent (no throw) in sourcePluginRegistry tests, while still preserving conflict checks for different types sharing the same plugin name.
