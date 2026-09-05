@@ -42,7 +42,7 @@ class StepTree : System.Collections.IEnumerable{
         if (-not ($config.name -and $config.name -is [string])) {
             throw [System.ArgumentException]::new("Every item must contain a name") 
         }
-        Write-Debug "Creating StepTree node '$($config.name)'"
+        #Write-Debug "[StepTree]::new() Creating StepTree node '$($config.name)'"
         $this.name = $config.name
 
         # Add and associate Step object to the Steps collection
@@ -66,22 +66,23 @@ class StepTree : System.Collections.IEnumerable{
         # Initialize children list before handling imports or regular items
         $this.children = [System.Collections.Generic.List[StepTree]]::new()
 
-        # Special handling for Import
-        if($config.type -eq "import"){
-            # Import steps are not added to the Steps collection, but we will still create a StepTree node for them
-            Write-Debug "Import: '$($config.name)'@'$($config.uri)'"
-            foreach ($child in [SourceFactory]::Create($config)) {
-                Write-Debug "Adding imported child StepTree node '$($child.name)' to parent '$($this.name)'"
-                $this.Add($child)
-            }
-        }
+        # Deprecated; Imports are handled via plugins now
+        # # Special handling for Import
+        # if($config.type -eq "import"){
+        #     # Import steps are not added to the Steps collection, but we will still create a StepTree node for them
+        #     Write-Debug "[StepTree]::new() Import: '$($config.name)'@'$($config.uri)'"
+        #     foreach ($child in [SourceFactory]::Create($config)) {
+        #         #Write-Debug "[StepTree]::new() Adding imported child StepTree node '$($child.name)' to parent '$($this.name)'"
+        #         $this.Add($child)
+        #     }
+        # }
         
         if ($null -ne $config.items -and $config.items -is [System.Collections.IEnumerable]) {
             foreach ($stepConfig in $config.items) {
                 # We probably don't actually need to complicate things with a factory
                 #$this.Add([StepTreeFactory]::Create($itemConfig))
 
-                Write-Debug "Adding child StepTree node '$($stepConfig.name)' to parent '$($this.name)'"
+                #Write-Debug "[StepTree]::new() Adding child StepTree node '$($stepConfig.name)' to parent '$($this.name)'"
 
                 $this.Add([StepTree]::new($stepConfig))
             }
@@ -159,7 +160,7 @@ class StepTree : System.Collections.IEnumerable{
         # queued config becomes its own child here, added in the same order Insert() was called.
         if ($null -ne $step.plugin.Api) {
             foreach ($insertedConfig in $step.plugin.Api.Configuration.GetPendingInserts()) {
-                Write-Debug "Inserting plugin-requested child config '$($insertedConfig.name)' under '$($this.name)'"
+                Write-Debug "[StepTree]::Process() - Inserting plugin-requested child config '$($insertedConfig.name)' under '$($this.name)'"
                 $this.Add([StepTree]::new($insertedConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingInserts()
@@ -183,7 +184,7 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
-        Write-Debug "[StepTree] '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed."
+        Write-Debug "[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed."
 
         if ($stepFailure -gt 0) {
             return $false

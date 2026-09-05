@@ -10,4 +10,4 @@ root:
       name: Imported welcome message
       plugin: TextOutput
       parameters:
-        - message: Imported workflow content for {{ fullName }} - FROM SampleOnboard.ImportedSection.yaml
+        - message: Imported workflow content for {{ fullName }} - FROM Sample.Onboard.ImportedSection.yaml

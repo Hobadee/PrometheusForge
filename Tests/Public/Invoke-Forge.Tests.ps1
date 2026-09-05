@@ -223,7 +223,7 @@ root:
         $stepResult.object.parameters.message | Should -Be 'User=Ada Lovelace'
     }
 
-    It 'imports another YAML file as a section item when the item type is import' {
+    It 'imports another YAML file using the ImportConfig plugin' {
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         $importedPath = Join-Path $TestDrive 'imported.yaml'
         @'
@@ -249,10 +249,12 @@ root:
   - type: section
     name: Root section
     items:
-      - type: import
+      - type: step
         name: Imported workflow
-        sourcePlugin: yamlSource
-        uri: "$importUri"
+        plugin: ImportConfig
+        parameters:
+          sourcePluginName: yamlSource
+          uri: "$importUri"
       - type: step
         name: Tail step
         plugin: TextOutput
@@ -291,16 +293,19 @@ root:
   - type: section
     name: Root section
     items:
-      - type: import
+      - type: step
         name: Imported workflow
-        sourcePlugin: yamlSource
-        uri: "$importUri"
+        plugin: ImportConfig
+        parameters:
+          sourcePluginName: yamlSource
+          uri: "$importUri"
       - type: step
         name: Tail step
         plugin: TextOutput
         result: importedVariableResult
         parameters:
           message: "User={{importedUser}}"
+        defer_binding: true
 "@ | Set-Content -Path $yamlPath -Encoding utf8
 
         $result = Invoke-Forge -FilePath $yamlPath

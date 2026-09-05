@@ -9,8 +9,8 @@ metadata:
 variables:
   domainName: "corp.example.com"
   globalMethod: "Info"
-  sampleImportPath: "./Samples/SampleOnboard.ImportedSection.yaml"
-  # See SampleOnboard.Overlay.yaml for an example of how to override these variables in an overlay
+  sampleImportPath: "./Samples/Sample.Onboard.ImportedSection.yaml"
+  # See Sample.Onboard.Overlay.yaml for an example of how to override these variables in an overlay
 
 root:
   - type: section
@@ -96,10 +96,12 @@ root:
                 method: "{{globalMethod}}"
             tags:
               - milestone
-      - type: import
+      - type: step
         name: Imported Sample Content
-        sourcePlugin: yamlSource
-        uri: "{{sampleImportPath}}"
+        plugin: ImportConfig
+        parameters:
+          - uri: "{{sampleImportPath}}"
+          - sourcePluginName: yamlSource
       - type: section
         name: User Creation/Accounts Setup
         items:
