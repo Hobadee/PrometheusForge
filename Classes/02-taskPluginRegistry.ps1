@@ -187,6 +187,7 @@ class taskPluginRegistry {
             throw [ArgumentException]::New("Plugin '$pluginName' not found in registry.")
         }
         $plugin = [Activator]::CreateInstance($pluginName)
+        $plugin.SetApi([ForgeApi]::new())
         return $plugin
     }
 

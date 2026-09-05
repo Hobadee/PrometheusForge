@@ -110,6 +110,8 @@ class Step{
                 throw [System.Exception]::new("Step: $($this.name) - Failed to set parameters for plugin $($this.config.plugin): $err")
             }
         }
+
+        Write-Debug "Step: $($this.name) - Plugin initialized with parameters: $($this.config.parameters)"
         
         # Parameters are now stored in the plugin
         # We could remove them from the config to reduce memory bloat, but
@@ -227,6 +229,8 @@ class Step{
         }
 
         $this.result = $res
+
+        Write-Debug "Step: $($this.name) - Result: $($res | Out-String)"
 
         return $res.success
     }

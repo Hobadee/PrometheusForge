@@ -1,8 +1,10 @@
 ﻿# Project Status
 
-Last updated: 2026-08-23
+Last updated: 2026-09-05
 
 ## Recent Changes
+- Scaffolded an optional plugin-facing API surface: `Classes/Api/ForgeApi.ps1` (top-level facade), `Classes/Api/ForgeVariableApi.ps1` (wraps `Variables`), and `Classes/Api/ForgeConfigurationApi.ps1` (MVP stub that only records requested overrides; no override-merging consumer yet). `TaskPluginInterface` now exposes `$this.Api` (settable via `SetApi()`), and `taskPluginRegistry.GetPlugin()` injects a fresh `ForgeApi` into every plugin instance it creates. This is opt-in: existing plugins are unaffected since `Api` defaults to `$null` and nothing requires calling it.
+- Began the `Item*` to `Step*` architecture migration. `Item` terminology and the legacy item model are deprecated; new work should use `StepTree` for execution order and `Steps` for executable actions.
 - Refactored `Steps` storage to match registry design: dictionary is now instance-scoped (`$this.Steps`) under the singleton instance instead of static class storage.
 - Superseded prior `Steps` static-storage null-access workaround with an instance-scoped dictionary refactor.
 - Renamed the project and PowerShell module to Prometheus Forge, including the public `Invoke-Forge` entry point, module manifest, build output, tests, and documentation.
@@ -54,17 +56,28 @@ Last updated: 2026-08-23
 
 **Suggested Implementation Order**
 
-1. Item replacement overlays
+1. Step replacement overlays
 2. Advanced templating coverage beyond the current MVP
-3. Item addon overlay insertion semantics and lazy-loading design
+3. Step addon overlay insertion semantics and lazy-loading design
 4. AI build/load reliability investigation
 
-### Item replacement overlays
-Replace items/sections with imported items/sections.
+**Stretch goal: permission plugin API access**
+Plugins should declare which `ForgeApi` categories they actually use (e.g. via a new `Apis`/`RequiredApis` key in `PluginInfo()`). Calls to an API category a plugin did not declare should fail (e.g. `ForgeApi` only populates/exposes declared sub-APIs, or each sub-API checks a declared-capabilities set before executing). Not implemented yet — `ForgeApi`/`ForgeVariableApi`/`ForgeConfigurationApi` currently grant full access to every injected plugin.
 
-The idea behind this, is that if we have for example a "Install" item that
+### Active architecture: Steps replace Items
+`Item` terminology and the legacy item model are deprecated. The migration separates the workflow into two independently managed concerns:
+
+- `StepTree` stores hierarchy and execution order, with nodes referring to actions by name.
+- `Steps` stores the executable action objects, keyed by their unique step names.
+
+This separation makes it possible to alter execution order or lazily load tree content at runtime without changing the action objects themselves. It is the current major work item and is intended to solve both immediate MVP overlay/import needs and future runtime extensibility.
+
+### Step replacement overlays
+Replace steps/actions with imported steps/actions.
+
+The idea behind this, is that if we have for example a "Install" step that
 works completely different for Client A and Client B, we can easily replace the
-entire item without having to rebuild everything.  With this feature, overlays
+entire action without having to rebuild everything. With this feature, overlays
 can do more than simply inject new items and variables; they can replace
 existing steps.
 
@@ -160,18 +173,18 @@ Notes:
 - Current coverage is focused on direct variable resolution from `Variables`, including nested keys such as `{{ a.b.c }}`.
 - The next phase should be driven by concrete runtime use cases rather than broad feature expansion without a clear contract.
 
-### Item addon overlays
+### Step addon overlays
 The basic YAML-import flow is working, but the remaining design questions are about insertion semantics and long-term behavior rather than the parser itself.
 
 Remaining work:
-- define how imported items/sections are inserted into the current `ItemSection` index
+- define how imported steps/sections are inserted into the current `StepTree` location
 - decide how future non-YAML sources should behave in the same pipeline
 - make a deliberate decision about relative import resolution before adding it, rather than inferring a hidden rule from current execution location
 - implement optional lazy-loading so filename variables set via function return can resolve
 
 Current state:
-- YAML imports are supported through `ItemFactory` and the source-plugin flow.
-- The remaining issue is not import loading itself; it is the semantics of where and how imported content should be placed in the running item tree.
+- YAML imports are currently supported through the legacy `ItemFactory` and the source-plugin flow.
+- The remaining issue is not import loading itself; it is the semantics of where and how imported content should be placed in the running `StepTree`.
 
 
 ### Issues with AI builds

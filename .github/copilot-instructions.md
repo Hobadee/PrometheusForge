@@ -29,9 +29,9 @@ Import-Module .\build\PrometheusForge\PrometheusForge.psd1 -Force
 Build-Module
 Invoke-Pester
 ``` 
-- A makefile is provided to simplify common tasks like building the module and running tests. You can use commands like `make` and `make test` to perform these actions.
+- A makefile is provided to simplify common tasks like building the module and running tests. You can use commands like `make` and `make test` to perform these actions from within a *NIX environment.
 - `make shell` exists to open an interactive PowerShell session with the module imported so you can play with it.
-- Automake may not be available on all systems; makesfiles are available to ease development on *NIX systems from a Bash environment.
+- Automake may not be available on all systems; makefiles are available to ease development on *NIX systems from a Bash environment.
   On Windows, you may need to install it separately or rely on other means to run the makefile commands.
 
 # Project conventions to follow (do not invent new ones without discussion)

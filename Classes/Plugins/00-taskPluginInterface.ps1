@@ -30,6 +30,7 @@ class TaskPluginInterface {
 
     # Instance state
     [object] $parameters = $null
+    [ForgeApi] $Api = $null
 
 
     TaskPluginInterface() {
@@ -55,6 +56,28 @@ class TaskPluginInterface {
         The initial parameters object to set and validate.
         #>
         $this.SetParameters($initialParameters)
+    }
+
+
+    [void] SetApi([ForgeApi] $api) {
+        <#
+        .SYNOPSIS
+        Injects the optional plugin-facing API facade.
+
+        .DESCRIPTION
+        Plugins may call $this.Api.* for optional capabilities (variables, configuration, etc.).
+        This is never required; plugins that don't need it can ignore it entirely.
+
+        .PARAMETER api
+        The ForgeApi facade instance to attach to this plugin.
+
+        .NOTES
+        Intentionally a plain setter, not a constructor: the caller (e.g. taskPluginRegistry.GetPlugin())
+        builds the ForgeApi. This keeps construction decisions (like which API categories a plugin is
+        permitted, per the future permissioning stretch goal) with the code that already knows which
+        plugin is being created, instead of baking them into this shared base class.
+        #>
+        $this.Api = $api
     }
 
 
