@@ -3,6 +3,9 @@
 Last updated: 2026-09-05
 
 ## Recent Changes
+- Added an `AI-Assisted Development` section to `README.md` that transparently acknowledges AI assistance while clarifying that architecture, workflow design, decisions, and review are human-led.
+- Reworked `README.md` for user and collaborator onboarding: corrected the sample workflow path and PowerShell requirement, added feature and configuration summaries, documented installation, plugin development, testing, and roadmap guidance, and corrected introductory terminology.
+- Implemented plugin-requested step replacement through `ForgeConfigurationApi.RequestOverride()`. `StepTree.Process()` consumes queued overrides before traversing children and replaces the matching `Steps` entry with a newly constructed step. The MVP accepts only same-named `type: step` replacement configs; section replacement and cross-type replacement remain unsupported. Added focused `StepTree` coverage for replacement execution and registry update behavior.
 - Updated `Invoke-Forge.Tests.ps1` to replace deprecated `type: import` StepTree syntax with the `type: step` + `plugin: ImportConfig` pattern (including `defer_binding: true` when sibling steps rely on variables imported at runtime).
 - Updated sample YAML files (`Sample.Onboard.yaml`, `Sample.Onboard.ImportedSection.yaml`) to use plugin-based `ImportConfig` steps instead of legacy import directives.
 - Fixed cross-run singleton leakage: `Variables` and `Steps` are run-scoped singletons but were previously never cleared, so calling `Invoke-Forge`/`Test-Item`/`Test-Steps` more than once in the same session reused state from the prior run. Added `[Variables]::Reset()` (new) and used the existing `[Steps]::Reset()` to null out each singleton's `Instance`. Added `Private/Reset-ForgeState.ps1` as the single call site that resets both, and wired it into the top of `Invoke-Forge`, `Test-Item`, and `Test-Steps`. Plugin registries (`sourcePluginRegistry`, `taskPluginRegistry`) are intentionally NOT reset since their registrations happen once at module load and must persist across runs. Any new run-scoped singleton should add its own `Reset()` and be wired into `Reset-ForgeState`.
@@ -46,13 +49,15 @@ Last updated: 2026-09-05
 
 **Suggested Implementation Order**
 
-1. Step replacement overlays
-2. Advanced templating coverage beyond the current MVP
-3. Step addon overlay insertion semantics and lazy-loading design
-4. AI build/load reliability investigation
+1. Include/Skip based on tags - VERY IMPORTANT FOR MVP!
+2. Full test-suite coverage
+3. Advanced templating coverage beyond the current MVP
+4. Step addon overlay insertion semantics and lazy-loading design
 
-**Stretch goal: permission plugin API access**
+
+### API permission settings
 Plugins should declare which `ForgeApi` categories they actually use (e.g. via a new `Apis`/`RequiredApis` key in `PluginInfo()`). Calls to an API category a plugin did not declare should fail (e.g. `ForgeApi` only populates/exposes declared sub-APIs, or each sub-API checks a declared-capabilities set before executing). Not implemented yet — `ForgeApi`/`ForgeVariableApi`/`ForgeConfigurationApi` currently grant full access to every injected plugin.
+
 
 ### Completed architecture: StepTree and Steps
 The deprecated `Item` terminology and legacy item model have been removed from normal workflow execution. The current architecture separates the workflow into two independently managed concerns:
@@ -60,7 +65,8 @@ The deprecated `Item` terminology and legacy item model have been removed from n
 - `StepTree` stores hierarchy and execution order, with nodes referring to actions by name.
 - `Steps` stores the executable action objects, keyed by their unique step names.
 
-This separation allows execution order and tree content to evolve without changing executable action objects. YAML imports and plugin-requested child insertion are supported through this model. Replacing existing actions through overlays remains future work.
+This separation allows execution order and tree content to evolve without changing executable action objects. YAML imports, plugin-requested child insertion, and plugin-requested step replacement are supported through this model. File-based overlay replacement semantics remain future work.
+
 
 ### Step replacement overlays
 Replace steps/actions with imported steps/actions.
@@ -95,6 +101,15 @@ the user will foot-gun themselves.  (Possibly auto-build names based on
 hirearchy so YAML authors don't need to worry about the entire project but
 rather just their section?)
 
+#### Overlay Targets
+Ideally, we should be able to eventually complete all the following types of overlays:
+- Step -> Step
+- Section -> Section
+- Step -> Section
+- Section -> Step
+
+The first 2 should be fairly easy.  Polymorphic overlays will be more difficult.
+
 
 ### Templating system
 The project has a working MVP for variable substitution, but the remaining work is the broader runtime surface area that still needs deliberate design and coverage.
@@ -108,6 +123,7 @@ Remaining scope:
 Notes:
 - Current coverage is focused on direct variable resolution from `Variables`, including nested keys such as `{{ a.b.c }}`.
 - The next phase should be driven by concrete runtime use cases rather than broad feature expansion without a clear contract.
+
 
 ### Step addon overlays
 The basic YAML-import flow is working, but the remaining design questions are about insertion semantics and long-term behavior rather than the parser itself.

@@ -21,7 +21,7 @@ class Step{
         Initializes a new instance of the Step class
         #>
         
-        Write-Debug "[Step]::new() Creating Step: $($config.name)"
+        #Write-Debug "[Step]::new() Creating Step: $($config.name)"
         if (-not ($config.name -and $config.name -is [string])) {
             Write-Debug "[Step]::new() Failed attempt to create a Step with an invalid name: $($config.name)"
             throw [System.ArgumentException]::new("Every step must contain a name") 
@@ -43,7 +43,7 @@ class Step{
             $this.InitializePlugin()
         }
         else {
-            Write-Verbose "[Step]::new() Step $($this.name) is configured for late binding. Plugin will be resolved at execution time."
+            Write-Verbose "Step $($this.name) is configured for late binding. Plugin will be resolved at execution time."
         }
     }
 
@@ -111,7 +111,7 @@ class Step{
             }
         }
 
-        Write-Debug "[Step]::InitializePlugin() - $($this.name) - Plugin initialized"
+        #Write-Debug "[Step]::InitializePlugin() - $($this.name) - Plugin initialized"
         
         # Parameters are now stored in the plugin
         # We could remove them from the config to reduce memory bloat, but

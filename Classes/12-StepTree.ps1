@@ -152,6 +152,29 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
+        # Apply plugin-requested replacements before traversing children, so an overridden
+        # child runs with its new configuration during this same processing pass.
+        if ($null -ne $step.plugin.Api) {
+            foreach ($requestedOverride in $step.plugin.Api.Configuration.GetPendingOverrides()) {
+                $overrideName = $requestedOverride.key
+                $overrideConfig = $requestedOverride.value
+
+                if ($null -eq $overrideConfig -or $overrideConfig.type -ne 'step') {
+                    throw [System.NotSupportedException]::new("Override '$overrideName' must provide a step configuration.")
+                }
+                if ($overrideConfig.name -ne $overrideName) {
+                    throw [System.ArgumentException]::new("Override '$overrideName' must provide a step configuration with the same name.")
+                }
+                if (-not [Steps]::GetInstance().Exists($overrideName)) {
+                    throw [System.ArgumentException]::new("No step named '$overrideName' exists to override.")
+                }
+
+                Write-Debug "[StepTree]::Process() - Replacing plugin-requested step '$overrideName'"
+                [Steps]::GetInstance().Update([Step]::new($overrideConfig))
+            }
+            $step.plugin.Api.Configuration.ClearPendingOverrides()
+        }
+
         # Drain any configs the plugin queued via Api.Configuration.Insert() during its own step,
         # so they run as additional children of this node in the same pass.
         # PowerShell property access on $null short-circuits to $null, so this chain is safe even

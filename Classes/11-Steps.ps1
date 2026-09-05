@@ -79,6 +79,11 @@ class Steps {
         if (-not $this.Exists($step.name)) {
             throw [System.ArgumentException]::new("No step with the name '$($step.name)' exists.")
         }
+
+        if ($this.Steps[$step.name].IsProcessed()) {
+            throw [System.InvalidOperationException]::new("Cannot update step '$($step.name)' because it has already run.")
+        }
+
         $this.Steps[$step.name] = $step
     }
 

@@ -1,43 +1,111 @@
-# Prometheus Forge
+<p align="center">
+  <img src="Assets/prometheus-forge-logo.png" alt="Prometheus Forge logo" width="240">
+</p>
 
-PowerShell 7+ module: onboarding/offboarding checklist engine following Module-Builder layout.
+<h1 align="center">Prometheus Forge</h1>
 
-Usage (quick):
+<p align="center">
+  A PowerShell workflow engine for YAML-defined onboarding, offboarding, and operational automation.
+</p>
+
+Prometheus Forge lets teams define repeatable workflows as reusable YAML configurations. Base configurations can be
+adapted for different clients, departments, or roles using variable overlays, imported sections, templating, and
+extensible task plugins.
+
+The original goal was to template Asana projects for onboarding and offboarding users across multiple clients. The
+plugin system now allows Prometheus Forge to support a wider range of operational tasks and integrations.
+
+The project is written in PowerShell 7.4+ and is designed to be cross-platform, easy to extend, and straightforward
+to maintain.
+
+
+## Features
+
+- YAML-defined workflows with reusable step and section structure
+- Variable overlays for client, department, or run-specific customization
+- Imported configuration sections and templated file paths
+- Extensible task plugin architecture
+- Plugin-requested step insertion and same-name step replacement
+- Serial workflow execution with configurable task behavior
+
+## Requirements
+
+- PowerShell 7.4 or later
+- `powershell-yaml` 0.4.12 or later
+
+Install the YAML dependency with:
+
+```powershell
+Install-Module -Name powershell-yaml -MinimumVersion 0.4.12 -Scope CurrentUser
+```
+
+## Quick Start
 
 ```powershell
 Import-Module .\PrometheusForge.psd1
-Invoke-Forge -FilePath .\Samples\SampleOnboard.yaml
+Invoke-Forge -FilePath .\Samples\Sample.Onboard.yaml
 ```
 
-Precedence: Base Config → Client-level Config → Run (instance-level) overrides.
+To view all options and examples for the public command:
 
-See `Invoke-Forge` help for options.
-
-Defaults and behavior:
-
-- Default run mode is **non-interactive (Abort on error)**.
-- Tasks run **serially** in dependency order (no parallel execution).
-- Current plugin MVP: `TextOutputPlugin` (prints Task name and ID).
-
-# Requirements
-This project required the `powershell-yaml` module from [github.com/cloudbase/powershell-yaml](https://github.com/cloudbase/powershell-yaml)
-
-```
-Install-Module powershell-yaml
+```powershell
+Get-Help Invoke-Forge -Full
 ```
 
-# Notes
-We should allow unlimited overlays.  Overlays should simply overwrite anything previous at the various keys and values, or add new keys.`
-Method of deleting keys/subkeys should be given by specifying parent key and giving a null plugin or something.  (Needs to be
-an actual nullifyer so we can kill children and don't dive into them)
+## Configuration Model
 
-Okay - overlays may be harder than I thought.  An overlay that edits or deletes should be easier, but an overlay that adds is a problem.
-Adding items makes the exact positioning abiguous.  It may be possible to do a specifiction such as "after: item A" or something, but
-then we need to create a position solver.
+Prometheus Forge applies configuration serially.  Later values override earlier values where supported. Individual steps can be replaced to account for implementation
+differences between clients or environments.
+
+Current execution behavior:
+
+- Workflows run serially in dependency order.
+- The default run mode is non-interactive and aborts on error.
+- The current built-in example plugin is `TextOutputPlugin`.
 
 
-# Potential Names
-- NABIB (Not Ansible But Inspired By)
+## Plugin Development
 
-# TODO
-- We need a way of backtracing an item hierarchy and printing it out to the user nicely
+Task plugins implement the `taskPluginInterface` contract. Existing plugin examples are available in
+`Classes/Plugins/Task/`, and the interface is defined in `Classes/Plugins/00-taskPluginInterface.ps1`.
+
+Plugins can use the injected `ForgeApi` surface to access workflow variables and request supported configuration
+changes during execution.
+
+## Development and Testing
+
+`Build-Module` is provided by PoshCode's [ModuleBuilder](https://github.com/PoshCode/ModuleBuilder) module. Install it
+for your current user with:
+
+```powershell
+Install-Module -Name ModuleBuilder -Scope CurrentUser
+```
+
+After installing ModuleBuilder and Pester, build the module and run the test suite from the repository root:
+
+```powershell
+Build-Module
+Import-Module .\build\PrometheusForge\PrometheusForge.psd1 -Force
+Invoke-Pester
+```
+
+The generated files in `build/` should not be edited directly.
+
+### *NIX
+A `makefile` is provided for *NIX users to ease build and test workflows from a non-PowerShell environment.  (`pwsh` must be in your `$path`)  Standard `make` targets exist:
+- `make`
+- `make test`
+- `make clean`
+
+Additionally, `make shell` will put you in a PowerShell instance with the module loaded
+
+## AI-Assisted Development
+
+AI tools were used to assist with implementation, documentation, and testing. Prometheus Forge's architecture,
+workflow model, design decisions, and code review remain human-led and thoughtfully designed.
+
+## Roadmap
+
+- Expand test coverage across the full workflow surface
+- Add advanced templating, including conditional expressions and recursive nested expansion
+- Improve step addon overlay insertion semantics and lazy loading

@@ -70,6 +70,16 @@ Invoke-Pester
 ```
 
 # Pester Quirks & Known Issues
+
+## Platform-Specific Command Guidance
+**Important**: Early in any session, quickly identify the platform (Windows vs. Unix/WSL) and use appropriate commands:
+- **Windows PowerShell**: Use `Select-String` instead of `grep` for searching file contents
+- **WSL/Unix**: Use standard Unix commands like `grep`, `sed`, etc.
+- **Parameter compatibility**: Pester parameter names vary by version (e.g., `-TestName` may not exist; check available parameters first)
+- **Makefile availability**: On Windows, makefiles may not be available; prefer direct PowerShell commands
+
+**Recommendation**: When running terminal commands for the first time in a session, test with simple commands first to understand what's available.
+
 ## Type Coercion in Parameter Validation
 When validating string parameters with `$null`, PowerShell coerces `$null` to an empty string before the method executes. This breaks `$null` checks:
 ```powershell
