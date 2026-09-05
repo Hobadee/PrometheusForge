@@ -133,5 +133,16 @@ class Steps {
         return $this.Steps.ContainsKey($name)
     }
 
+    static [void] Reset() {
+        <#
+        .SYNOPSIS
+        Resets the singleton instance
+
+        .DESCRIPTION
+        Clears the singleton instance, forcing GetInstance() to create a new one on the next call.
+        This is primarily used for testing.
+        #>
+        [Steps]::Instance = $null
+    }
 
 }

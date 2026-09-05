@@ -16,6 +16,7 @@
 - Plugin model: implement `taskPluginInterface` interface (see `Classes/Plugins/TaskPluginInterface.ps1`)
 - YAML parsing requires the `powershell-yaml` module (see `PrometheusForge.psd1` RequiredModules). If missing, install with `Install-Module powershell-yaml`.
 - Factory methods (construction and type lookup) belong in a dedicated `*Factory` class, not in the registry. Registries handle registration and membership checks only. Example: `sourcePluginRegistry` registers types; `sourcePluginFactory` constructs instances.
+- Singleton classes that hold run-scoped state (e.g. `Variables`, `Steps`) must expose a `static [void] Reset()` method that nulls out `Instance`, and must be wired into `Private/Reset-ForgeState.ps1` so state doesn't leak between `Invoke-Forge` calls in the same session. Singletons that hold module-load-time state (e.g. plugin registries) should NOT be reset here.
 
 # Developer workflows (commands)
 - Import and play interactively in PS7:

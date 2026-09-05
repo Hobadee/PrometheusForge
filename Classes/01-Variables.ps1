@@ -34,6 +34,12 @@
     }
 
 
+    # Clears the singleton so the next GetInstance() call starts a fresh run
+    static [void] Reset() {
+        [Variables]::Instance = $null
+    }
+
+
     # Constructor
     Variables() {
         [Variables]::KeyValueStore = [System.Collections.Generic.Dictionary[string, object]]::new()

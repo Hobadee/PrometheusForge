@@ -36,6 +36,8 @@
         [string[]] $Overlay = @()
     )
 
+    Reset-ForgeState
+
     $mainPlugin = [sourcePluginFactory]::GetPlugin('yamlSource', $FilePath)
     Write-Verbose "Loading configuration from '$($mainPlugin.URI.LocalPath)'."
     $cfg = $mainPlugin.Load()

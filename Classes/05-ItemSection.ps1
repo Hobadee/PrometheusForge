@@ -204,7 +204,7 @@ class ItemSection : ItemInterface, System.Collections.IEnumerable {
     }
 
 
-    [bool] ProcessCurrentItem() {
+    [object] ProcessCurrentItem() {
         <#
         .SYNOPSIS
         Executes the currently selected child item.
@@ -213,17 +213,17 @@ class ItemSection : ItemInterface, System.Collections.IEnumerable {
         Resolves the child at currentIndex via GetCurrentItem() and invokes its Process() method.
 
         .OUTPUTS
-        System.Boolean. Returns the selected child's Process() result.
+        System.Object. Returns the selected child's Process() result.
 
         .NOTES
         Throws InvalidOperationException when the section contains no child items.
         #>
         $currentItem = [object]$this.GetCurrentItem()
-        return [bool]$currentItem.Process()
+        return $currentItem.Process()
     }
 
 
-    [bool] ProcessAllItems() {
+    [object] ProcessAllItems() {
         <#
         .SYNOPSIS
         Executes all child items in order.
@@ -233,7 +233,7 @@ class ItemSection : ItemInterface, System.Collections.IEnumerable {
         Child return values are not aggregated; this method returns $true after iteration.
 
         .OUTPUTS
-        System.Boolean. Returns $true after processing the collection.
+        System.Object. Returns $true after processing the collection.
 
         .NOTES
         Child-level exception handling is delegated to child implementations.

@@ -63,6 +63,9 @@ class StepTree : System.Collections.IEnumerable{
 
         # Do nothing for Sections
 
+        # Initialize children list before handling imports or regular items
+        $this.children = [System.Collections.Generic.List[StepTree]]::new()
+
         # Special handling for Import
         if($config.type -eq "import"){
             # Import steps are not added to the Steps collection, but we will still create a StepTree node for them
@@ -72,8 +75,6 @@ class StepTree : System.Collections.IEnumerable{
                 $this.Add($child)
             }
         }
-
-        $this.children = [System.Collections.Generic.List[StepTree]]::new()
         
         if ($null -ne $config.items -and $config.items -is [System.Collections.IEnumerable]) {
             foreach ($stepConfig in $config.items) {
@@ -112,10 +113,14 @@ class StepTree : System.Collections.IEnumerable{
     }
     
 
-    [bool] Process(){
+    [object] Process(){
         <#
         .SYNOPSIS
         Processes the current step and its child steps recursively.
+
+        .OUTPUTS
+        System.Object
+        Really a boolean, but PowerShell binding quirks require it to be declared as System.Object.
         #>
         $stepTotal = 0
         $stepSuccess = 0
@@ -125,7 +130,12 @@ class StepTree : System.Collections.IEnumerable{
 
         # Note: DO NOT wrap this in a try/catch as [Step]::Process() SHOULD
         # throw an unhandled exception if set to "abort" on error.
-        $res = $step.Process()
+        # Only call Process() if the step exists (sections have no step in the registry)
+        if ($null -ne $step) {
+            $res = $step.Process()
+        } else {
+            $res = $null
+        }
 
         switch ($res) {
             $true {

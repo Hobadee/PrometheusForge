@@ -1,10 +1,21 @@
-﻿BeforeAll {
+﻿Using Module "../../build/PrometheusForge/PrometheusForge.psd1"
+
+BeforeAll {
     Remove-Module PrometheusForge -ErrorAction SilentlyContinue
     $modulePath = Join-Path $PSScriptRoot '..\..\build\PrometheusForge\PrometheusForge.psd1'
     Import-Module $modulePath -Force
 }
 
 Describe 'Invoke-Forge' {
+    BeforeEach {
+        # Reset singleton instances before each test
+        [Variables]::Instance = $null
+        [Variables]::KeyValueStore = $null
+        [Variables]::IncludeTags = $null
+        [Variables]::ExcludeTags = $null
+        [Steps]::Instance = $null
+    }
+
     It 'runs the items when FilePath is an absolute YAML path' {
         $yamlPath = Join-Path $TestDrive 'workflow-absolute.yaml'
         @'

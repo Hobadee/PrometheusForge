@@ -122,7 +122,7 @@ class Step{
     }
 
     
-    [bool] Process(){
+    [object] Process(){
         <#
         .SYNOPSIS
         Executes the step plugin with retry and error handling.
@@ -142,9 +142,9 @@ class Step{
         7. If config.result is set, store full result object in Variables singleton.
 
         .OUTPUTS
-        System.Boolean
-        - $true  when RunTask ultimately reports success
-        - $false when all attempts fail and onError is "fail"
+        System.Object
+        - Returns $true (as object) when RunTask ultimately reports success
+        - Returns $false (as object) when all attempts fail and onError is "fail"
 
         .NOTES
         RunTask is expected to return an object/hashtable containing at least a success field.
