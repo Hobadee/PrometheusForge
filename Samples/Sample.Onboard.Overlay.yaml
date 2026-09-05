@@ -24,7 +24,7 @@ excludeByTags: []
 # Variables that can be referenced throughout the workflow
 # These override any defaults in the base configuration
 variables:
-  userName: "jdoe"
+  userName: "jdoe_overlay"
   fullName: "John Doe - Pulled from Overlay Variables"
   #setupPhase: 1
   #skipSoftwareDeployment: false

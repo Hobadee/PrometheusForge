@@ -59,9 +59,9 @@
         throw [System.ArgumentException]::new("The YAML configuration at '$FilePath' must contain a top-level 'root' property.", 'FilePath')
     }
 
-    $items = [ItemFactory]::Create($itemConfig)
+    $stepTree = [StepTree]::new($itemConfig)
 
-    $items.Process() | Out-Null
+    $stepTree.Process() | Out-Null
 
     return $true
 }

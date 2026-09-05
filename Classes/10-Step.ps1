@@ -43,7 +43,7 @@ class Step{
             $this.InitializePlugin()
         }
         else {
-            Write-Debug "Step $($this.name) is configured for late binding. Plugin will be resolved at execution time."
+            Write-Verbose "Step $($this.name) is configured for late binding. Plugin will be resolved at execution time."
         }
     }
 
@@ -111,7 +111,7 @@ class Step{
             }
         }
 
-        Write-Debug "Step: $($this.name) - Plugin initialized with parameters: $($this.config.parameters)"
+        Write-Debug "Step: $($this.name) - Plugin initialized"
         
         # Parameters are now stored in the plugin
         # We could remove them from the config to reduce memory bloat, but

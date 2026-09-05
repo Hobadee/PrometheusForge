@@ -1,0 +1,47 @@
+name: Sample Onboard
+version: 1.0
+description: Basic test of the import functionality
+
+metadata:
+  author: Eric Kincl
+  created: 2026-07-10
+
+variables:
+  section12: "./Samples/Sample.Import.section.1.2.yaml"
+  section2: "./Samples/Sample.Import.section.2.yaml"
+
+root:
+  - type: section
+    name: root
+    items:
+      - type: section
+        name: Section 1
+        items:
+          - type: step
+            name: Section 1.1
+            plugin: TextOutput
+            parameters:
+              - message: Executing Section 1.1
+          - type: step
+            name: Section 1.2
+            plugin: ImportConfig
+            parameters:
+              - uri: "{{section12}}"
+              - sourcePluginName: yamlSource
+            defer_binding: true
+          - type: step
+            name: Section 1.3
+            plugin: TextOutput
+            parameters:
+              - message: Executing Section 1.3
+      - type: step
+        name: Section 2
+        plugin: ImportConfig
+        parameters:
+          - uri: "{{section2}}"
+          - sourcePluginName: yamlSource
+      - type: step
+        name: Section 3
+        plugin: TextOutput
+        parameters:
+          - message: Executing Section 3

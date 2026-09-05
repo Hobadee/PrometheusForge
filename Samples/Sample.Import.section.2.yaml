@@ -1,0 +1,17 @@
+name: Sample Onboard
+version: 1.0
+description: Basic test of the import functionality
+
+metadata:
+  author: Eric Kincl
+  created: 2026-07-10
+
+root:
+  - type: section
+    name: root
+    items:
+      - type: step
+        name: Section 2.1
+        plugin: TextOutput
+        parameters:
+          - message: Executing Section 2 - Imported

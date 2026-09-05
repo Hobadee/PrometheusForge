@@ -141,6 +141,19 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
+        # Drain any configs the plugin queued via Api.Configuration.Insert() during its own step,
+        # so they run as additional children of this node in the same pass.
+        # PowerShell property access on $null short-circuits to $null, so this chain is safe even
+        # when $step (e.g. sections have none) or $step.plugin is $null.
+        # Insert() may have been called multiple times (per Execute() or across retries); each
+        # queued config becomes its own child here, added in the same order Insert() was called.
+        if ($null -ne $step.plugin.Api) {
+            foreach ($insertedConfig in $step.plugin.Api.Configuration.GetPendingInserts()) {
+                Write-Debug "Inserting plugin-requested child config '$($insertedConfig.name)' under '$($this.name)'"
+                $this.Add([StepTree]::new($insertedConfig))
+            }
+            $step.plugin.Api.Configuration.ClearPendingInserts()
+        }
 
         foreach ($child in $this.children) {
             $res = $child.Process()
