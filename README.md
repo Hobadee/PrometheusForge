@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Assets/prometheus-forge-logo.png" alt="Prometheus Forge logo" width="240">
+  <img src="Assets/prometheus-forge-logo.svg" alt="Prometheus Forge logo" width="240">
 </p>
 
 <h1 align="center">Prometheus Forge</h1>
