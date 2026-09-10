@@ -10,17 +10,6 @@ metadata:
   created: 2024-01-01
   baseConfig: SampleOnboard.yaml
 
-# Tag-based filtering: Include only sections/steps with these tags
-includeByTags:
-  - create-user
-  - create-accounts
-  - enroll-mdm
-  - setup-computer
-
-# Tag-based filtering: Exclude sections/steps with these tags
-excludeByTags: []
-  # Example: ["hardware"]  would skip hardware configuration
-
 # Variables that can be referenced throughout the workflow
 # These override any defaults in the base configuration
 variables:
@@ -28,3 +17,19 @@ variables:
   fullName: "John Doe - Pulled from Overlay Variables"
   #setupPhase: 1
   #skipSoftwareDeployment: false
+
+  # Tag-based filtering: Include only sections/steps with these tags
+  # tagsInclude here overwrites (does not merge with) the base config's tagsInclude
+  tagsInclude:
+    - create-user
+    - create-accounts
+    - enroll-mdm
+    - setup-computer
+
+  # Tag-based filtering: Exclude sections/steps with these tags
+  tagsExclude: []
+    # Example: ["hardware"]  would skip hardware configuration
+
+  # When a step's tags match both tagsInclude and tagsExclude, tagsPrecedence decides
+  # whether it runs ("include") or is skipped ("exclude"). Unset/empty defaults to "include".
+  #tagsPrecedence: include

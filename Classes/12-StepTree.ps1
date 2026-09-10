@@ -25,6 +25,7 @@ class StepTree : System.Collections.IEnumerable{
 
     [string] $name = $null
     [System.Collections.Generic.List[StepTree]] $children = $null
+    [tags] $tags = $null
 
     # For IEnumerable implementation, track the current index for iteration
     [int] $currentIndex = 0
@@ -44,6 +45,11 @@ class StepTree : System.Collections.IEnumerable{
         }
         #Write-Debug "[StepTree]::new() Creating StepTree node '$($config.name)'"
         $this.name = $config.name
+
+        $this.tags = [tags]::new()
+        if ($null -ne $config.tags) {
+            $this.tags.AddTags($config.tags)
+        }
 
         # Add and associate Step object to the Steps collection
         $steps = [Steps]::GetInstance()
@@ -112,6 +118,41 @@ class StepTree : System.Collections.IEnumerable{
 
         $this.children.Add($child)
     }
+
+
+    [bool] checkConditionals() {
+        <#
+        .SYNOPSIS
+        Checks if the step should be executed based on its conditionals.
+
+        .DESCRIPTION
+        Compares this node's tags against the run's configured IncludeTags/ExcludeTags:
+        - Matches neither: run
+        - Matches exclude only: skip
+        - Matches include only: run
+        - Matches both: fall back to the 'tagsPrecedence' variable ('include' runs, 'exclude' skips,
+          unset/anything else defaults to running)
+
+        .OUTPUTS
+        [bool] True if all conditionals are met, false otherwise
+        #>
+        $includeTags = [Variables]::IncludeTags
+        $excludeTags = [Variables]::ExcludeTags
+
+        $matchesInclude = $includeTags.Count() -gt 0 -and $this.tags.HasTags($includeTags.GetTags())
+        $matchesExclude = $excludeTags.Count() -gt 0 -and $this.tags.HasTags($excludeTags.GetTags())
+
+        if ($matchesInclude -and $matchesExclude) {
+            $precedence = [Variables]::GetInstance().Get('tagsPrecedence')
+            return $precedence -ne 'exclude'
+        }
+
+        if ($matchesExclude) {
+            return $false
+        }
+
+        return $true
+    }
     
 
     [object] Process(){
@@ -123,6 +164,20 @@ class StepTree : System.Collections.IEnumerable{
         System.Object
         Really a boolean, but PowerShell binding quirks require it to be declared as System.Object.
         #>
+
+        # Check if we even need to run this step, given our conditionals
+        if (-not $this.checkConditionals()) {
+            Write-Debug "[StepTree]::Process() - $($this.name) conditionals not met. Skipping execution."
+
+            # Returning early will skip processing childres as well; this is what we want.
+            return $true
+
+            # Would be nice to note somehow that step was skipped, but result is stored in Step object, not StepTree
+            # TODO: Ponder this and figure out a solution - maybe force the result into the StepTree's result property?
+            #$res = @{success = $true; skipped = $true}
+            #return $res
+        }
+
         $stepTotal = 0
         $stepSuccess = 0
         $stepFailure = 0

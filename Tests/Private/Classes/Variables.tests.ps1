@@ -116,6 +116,25 @@ Describe 'Key/Value Store Operations' {
             $exceptionType = [System.ArgumentException]
             { $config.SetMany([pscustomobject]@{ key = 'value' }) } | Should -Throw -ExceptionType $exceptionType
         }
+
+        It 'Should populate IncludeTags from a tagsInclude entry' {
+            $config.SetMany(@{ tagsInclude = @('tag1', 'tag2') })
+            $config.GetIncludeTags() | Should -Contain 'tag1'
+            $config.GetIncludeTags() | Should -Contain 'tag2'
+        }
+
+        It 'Should populate ExcludeTags from a tagsExclude entry' {
+            $config.SetMany(@{ tagsExclude = @('tag1', 'tag2') })
+            $config.GetExcludeTags() | Should -Contain 'tag1'
+            $config.GetExcludeTags() | Should -Contain 'tag2'
+        }
+
+        It 'Should overwrite previously set IncludeTags on a later SetMany call' {
+            $config.SetMany(@{ tagsInclude = @('tag1') })
+            $config.SetMany(@{ tagsInclude = @('tag2') })
+            $config.GetIncludeTags() | Should -Not -Contain 'tag1'
+            $config.GetIncludeTags() | Should -Contain 'tag2'
+        }
     }
 
     Context 'HasKey' {

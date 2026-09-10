@@ -108,6 +108,8 @@
         .NOTES
         If entries is $null, this method is a no-op.
         Keys are validated through Set(). Existing keys are overwritten.
+
+        The special 'tagsInclude'/'tagsExclude' keys are NOT overwritten, but rather appended to the existing IncludeTags/ExcludeTags collections.
         #>
         if ($null -eq $entries) {
             return
@@ -118,7 +120,25 @@
         }
 
         foreach ($key in $entries.Keys) {
-            $this.Set($key, $entries[$key])
+            switch ($key) {
+                'tagsInclude' {
+                    # Append, don't overwrite existing tags
+                    #[Variables]::IncludeTags.Clear()
+                    foreach ($tag in $entries['tagsInclude']) {
+                        [Variables]::IncludeTags.AddTag($tag)
+                    }
+                }
+                'tagsExclude' {
+                    # Append, don't overwrite existing tags
+                    #[Variables]::ExcludeTags.Clear()
+                    foreach ($tag in $entries['tagsExclude']) {
+                        [Variables]::ExcludeTags.AddTag($tag)
+                    }
+                }
+                default {
+                    $this.Set($key, $entries[$key])
+                }
+            }
         }
     }
 

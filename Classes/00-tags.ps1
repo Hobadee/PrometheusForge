@@ -45,6 +45,14 @@ class tags {
     }
 
 
+    [tags] AddTags([string[]] $tags) {
+        foreach ($tag in $tags) {
+            $this.AddTag($tag)
+        }
+        return $this
+    }
+
+
     [tags] RemoveTag([string] $tag) {
         <#
         .SYNOPSIS
@@ -76,6 +84,26 @@ class tags {
         [bool] True if the tag exists, false otherwise
         #>
         return $this.TagList.Contains($tag)
+    }
+
+
+    [bool] HasTags([string[]] $tags) {
+        <#
+        .SYNOPSIS
+        Checks if any of the specified tags exist in the collection
+
+        .PARAMETER tags
+        The array of tag strings to check for
+
+        .OUTPUTS
+        [bool] True if at least one of the specified tags exists, false otherwise
+        #>
+        foreach ($tag in $tags) {
+            if ($this.HasTag($tag)) {
+                return $true
+            }
+        }
+        return $false
     }
 
 

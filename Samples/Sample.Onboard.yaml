@@ -11,6 +11,15 @@ variables:
   globalMethod: "Info"
   sampleImportPath: "./Samples/Sample.Onboard.ImportedSection.yaml"
   # See Sample.Onboard.Overlay.yaml for an example of how to override these variables in an overlay
+  tagsInclude:
+    - Documentation
+    - Purchase
+    - Laptop
+    - YubiKey
+    - Phone
+  tagsExclude:
+    - Finance
+    - HR
 
 root:
   - type: section

@@ -159,6 +159,7 @@ class Step{
         then either throws (onError=abort) or returns $false (onError=fail).
         #>
 
+        # Check if we need to initialize the plugin for late binding
         if($null -eq $this.plugin) {
             Write-Debug "[Step]::Process() - $($this.name) is configured for late binding. Initializing plugin now."
             $this.InitializePlugin()
