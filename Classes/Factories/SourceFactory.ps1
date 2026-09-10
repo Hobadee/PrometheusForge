@@ -48,7 +48,7 @@ class SourceFactory {
                     type = 'section'
                     items = @($resolvedConfig)
                 }
-                Write-Debug "[SourceFactory]::Create() - Wrapping imported step config '$($resolvedConfig.name)' in a synthetic section item."
+                [Log]::Debug("[SourceFactory]::Create() - Wrapping imported step config '$($resolvedConfig.name)' in a synthetic section item.")
             }
             
             return [StepTree]::new($resolvedConfig)

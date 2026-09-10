@@ -19,6 +19,7 @@ function Reset-ForgeState {
     [CmdletBinding()]
     param ()
 
+    [Log]::Reset()
     [Variables]::Reset()
     [Steps]::Reset()
 }

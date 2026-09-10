@@ -10,6 +10,7 @@ variables:
   domainName: "corp.example.com"
   globalMethod: "Info"
   sampleImportPath: "./Samples/Sample.Onboard.ImportedSection.yaml"
+  logTerminalLevel: "Debug"
   # See Sample.Onboard.Overlay.yaml for an example of how to override these variables in an overlay
   tagsInclude:
     - Documentation

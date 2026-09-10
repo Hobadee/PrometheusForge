@@ -3,8 +3,9 @@
 Last updated: 2026-09-09
 
 ## Recent Changes
+- Added the terminal-only MVP `Log` singleton and `LogLevel` enum. `TextOutput` now routes its output through the logger, which prefixes messages with their level. Logger configuration currently supports enabling or disabling terminal output; file and other sinks remain future work.
 - Implemented tag-based include/exclude filtering (MVP TODO #1). `StepTree` now owns a `tags` object populated from each item's `tags` YAML list, and `checkConditionals()` compares it against `Variables.IncludeTags`/`ExcludeTags`: no match runs the step, an exclude-only match skips it, an include-only match runs it, and a match on both falls back to the `tagsPrecedence` variable (`"include"` runs, `"exclude"` skips, unset/empty defaults to running).
-- `Variables.SetMany()` now recognizes `tagsInclude`/`tagsExclude` entries in a variables map and (re)populates `IncludeTags`/`ExcludeTags` accordingly, so overlay variables overwrite base-config tag filters the same way any other variable is overwritten. `tagsPrecedence` is read as a plain variable via `Variables.Get('tagsPrecedence')`.
+- `Variables.SetMany()` now recognizes `tagsInclude`/`tagsExclude` entries in a variables map and appends them to `IncludeTags`/`ExcludeTags` across calls. This is intentionally inconsistent with ordinary variables, which overwrite earlier values. `tagsPrecedence` is read as a plain variable via `Variables.Get('tagsPrecedence')`.
 - Updated `Sample.Onboard.Overlay.yaml` to move tag filtering (`tagsInclude`/`tagsExclude`) under `variables:` (and documented `tagsPrecedence`), replacing the previous unused top-level `includeByTags`/`excludeByTags` keys.
 - Added `StepTree tags` and `StepTree checkConditionals` Pester coverage, plus `SetMany` tag-population coverage in the (duplicate) `Variables.tests.ps1`/`Configuration.tests.ps1` files.
 - Added an `AI-Assisted Development` section to `README.md` that transparently acknowledges AI assistance while clarifying that architecture, workflow design, decisions, and review are human-led.
@@ -54,14 +55,18 @@ Last updated: 2026-09-09
 **Suggested Implementation Order**
 
 1. Logging Class
-1. Full test-suite coverage
-2. Advanced templating coverage beyond the current MVP
-3. Step addon overlay insertion semantics and lazy-loading design
+2. Full test-suite coverage
+3. Advanced templating coverage beyond the current MVP
+4. Step addon overlay insertion semantics and lazy-loading design
 
 ### Logging Class
-We need a "logging" class that all output should pass through.  This needs to be a singleton, but we'll usually access via a static method:
+Implemented the terminal-only MVP `Log` singleton and `LogLevel` enum. All `TextOutput` output now passes through the logger and is prefixed with its level. The logger can enable or disable terminal output; file and other sinks remain future work.
+
+The original design was:
 `log::write([string]$msg, [enum]$level)`
 Where `[enum]` is an enum we create for this with standard log levels such as "INFO", "WARNING", "DEBUG", etc...
+
+Reason for being a singleton is that when writing files or other log locations, we want things to remain ordered properly, and only have a single file handle open if required.
 
 Backing static functions for each level need to exist, such as `log::info([string]$msg)`, but this will just call `log::write($msg, "INFO")` for the user.
 

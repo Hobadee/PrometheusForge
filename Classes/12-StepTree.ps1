@@ -167,7 +167,7 @@ class StepTree : System.Collections.IEnumerable{
 
         # Check if we even need to run this step, given our conditionals
         if (-not $this.checkConditionals()) {
-            Write-Debug "[StepTree]::Process() - $($this.name) conditionals not met. Skipping execution."
+            [Log]::Debug("[StepTree]::Process() - $($this.name) conditionals not met. Skipping execution.")
 
             # Returning early will skip processing childres as well; this is what we want.
             return $true
@@ -224,7 +224,7 @@ class StepTree : System.Collections.IEnumerable{
                     throw [System.ArgumentException]::new("No step named '$overrideName' exists to override.")
                 }
 
-                Write-Debug "[StepTree]::Process() - Replacing plugin-requested step '$overrideName'"
+                [Log]::Debug("[StepTree]::Process() - Replacing plugin-requested step '$overrideName'")
                 [Steps]::GetInstance().Update([Step]::new($overrideConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingOverrides()
@@ -238,7 +238,7 @@ class StepTree : System.Collections.IEnumerable{
         # queued config becomes its own child here, added in the same order Insert() was called.
         if ($null -ne $step.plugin.Api) {
             foreach ($insertedConfig in $step.plugin.Api.Configuration.GetPendingInserts()) {
-                Write-Debug "[StepTree]::Process() - Inserting plugin-requested child config '$($insertedConfig.name)' under '$($this.name)'"
+                [Log]::Debug("[StepTree]::Process() - Inserting plugin-requested child config '$($insertedConfig.name)' under '$($this.name)'")
                 $this.Add([StepTree]::new($insertedConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingInserts()
@@ -262,7 +262,7 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
-        Write-Debug "[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed."
+        [Log]::Debug("[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed.")
 
         if ($stepFailure -gt 0) {
             return $false

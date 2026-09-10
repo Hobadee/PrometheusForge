@@ -129,11 +129,18 @@ Describe 'Key/Value Store Operations' {
             $config.GetExcludeTags() | Should -Contain 'tag2'
         }
 
-        It 'Should overwrite previously set IncludeTags on a later SetMany call' {
+        It 'Should append IncludeTags on a later SetMany call' {
             $config.SetMany(@{ tagsInclude = @('tag1') })
             $config.SetMany(@{ tagsInclude = @('tag2') })
-            $config.GetIncludeTags() | Should -Not -Contain 'tag1'
+            $config.GetIncludeTags() | Should -Contain 'tag1'
             $config.GetIncludeTags() | Should -Contain 'tag2'
+        }
+
+        It 'Should append ExcludeTags on a later SetMany call' {
+            $config.SetMany(@{ tagsExclude = @('tag1') })
+            $config.SetMany(@{ tagsExclude = @('tag2') })
+            $config.GetExcludeTags() | Should -Contain 'tag1'
+            $config.GetExcludeTags() | Should -Contain 'tag2'
         }
     }
 

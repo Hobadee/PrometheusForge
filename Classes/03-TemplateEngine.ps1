@@ -18,6 +18,9 @@
 
     .NOTES
     This class is intentionally static-only and has no instance state.
+
+    This class entirely AI generated and not human reviewed at all, but hey, it works.
+    TODO: Eventually have a human review this
     #>
 
     static [string] ExpandString([string]$template, [Variables]$configuration) {

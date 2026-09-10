@@ -23,7 +23,7 @@ class Step{
         
         #Write-Debug "[Step]::new() Creating Step: $($config.name)"
         if (-not ($config.name -and $config.name -is [string])) {
-            Write-Debug "[Step]::new() Failed attempt to create a Step with an invalid name: $($config.name)"
+            [Log]::Debug("[Step]::new() Failed attempt to create a Step with an invalid name: $($config.name)")
             throw [System.ArgumentException]::new("Every step must contain a name") 
         }
 
@@ -36,14 +36,14 @@ class Step{
 
         # We don't actually *REQUIRE* parameters - plugins *MAY* have no parameters.  (Although it is probably rare.)  So we will just warn if they are missing, but not throw an exception.
         if (-not ($this.config.parameters -and $this.config.parameters -is [object])){
-            Write-Warning "[Step]::new() Step $($this.config.name) does not include plugin parameters.  This may be valid if the plugin does not require parameters, but it is unusual."
+            [Log]::Warning("[Step]::new() Step $($this.config.name) does not include plugin parameters.  This may be valid if the plugin does not require parameters, but it is unusual.")
         }
 
         if($true -ne $this.config.defer_binding){
             $this.InitializePlugin()
         }
         else {
-            Write-Verbose "Step $($this.name) is configured for late binding. Plugin will be resolved at execution time."
+            [Log]::Verbose("Step $($this.name) is configured for late binding. Plugin will be resolved at execution time.")
         }
     }
 
@@ -161,7 +161,7 @@ class Step{
 
         # Check if we need to initialize the plugin for late binding
         if($null -eq $this.plugin) {
-            Write-Debug "[Step]::Process() - $($this.name) is configured for late binding. Initializing plugin now."
+            [Log]::Debug("[Step]::Process() - $($this.name) is configured for late binding. Initializing plugin now.")
             $this.InitializePlugin()
         }
 

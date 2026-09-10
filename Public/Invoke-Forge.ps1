@@ -15,6 +15,9 @@
     One or more overlay YAML files. Overlay files are processed in the order provided,
     and each overlay's `variables` keys overwrite previously set values in Variables.
 
+    .PARAMETER Variables
+    A hashtable of variable names and values to set in the configuration. These variables overwrite any previously set values from the main YAML file or overlays.
+
     .OUTPUTS
     System.Boolean
     Returns $true when the workflow items complete successfully.
@@ -25,6 +28,9 @@
     .EXAMPLE
     Invoke-Forge -FilePath ./Samples/SampleOnboard.yaml -Overlay ./Samples/OverlayA.yaml, ./Samples/OverlayB.yaml
 
+    .EXAMPLE
+    Invoke-Forge -FilePath ./Samples/SampleOnboard.yaml -Variables @{ environment = 'production'; region = 'east' }
+
     .NOTES
     This function supports standard PowerShell common parameters such as -Verbose and -Debug.
     #>
@@ -33,13 +39,20 @@
         [Parameter(Mandatory = $true)]
         [string] $FilePath,
 
-        [string[]] $Overlay = @()
+        [string[]] $Overlay = @(),
+        [hashtable] $Variables = @{}
     )
 
     Reset-ForgeState
 
+    # Code to get `-Verbose` and `-Debug` flags, if we want to pass those to [Log] somehow?
+    #$verboseSet = $PSBoundParameters.ContainsKey('Verbose')
+    #$debugSet = $PSBoundParameters.ContainsKey('Debug')
+    #$verboseEnabled = $PSBoundParameters['Verbose'] -eq $true
+    #$debugEnabled = $PSBoundParameters['Debug'] -eq $true
+
     $mainPlugin = [sourcePluginFactory]::GetPlugin('yamlSource', $FilePath)
-    Write-Verbose "Loading configuration from '$($mainPlugin.URI.LocalPath)'."
+    [Log]::Info("Loading configuration from '$($mainPlugin.URI.LocalPath)'.")
     $cfg = $mainPlugin.Load()
 
     $configuration = [Variables]::GetInstance()
@@ -48,11 +61,14 @@
     if ($null -ne $Overlay) {
         foreach ($overlayPath in $Overlay) {
             $overlayPlugin = [sourcePluginFactory]::GetPlugin('yamlSource', $overlayPath)
-            Write-Verbose "Applying overlay '$($overlayPlugin.URI.LocalPath)'."
+            [Log]::Info("Applying overlay '$($overlayPlugin.URI.LocalPath)'.")
             $overlayCfg = $overlayPlugin.Load()
             $configuration.SetMany($overlayCfg.variables)
         }
     }
+
+    # Apply variables AFTER overlays - they have the highest precedence
+    $configuration.SetMany($Variables)
 
     if ($null -ne $cfg.root) {
         $itemConfig = $cfg.root
@@ -61,8 +77,8 @@
         throw [System.ArgumentException]::new("The YAML configuration at '$FilePath' must contain a top-level 'root' property.", 'FilePath')
     }
 
-    Write-Verbose "Running with Include Tags: $($configuration.Get('tagsInclude'))"
-    Write-Verbose "Running with Exclude Tags: $($configuration.Get('tagsExclude'))"
+    [Log]::Info("Running with Include Tags: $($configuration.Get('tagsInclude'))")
+    [Log]::Info("Running with Exclude Tags: $($configuration.Get('tagsExclude'))")
 
     $stepTree = [StepTree]::new($itemConfig)
 

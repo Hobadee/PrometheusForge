@@ -63,19 +63,19 @@ class TextOutput : TaskPluginInterface {
 
         switch ($this.parameters.method) {
             "Verbose" {
-                Write-Verbose($this.parameters.message)
+                [Log]::Write($this.parameters.message, [LogLevel]::Notice)
             }
             "Debug" {
-                Write-Debug($this.parameters.message)
+                [Log]::Debug($this.parameters.message)
             }
             "Error" {
-                [console]::Error.WriteLine("ERROR: $($this.parameters.message)")
+                [Log]::Error($this.parameters.message)
             }
             "Warning" {
-                [System.Console]::Out.WriteLine("WARNING: $($this.parameters.message)")
+                [Log]::Warning($this.parameters.message)
             }
             default {
-                [console]::WriteLine($this.parameters.message)
+                [Log]::Info($this.parameters.message)
             }
         }
         return $this
