@@ -35,19 +35,19 @@ root:
             result: password
             onError: abort
             retry:
-              - retries: 5
-                delay: 10
+              retries: 5
+              delay: 10
             parameters:
-              - length: 16
+              length: 16
           - type: step
             name: Generate user PIN
             plugin: PasswordGenerator
             parameters:
-              - length: 6
-                includeNumbers: true
-                includeLowercase: false
-                includeUppercase: false
-                includeSpecial: false
+              length: 6
+              includeNumbers: true
+              includeLowercase: false
+              includeUppercase: false
+              includeSpecial: false
             result: PIN
             defer_binding: true
       - type: section
@@ -63,28 +63,28 @@ root:
                 name: Laptop
                 plugin: TextOutput
                 parameters:
-                  - message: Purchasing laptop for {{ fullName }}...
+                  message: Purchasing laptop for {{ fullName }}...
                 tags:
                   - Laptop
               - type: step
                 name: YubiKey
                 plugin: TextOutput
                 parameters:
-                  - message: Purchasing YubiKey for {{ fullName }}...
+                  message: Purchasing YubiKey for {{ fullName }}...
                 tags:
                   - YubiKey
               - type: step
                 name: Phone
                 plugin: TextOutput
                 parameters:
-                  - message: Purchasing phone for {{ fullName }}...
+                  message: Purchasing phone for {{ fullName }}...
                 tags:
                   - Phone
           - type: step
             name: Purchase Google Fi phone line
             plugin: TextOutput
             parameters:
-              - message: Purchasing Google Fi phone line for {{ fullName }}...
+              message: Purchasing Google Fi phone line for {{ fullName }}...
             tags:
               - Purchase
               - Google Fi
@@ -92,8 +92,8 @@ root:
             name: Purchase Zoom license
             plugin: TextOutput
             parameters:
-              - message: Purchasing Zoom license for {{ fullName }}...
-                method: "{{globalMethod}}"
+              message: Purchasing Zoom license for {{ fullName }}...
+              method: "{{globalMethod}}"
             tags:
               - Purchase
               - Zoom
@@ -102,16 +102,16 @@ root:
             description: A "milestone" marker for task management systems
             plugin: TextOutput
             parameters:
-              - message: Pre-creation steps complete for {{ fullName }}.
-                method: "{{globalMethod}}"
+              message: Pre-creation steps complete for {{ fullName }}.
+              method: "{{globalMethod}}"
             tags:
               - milestone
       - type: step
         name: Imported Sample Content
         plugin: ImportConfig
         parameters:
-          - uri: "{{sampleImportPath}}"
-          - sourcePluginName: yamlSource
+          uri: "{{sampleImportPath}}"
+          sourcePluginName: yamlSource
       - type: section
         name: User Creation/Accounts Setup
         items:
@@ -122,8 +122,8 @@ root:
                 name: Assign generated password
                 plugin: TextOutput
                 parameters:
-                  - message: Password for {{ fullName }} is {{ password.object.generatedPassword }}
-                    #method: Verbose
+                  message: Password for {{ fullName }} is {{ password.object.generatedPassword }}
+                    #method: Info
           - type: section
             name: Assign user Okta applications
             tags:
@@ -133,24 +133,24 @@ root:
                 name: Google
                 plugin: TextOutput
                 parameters:
-                  - message: Assigning Google applications to {{ fullName }}...
-                    #method: Debug
+                  message: Assigning Google applications to {{ fullName }}...
+                  #method: Debug
                 tags:
                   - Google
               - type: step
                 name: Office365
                 plugin: TextOutput
                 parameters:
-                  - message: Assigning Office365 applications to {{ fullName }}...
-                    method: "{{globalMethod}}"
+                  message: Assigning Office365 applications to {{ fullName }}...
+                  method: "{{globalMethod}}"
                 tags:
                   - Office
               - type: step
                 name: Zoom
                 plugin: TextOutput
                 parameters:
-                  - message: Assigning Zoom applications to {{ fullName }}...
-                    method: "{{globalMethod}}"
+                  message: Assigning Zoom applications to {{ fullName }}...
+                  method: "{{globalMethod}}"
                 tags:
                   - Zoom
       - type: section
@@ -172,7 +172,7 @@ root:
                   - setup-computer
                 plugin: TextOutput
                 parameters:
-                  - message: "Installing base operating system..."
+                  message: "Installing base operating system..."
                 result: osInstalled
               # - type: step
               #   name: Install Drivers
@@ -186,8 +186,8 @@ root:
               #     timeout: 600
               #   onError: abort
               #   retry:
-              #     - retries: 3
-              #       delay: 0
+              #     retries: 3
+              #     delay: 0
               #   result: driversInstalled
           - type: section
             name: Network Setup
@@ -203,7 +203,7 @@ root:
                   - network
                 plugin: TextOutput
                 parameters:
-                  - message: "Configuring network adapter..."
+                  message: "Configuring network adapter..."
                 result: networkConfigured
               # - type: step
               #   name: Connect to Domain
@@ -238,7 +238,7 @@ root:
                   - create-accounts
                 plugin: TextOutput
                 parameters:
-                  - message: "Creating user account..."
+                  message: "Creating user account..."
                 result: userCreated
               - type: step
                 name: Configure User Permissions
@@ -246,7 +246,7 @@ root:
                   - create-user
                 plugin: TextOutput
                 parameters:
-                  - message: "Configuring user permissions..."
+                  message: "Configuring user permissions..."
                 result: permissionsConfigured
           - type: section
             name: Mobile Device Management
@@ -258,7 +258,7 @@ root:
                 name: Enroll in MDM
                 plugin: TextOutput
                 parameters:
-                  - message: "Enrolling device in MDM..."
+                  message: "Enrolling device in MDM..."
       - type: section
         name: Software Deployment
         tags:
@@ -270,4 +270,4 @@ root:
             name: Deploy Applications
             plugin: TextOutput
             parameters:
-              - message: "Deploying required applications..."
+              message: "Deploying required applications..."

@@ -14,4 +14,4 @@ root:
         name: Section 2.1
         plugin: TextOutput
         parameters:
-          - message: Executing Section 2 - Imported
+          message: Executing Section 2 - Imported

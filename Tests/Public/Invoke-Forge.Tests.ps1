@@ -210,7 +210,7 @@ root:
         plugin: TextOutput
         result: outputResult
         parameters:
-          - message: "User={{fullName}}"
+          message: "User={{fullName}}"
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
         $result = Invoke-Forge -FilePath $yamlPath

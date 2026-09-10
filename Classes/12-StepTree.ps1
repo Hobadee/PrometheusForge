@@ -224,7 +224,7 @@ class StepTree : System.Collections.IEnumerable{
                     throw [System.ArgumentException]::new("No step named '$overrideName' exists to override.")
                 }
 
-                [Log]::Debug("[StepTree]::Process() - Replacing plugin-requested step '$overrideName'")
+                [Log]::Write("[StepTree]::Process() - Replacing API-requested step '$overrideName'", "Debug")
                 [Steps]::GetInstance().Update([Step]::new($overrideConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingOverrides()
@@ -238,7 +238,7 @@ class StepTree : System.Collections.IEnumerable{
         # queued config becomes its own child here, added in the same order Insert() was called.
         if ($null -ne $step.plugin.Api) {
             foreach ($insertedConfig in $step.plugin.Api.Configuration.GetPendingInserts()) {
-                [Log]::Debug("[StepTree]::Process() - Inserting plugin-requested child config '$($insertedConfig.name)' under '$($this.name)'")
+                [Log]::Write("[StepTree]::Process() - Inserting API-requested child config '$($insertedConfig.name)' under '$($this.name)'", "Debug")
                 $this.Add([StepTree]::new($insertedConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingInserts()
@@ -262,7 +262,7 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
-        [Log]::Debug("[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed.")
+        [Log]::Write("[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed.", "Trace")
 
         if ($stepFailure -gt 0) {
             return $false

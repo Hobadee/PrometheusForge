@@ -77,8 +77,8 @@
         throw [System.ArgumentException]::new("The YAML configuration at '$FilePath' must contain a top-level 'root' property.", 'FilePath')
     }
 
-    [Log]::Info("Running with Include Tags: $($configuration.Get('tagsInclude'))")
-    [Log]::Info("Running with Exclude Tags: $($configuration.Get('tagsExclude'))")
+    [Log]::Info("Running with Include Tags: $($configuration.GetIncludeTags())")
+    [Log]::Info("Running with Exclude Tags: $($configuration.GetExcludeTags())")
 
     $stepTree = [StepTree]::new($itemConfig)
 

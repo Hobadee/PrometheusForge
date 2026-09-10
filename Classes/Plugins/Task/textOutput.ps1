@@ -61,23 +61,12 @@ class TextOutput : TaskPluginInterface {
         The instance of the TextOutput class after execution.
         #>
 
-        switch ($this.parameters.method) {
-            "Verbose" {
-                [Log]::Write($this.parameters.message, [LogLevel]::Notice)
-            }
-            "Debug" {
-                [Log]::Debug($this.parameters.message)
-            }
-            "Error" {
-                [Log]::Error($this.parameters.message)
-            }
-            "Warning" {
-                [Log]::Warning($this.parameters.message)
-            }
-            default {
-                [Log]::Info($this.parameters.message)
-            }
+        if ($null -eq $this.parameters.method) {
+            $this.parameters.method = "Info"
         }
+
+        [Log]::Write($this.parameters.message, $this.parameters.method)
+
         return $this
     }
     

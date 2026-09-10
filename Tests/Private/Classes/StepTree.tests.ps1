@@ -15,14 +15,14 @@ Describe 'StepTree configuration overrides' {
                     type = 'step'
                     name = 'Request replacement'
                     plugin = 'TextOutput'
-                    parameters = @{ message = 'requesting replacement'; method = 'Verbose' }
+                    parameters = @{ message = 'requesting replacement'; method = 'Info' }
                 },
                 @{
                     type = 'step'
                     name = 'Target'
                     plugin = 'TextOutput'
                     result = 'originalResult'
-                    parameters = @{ message = 'original'; method = 'Verbose' }
+                    parameters = @{ message = 'original'; method = 'Info' }
                 }
             )
         }
@@ -31,7 +31,7 @@ Describe 'StepTree configuration overrides' {
             name = 'Target'
             plugin = 'TextOutput'
             result = 'replacementResult'
-            parameters = @{ message = 'replacement'; method = 'Verbose' }
+            parameters = @{ message = 'replacement'; method = 'Info' }
         }
 
         $tree = [StepTree]::new($rootConfig)

@@ -1,5 +1,5 @@
 enum LogLevel {
-    Emergency = 0
+    Emergency  = 0
     Alert     = 1
     Critical  = 2
     Error     = 3
@@ -7,7 +7,9 @@ enum LogLevel {
     Notice    = 5
     Info      = 6
     Debug     = 7
+    Trace     = 8
 }
+
 
 class Log {
     <#
@@ -88,6 +90,7 @@ class Log {
             ([LogLevel]::Notice) { return [System.ConsoleColor]::Cyan }
             ([LogLevel]::Info) { return [System.ConsoleColor]::Green }
             ([LogLevel]::Debug) { return [System.ConsoleColor]::Gray }
+            ([LogLevel]::Trace) { return [System.ConsoleColor]::DarkGray }
         }
 
         return [System.ConsoleColor]::White

@@ -54,23 +54,51 @@ Last updated: 2026-09-09
 
 **Suggested Implementation Order**
 
-1. Logging Class
-2. Full test-suite coverage
+1. Full test-suite coverage
+2. Asana Plugin
 3. Advanced templating coverage beyond the current MVP
 4. Step addon overlay insertion semantics and lazy-loading design
+
+### Asana Task Plugin
+My original goal was to create Asana checklists.  Since we are very near MVP now, I would like to make an Asana plugin.  Plugin should have the following parameters:
+- Name (becomes Asana task name)
+- Description (becomes Asana description)
+- Parent (If a nested task, the name of the `Step` object containing the return information of the parent)
+- DependancyParent (Asana tasks that need to be completed before this one.  Name of `Step` object containing return information)
+- DependancyChild (Asana tasks that can only be completed after this one.  Name of the `Step` object(s) containing return information)
+- Type (Item, Section, Milestone, Project.  Various parameters ignored for certain types)
+- Color (For Projects)
+- Icon (For Projects)
+
+It's unlikely we will use DependancyChild, as it's more likely the parent object is created before the child object, but it isn't 100% certain
+
+We will want a singleton attached to the Asana plugin to handle API connection to Asana.  Configuration will be global via a YAML "variables" section or CLI args.
+Configuration variables we need:
+- Personal Access Token
+
+#### Asana API Reference
+https://developers.asana.com/reference/rest-api-reference
+https://developers.asana.com/reference/createproject
+https://developers.asana.com/reference/createsectionforproject
+https://developers.asana.com/reference/createtask
+https://developers.asana.com/reference/adddependenciesfortask
+https://developers.asana.com/reference/adddependentsfortask
+
+
+### StepTree Metrics
+StepTree should store it's metrics, (pass/fail minimum - maybe timing and other?) then pass itself as an object back upstream so we can generate a report at the end.
+
 
 ### Logging Class
 Implemented the terminal-only MVP `Log` singleton and `LogLevel` enum. All `TextOutput` output now passes through the logger and is prefixed with its level. The logger can enable or disable terminal output; file and other sinks remain future work.
 
-The original design was:
-`log::write([string]$msg, [enum]$level)`
-Where `[enum]` is an enum we create for this with standard log levels such as "INFO", "WARNING", "DEBUG", etc...
-
 Reason for being a singleton is that when writing files or other log locations, we want things to remain ordered properly, and only have a single file handle open if required.
 
-Backing static functions for each level need to exist, such as `log::info([string]$msg)`, but this will just call `log::write($msg, "INFO")` for the user.
-
 The logger should take configuration to be able to output to terminal, file, or other sinks.  (MVP will just be terminal output - we'll handle other outputs later)
+
+Possibly implement sinks as plugins?
+
+Create LogEntry class and store each entry there with timestamp, facility, message, trace, and other metrics, allowing us to replay or bulk flush logs to a sink later
 
 
 ### API permission settings
