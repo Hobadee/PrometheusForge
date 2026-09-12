@@ -1,0 +1,99 @@
+name: Sample Secrets
+version: 1.0
+description: Basic onboarding workflow example with hierarchical sections, steps, and plugin-based execution
+
+metadata:
+  author: Eric Kincl
+  created: 2026-07-10
+
+variables:
+  Plugin.Asana.WorkspaceGID: "<your-workspace-gid-here>"
+
+root:
+  - type: section
+    name: root
+    items:
+      - type: step
+        name: Create Asana Project
+        plugin: AsanaCreateProject
+        result: asanaProject
+        tags:
+          - asana
+        parameters:
+          workspaceGid: "{Plugin.Asana.WorkspaceGID}"
+          name: "Sample Project"
+      - type: section
+        name: Asana Documentation Section
+        items:
+          - type: step
+            name: Create Asana Documentation Section
+            plugin: AsanaCreateSection
+            result: asanaDocumentationSection
+            parameters:
+              projectGid: "{asanaProject.gid}"
+              name: "Documentation"
+          - type: step
+            name: Asana Documentation - General Information
+            plugin: AsanaCreateTask
+            parameters:
+              projectGid: "{asanaProject.gid}"
+              sectionGid: "{asanaDocumentationSection.gid}"
+              name: "General Information"
+              notes: "Place general information about the onboarding in the notes here"
+          - type: step
+            name: Generate User Account password
+            plugin: PasswordGenerator
+            result: UserPassword
+            parameters:
+              length: 16
+          - type: step
+            name: Generate User Account PIN
+            plugin: PasswordGenerator
+            parameters:
+              length: 6
+              includeNumbers: true
+              includeLowercase: false
+              includeUppercase: false
+              includeSpecial: false
+            result: UserPIN
+          - type: step
+            name: Asana Documentation - User Password
+            plugin: AsanaCreateTask
+            parameters:
+              projectGid: "{asanaProject.gid}"
+              sectionGid: "{asanaDocumentationSection.gid}"
+              name: "Generate a Password"
+              notes: "User Password: {UserPassword}"
+          - type: step
+            name: Asana Documentation - User PIN
+            plugin: AsanaCreateTask
+            parameters:
+              projectGid: "{asanaProject.gid}"
+              sectionGid: "{asanaDocumentationSection.gid}"
+              name: "Generate a PIN"
+              notes: "User PIN: {UserPIN}"
+      - type: section
+        name: Asana Switches
+        items:
+          - type: step
+            name: Create Asana Switches Section
+            plugin: AsanaCreateSection
+            result: asanaSwitchesSection
+            parameters:
+              projectGid: "{asanaProject.gid}"
+              name: "Switches"
+          - type: step
+            name: Switches - Computer Type
+            plugin: AsanaCreateTask
+            parameters:
+              projectGid: "{asanaProject.gid}"
+              sectionGid: "{asanaSwitchesSection.gid}"
+              name: "Computer Type"
+              notes: "Select ONLY ONE computer type from the options below"
+          - type: step
+            name: Switches - Computer Type - PC
+            plugin: AsanaCreateTask
+            parameters:
+              projectGid: "{asanaProject.gid}"
+              sectionGid: "{asanaSwitchesSection.gid}"
+              name: "Switches - Computer Type - PC"

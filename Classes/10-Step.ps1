@@ -237,5 +237,22 @@ class Step{
     }
 
 
+    [object] GetResult() {
+        <#
+        .SYNOPSIS
+        Gets the result of the current step
+
+        .OUTPUTS
+        System.Object
+        - The result of the step, or $null if it hasn't been processed
+        #>
+        if ($this.IsProcessed()) {
+            return $this.result
+        }
+
+        return $null
+    }
+
+
 
 }

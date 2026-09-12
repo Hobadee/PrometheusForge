@@ -90,7 +90,24 @@ Describe 'Key/Value Store Operations' {
         It 'Should return $null for non-existent key' {
             $config.Get('nonExistentKey') | Should -BeNullOrEmpty
         }
+
+        # Human verified test
+        It 'Should return the stored value with GetOrDefault when the key exists' {
+            $config.Set('existingKey', 'storedValue')
+            $config.GetOrDefault('existingKey', 'defaultValue') | Should -Be 'storedValue'
+        }
+
+        # Human verified test
+        It 'Should return the default value with GetOrDefault when the key does not exist' {
+            $config.GetOrDefault('missingKey', 'defaultValue') | Should -Be 'defaultValue'
+        }
         
+        # Human verified test
+        It 'Should return $null with GetOrDefault when the existing value is $null' {
+            $config.Set('nullKey', $null)
+            $config.GetOrDefault('nullKey', 'defaultValue') | Should -BeNullOrEmpty
+        }
+
         It 'Should be idempotent' {
             $config.Set('idempotentKey', 'value')
             $config.Set('idempotentKey', 'value')

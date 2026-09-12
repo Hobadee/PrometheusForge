@@ -133,6 +133,9 @@ class StepTree : System.Collections.IEnumerable{
         - Matches both: fall back to the 'tagsPrecedence' variable ('include' runs, 'exclude' skips,
           unset/anything else defaults to running)
 
+        .NOTES
+        Checking conditionals in StepTree vs. Step allows for skipping entire sections of the tree.
+
         .OUTPUTS
         [bool] True if all conditionals are met, false otherwise
         #>
@@ -142,16 +145,21 @@ class StepTree : System.Collections.IEnumerable{
         $matchesInclude = $includeTags.Count() -gt 0 -and $this.tags.HasTags($includeTags.GetTags())
         $matchesExclude = $excludeTags.Count() -gt 0 -and $this.tags.HasTags($excludeTags.GetTags())
 
+        [Log]::Write("[StepTree]::checkConditionals() - $($this.name) matchesInclude=$matchesInclude matchesExclude=$matchesExclude", "Trace")
+
+        # Run by default if no conditionals trigger
+        $rtn = $true
+
         if ($matchesInclude -and $matchesExclude) {
             $precedence = [Variables]::GetInstance().Get('tagsPrecedence')
-            return $precedence -ne 'exclude'
+            $rtn = $precedence -ne 'exclude'
         }
 
         if ($matchesExclude) {
-            return $false
+            $rtn = $false
         }
 
-        return $true
+        return $rtn
     }
     
 
@@ -204,6 +212,7 @@ class StepTree : System.Collections.IEnumerable{
             }
             $null {
                 # Step was not found, so we don't count it as a step
+                [Log]::Write("[StepTree]::Process() - Step '$($this.name)' not found.", "Warning")
             }
         }
 

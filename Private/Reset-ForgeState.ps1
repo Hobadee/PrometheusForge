@@ -22,4 +22,9 @@ function Reset-ForgeState {
     [Log]::Reset()
     [Variables]::Reset()
     [Steps]::Reset()
+
+    # Note: We actually DO NOT want to reset plugin singletons here.
+    # Plugins should be completely independent of all other logic, including logic here.
+    # Possibly allow a Forge API method to reset plugin singletons in the future, but not currently implemented.
+    #[AsanaApiClient]::Reset()
 }

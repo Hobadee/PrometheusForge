@@ -3,6 +3,7 @@
 Last updated: 2026-09-09
 
 ## Recent Changes
+- Added `Variables.GetOrDefault()` to return an existing variable value or a supplied fallback without overwriting the stored value, including coverage for existing, missing, and explicitly null values.
 - Added the terminal-only MVP `Log` singleton and `LogLevel` enum. `TextOutput` now routes its output through the logger, which prefixes messages with their level. Logger configuration currently supports enabling or disabling terminal output; file and other sinks remain future work.
 - Implemented tag-based include/exclude filtering (MVP TODO #1). `StepTree` now owns a `tags` object populated from each item's `tags` YAML list, and `checkConditionals()` compares it against `Variables.IncludeTags`/`ExcludeTags`: no match runs the step, an exclude-only match skips it, an include-only match runs it, and a match on both falls back to the `tagsPrecedence` variable (`"include"` runs, `"exclude"` skips, unset/empty defaults to running).
 - `Variables.SetMany()` now recognizes `tagsInclude`/`tagsExclude` entries in a variables map and appends them to `IncludeTags`/`ExcludeTags` across calls. This is intentionally inconsistent with ordinary variables, which overwrite earlier values. `tagsPrecedence` is read as a plain variable via `Variables.Get('tagsPrecedence')`.

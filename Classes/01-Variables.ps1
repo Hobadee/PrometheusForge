@@ -162,6 +162,32 @@
     }
 
 
+    [object] GetOrDefault([object] $key, [object] $defaultValue) {
+        <#
+        .SYNOPSIS
+        Gets a Variables value by key, or returns a default value when the key does not exist
+
+        .PARAMETER key
+        The Variables key to retrieve
+
+        .PARAMETER defaultValue
+        The value to return when the key does not exist
+
+        .OUTPUTS
+        [object] The value associated with the key, or the default value when the key does not exist
+
+        .NOTES
+        An existing key with a $null value returns $null rather than the default value.
+        #>
+        $this.ValidateKey($key)
+        if ($this.HasKey($key)) {
+            return [Variables]::KeyValueStore[$key]
+        }
+
+        return $defaultValue
+    }
+
+
     [bool] HasKey([object] $key) {
         <#
         .SYNOPSIS

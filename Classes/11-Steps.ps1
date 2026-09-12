@@ -122,6 +122,48 @@ class Steps {
         return $null
     }
 
+
+    [object] GetResult([string]$name) {
+        <#
+        .SYNOPSIS
+        Gets the result of a step by name
+
+        .PARAMETER name
+        The name of the step to retrieve the result for
+
+        .OUTPUTS
+        System.Object
+        - The result of the step, or $null if it doesn't exist
+        #>
+        if ($this.IsProcessed($name)) {
+            return $this.Get($name).GetResult()
+        }
+
+        return $null
+    }
+
+
+    [bool] IsProcessed([string]$name) {
+        <#
+        .SYNOPSIS
+        Checks if a step has been processed (run) by name
+
+        .PARAMETER name
+        The name of the step to check
+
+        .OUTPUTS
+        System.Boolean
+        - $true  if the step has been processed
+        - $false if the step has not been processed or does not exist
+        #>
+        if ($this.Exists($name)) {
+            return $this.Get($name).IsProcessed()
+        }
+
+        return $false
+    }
+    
+
     [bool] Exists([string]$name) {
         <#
         .SYNOPSIS
