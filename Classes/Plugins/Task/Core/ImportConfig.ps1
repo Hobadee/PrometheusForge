@@ -86,6 +86,7 @@ class ImportConfig : TaskPluginInterface {
         if ($resolvedConfig -is [System.Collections.IEnumerable] -and -not ($resolvedConfig -is [string]) -and -not ($resolvedConfig -is [System.Collections.IDictionary])) {
             $resolvedConfig = [pscustomobject]@{
                 name = 'Imported section'
+                slug = 'imported-section'
                 type = 'section'
                 items = @($resolvedConfig)
             }
@@ -94,6 +95,7 @@ class ImportConfig : TaskPluginInterface {
         if ($resolvedConfig.type -eq 'step') {
             $resolvedConfig = [pscustomobject]@{
                 name = if ($null -ne $resolvedConfig.name -and $resolvedConfig.name -is [string]) { $resolvedConfig.name } else { 'Imported section' }
+                slug = if ($null -ne $resolvedConfig.slug -and $resolvedConfig.slug -is [string]) { $resolvedConfig.slug } else { 'imported-section' }
                 type = 'section'
                 items = @($resolvedConfig)
             }

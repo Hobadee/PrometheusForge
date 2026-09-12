@@ -10,6 +10,7 @@ class Step{
     $default_onError = "fail"
 
     [string] $name = $null
+    [string] $slug = $null
     [taskPluginInterface] $plugin = $null
     [object] $config = $null
     [object] $result = $null
@@ -27,7 +28,14 @@ class Step{
             throw [System.ArgumentException]::new("Every step must contain a name") 
         }
 
+        # TODO: This regex validation is duplicated in StepTree - dedup, along with the name validation above, at some later time.
+        if (-not ($config.slug -and $config.slug -is [string] -and $config.slug -match '^[a-zA-Z0-9_-]+$')) {
+            [Log]::Debug("[Step]::new() Failed attempt to create a Step with an invalid slug: $($config.slug)")
+            throw [System.ArgumentException]::new("Every step must contain a slug matching '^[a-zA-Z0-9_-]+`$'")
+        }
+
         $this.name = $config.name
+        $this.slug = $config.slug
         $this.config = $config
 
         # Note: DO NOT check for plugin name here - that may be deferred until

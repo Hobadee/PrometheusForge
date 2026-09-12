@@ -6,11 +6,13 @@ description: Deploy required applications and tools
 
 sections:
   - name: Core Applications
+    slug: core-applications
     tags:
       - deploy
       - core-apps
     steps:
       - name: Install Office Suite
+        slug: install-office-suite
         tags:
           - deploy
           - core-apps
@@ -22,6 +24,7 @@ sections:
         result: officeInstalled
 
       - name: Install Productivity Tools
+        slug: install-productivity-tools
         tags:
           - deploy
           - core-apps
@@ -34,11 +37,13 @@ sections:
         result: productivityToolsInstalled
 
   - name: Security Software
+    slug: security-software
     tags:
       - deploy
       - security
     steps:
       - name: Install Antivirus
+        slug: install-antivirus
         tags:
           - deploy
           - security
@@ -50,6 +55,7 @@ sections:
         result: antivirusInstalled
 
       - name: Configure Firewall
+        slug: configure-firewall
         tags:
           - deploy
           - security

@@ -1,9 +1,11 @@
 ﻿# Project Status
 
-Last updated: 2026-09-09
+Last updated: 2026-09-11
 
 ## Recent Changes
-- Added `Variables.GetOrDefault()` to return an existing variable value or a supplied fallback without overwriting the stored value, including coverage for existing, missing, and explicitly null values.
+- Added a required `slug` field (must match `^[a-zA-Z0-9_-]+$`) to `Step` and `StepTree`, alongside the existing free-text `name`. `slug` is now the machine key used by the `Steps` registry (`Add`/`Remove`/`Update`/`Get`/`Exists`/`GetResult`/`IsProcessed`) and by `ForgeConfigurationApi.RequestOverride()`/`StepTree` override matching - `name` remains purely descriptive. Updated all sample YAML files and inline test fixtures (`StepTree.tests.ps1`, `Invoke-Forge.Tests.ps1`) to include `slug`. Synthetic section wrappers created by `SourceFactory`/`ImportConfig` for imports now also carry a `slug` (`imported-section` by default, or the wrapped step's own slug when present).
+- `TemplateEngine.ResolvePath()` now resolves `step.<slug>[.path...]` tokens directly against the `Steps` registry (live reference to `Step.result`, no copy/registration required), so step results are available in templates without needing to declare a `result:` alias. `result:` + `Variables` remains supported as an optional alias.
+- KNOWN TECH DEBT: the `slug` regex validation (and the pre-existing `name` required-string validation) is duplicated between `Step` and `StepTree` constructors. Needs deduping into a shared helper at some later time.
 - Added the terminal-only MVP `Log` singleton and `LogLevel` enum. `TextOutput` now routes its output through the logger, which prefixes messages with their level. Logger configuration currently supports enabling or disabling terminal output; file and other sinks remain future work.
 - Implemented tag-based include/exclude filtering (MVP TODO #1). `StepTree` now owns a `tags` object populated from each item's `tags` YAML list, and `checkConditionals()` compares it against `Variables.IncludeTags`/`ExcludeTags`: no match runs the step, an exclude-only match skips it, an include-only match runs it, and a match on both falls back to the `tagsPrecedence` variable (`"include"` runs, `"exclude"` skips, unset/empty defaults to running).
 - `Variables.SetMany()` now recognizes `tagsInclude`/`tagsExclude` entries in a variables map and appends them to `IncludeTags`/`ExcludeTags` across calls. This is intentionally inconsistent with ordinary variables, which overwrite earlier values. `tagsPrecedence` is read as a plain variable via `Variables.Get('tagsPrecedence')`.

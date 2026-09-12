@@ -9,13 +9,17 @@ metadata:
 items:
   - type: step
     name: step 1
+    slug: step-1
     foo: bar 1
   - type: section
     name: section 1
+    slug: section-1
     somevalue: section 1 value
   - type: step
     name: step 3.5
+    slug: step-3-5
     note: Position is ambiguous - where are we in the order?!
   - type: step
     name: step 5
+    slug: step-5
     

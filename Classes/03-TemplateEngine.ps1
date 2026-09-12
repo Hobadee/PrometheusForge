@@ -167,27 +167,43 @@
             return $null
         }
 
-        if ($null -eq $configuration) {
-            return $null
-        }
-
         $pathSegments = $path -split '\.'
         if ($pathSegments.Count -eq 0) {
             return $null
         }
 
         $rootKey = $pathSegments[0]
-        if (-not $configuration.HasKey($rootKey)) {
-            return $null
+        $currentValue = $null
+        $remainingSegments = @()
+
+        if ($rootKey -eq 'step') {
+            # step.<slug>[.path...] resolves against the Steps registry, not Variables
+            if ($pathSegments.Count -lt 2) {
+                return $null
+            }
+
+            $step = [Steps]::GetInstance().Get($pathSegments[1])
+            if ($null -eq $step) {
+                return $null
+            }
+
+            $currentValue = $step.result
+            if ($pathSegments.Count -gt 2) {
+                $remainingSegments = $pathSegments[2..($pathSegments.Count - 1)]
+            }
+        }
+        else {
+            if ($null -eq $configuration -or -not $configuration.HasKey($rootKey)) {
+                return $null
+            }
+
+            $currentValue = $configuration.Get($rootKey)
+            if ($pathSegments.Count -gt 1) {
+                $remainingSegments = $pathSegments[1..($pathSegments.Count - 1)]
+            }
         }
 
-        $currentValue = $configuration.Get($rootKey)
-
-        if ($pathSegments.Count -eq 1) {
-            return $currentValue
-        }
-
-        foreach ($segment in $pathSegments[1..($pathSegments.Count - 1)]) {
+        foreach ($segment in $remainingSegments) {
             if ($null -eq $currentValue) {
                 return $null
             }

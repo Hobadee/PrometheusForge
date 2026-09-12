@@ -24,9 +24,11 @@ version: 1.0
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Write output
+        slug: write-output
         plugin: TextOutput
         parameters:
           message: hello from absolute path
@@ -45,9 +47,11 @@ version: 1.0
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Write output
+        slug: write-output
         plugin: TextOutput
         parameters:
           message: hello from relative path
@@ -67,9 +71,11 @@ version: 1.0
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Write output
+        slug: write-output
         plugin: TextOutput
         parameters:
           message: hello from lifecycle
@@ -97,9 +103,11 @@ variables:
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Write output
+        slug: write-output
         plugin: TextOutput
         parameters:
           message: hello from lifecycle
@@ -141,9 +149,11 @@ version: 1.0
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Write output
+        slug: write-output
         plugin: TextOutput
         parameters:
           message: hello from lifecycle
@@ -167,9 +177,11 @@ variables:
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Templated output
+        slug: templated-output
         plugin: TextOutput
         result: outputResult
         parameters:
@@ -204,9 +216,11 @@ variables:
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Templated output
+        slug: templated-output
         plugin: TextOutput
         result: outputResult
         parameters:
@@ -232,9 +246,11 @@ version: 1.0
 root:
   - type: section
     name: Imported section
+    slug: imported-section
     items:
       - type: step
         name: Imported step
+        slug: imported-step
         plugin: TextOutput
         result: importedResult
         parameters:
@@ -248,15 +264,18 @@ version: 1.0
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Imported workflow
+        slug: imported-workflow
         plugin: ImportConfig
         parameters:
           sourcePluginName: yamlSource
           uri: "$importUri"
       - type: step
         name: Tail step
+        slug: tail-step
         plugin: TextOutput
         result: tailResult
         parameters:
@@ -283,6 +302,7 @@ variables:
 root:
   type: section
   name: Imported section
+  slug: imported-section
 '@ | Set-Content -Path $importedPath -Encoding utf8
 
         $importUri = [System.Uri]::new($importedPath).AbsoluteUri
@@ -292,15 +312,18 @@ version: 1.0
 root:
   - type: section
     name: Root section
+    slug: root-section
     items:
       - type: step
         name: Imported workflow
+        slug: imported-workflow
         plugin: ImportConfig
         parameters:
           sourcePluginName: yamlSource
           uri: "$importUri"
       - type: step
         name: Tail step
+        slug: tail-step
         plugin: TextOutput
         result: importedVariableResult
         parameters:

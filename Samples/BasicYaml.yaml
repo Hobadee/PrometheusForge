@@ -8,18 +8,21 @@ metadata:
 
 sections:
   - name: Setup Phase
+    slug: setup-phase
     tags:
       - setup-computer
       - initial-config
     description: Initial system setup and configuration
     sections:
       - name: Hardware Configuration
+        slug: hardware-configuration
         tags:
           - setup-computer
           - hardware
         description: Configure and set up hardware components
         steps:
           - name: Install Base OS
+            slug: install-base-os
             tags:
               - setup-computer
             plugin: textOutput
@@ -28,6 +31,7 @@ sections:
             result: osInstalled
 
           - name: Install Drivers
+            slug: install-drivers
             tags:
               - setup-computer
               - hardware
@@ -40,6 +44,7 @@ sections:
               stopOnError: true
             result: driversInstalled
       - name: Software Configuration
+        slug: software-configuration
         tags:
           - setup-computer
           - software

@@ -38,37 +38,37 @@ class Steps {
         The Step object to add
 
         .NOTES
-        Throws an exception if a step with the same name already exists
+        Throws an exception if a step with the same slug already exists
         #>
-        if ($true -eq $this.Exists($step.name)) {
-            throw [System.ArgumentException]::new("A step with the name '$($step.name)' already exists.")
+        if ($true -eq $this.Exists($step.slug)) {
+            throw [System.ArgumentException]::new("A step with the slug '$($step.slug)' already exists.")
         }
-        $this.Steps.Add($step.name, $step)
+        $this.Steps.Add($step.slug, $step)
     }
 
 
-    [void] Remove([string]$name) {
+    [void] Remove([string]$slug) {
         <#
         .SYNOPSIS
-        Removes a step by name
+        Removes a step by slug
 
-        .PARAMETER name
-        The name of the step to remove
+        .PARAMETER slug
+        The slug of the step to remove
 
         .NOTES
         Throws an exception if the step does not exist
         #>
-        if (-not $this.Exists($name)) {
-            throw [System.ArgumentException]::new("No step with the name '$name' exists to remove.")
+        if (-not $this.Exists($slug)) {
+            throw [System.ArgumentException]::new("No step with the slug '$slug' exists to remove.")
         }
-        $this.Steps.Remove($name)
+        $this.Steps.Remove($slug)
     }
 
 
     [void] Update([Step]$step) {
         <#
         .SYNOPSIS
-        Updates an existing step by name
+        Updates an existing step by slug
 
         .PARAMETER step
         The Step object to update
@@ -76,15 +76,15 @@ class Steps {
         .NOTES
         Throws an exception if the step does not exist
         #>
-        if (-not $this.Exists($step.name)) {
-            throw [System.ArgumentException]::new("No step with the name '$($step.name)' exists.")
+        if (-not $this.Exists($step.slug)) {
+            throw [System.ArgumentException]::new("No step with the slug '$($step.slug)' exists.")
         }
 
-        if ($this.Steps[$step.name].IsProcessed()) {
-            throw [System.InvalidOperationException]::new("Cannot update step '$($step.name)' because it has already run.")
+        if ($this.Steps[$step.slug].IsProcessed()) {
+            throw [System.InvalidOperationException]::new("Cannot update step '$($step.slug)' because it has already run.")
         }
 
-        $this.Steps[$step.name] = $step
+        $this.Steps[$step.slug] = $step
     }
 
 
@@ -104,80 +104,80 @@ class Steps {
     }
 
 
-    [Step] Get([string]$name) {
+    [Step] Get([string]$slug) {
         <#
         .SYNOPSIS
-        Gets a step by name
+        Gets a step by slug
 
-        .PARAMETER name
-        The name of the step to retrieve
+        .PARAMETER slug
+        The slug of the step to retrieve
 
         .OUTPUTS
-        [Step] The Step object associated with the name, or $null if it doesn't exist
+        [Step] The Step object associated with the slug, or $null if it doesn't exist
         #>
-        if ($this.Exists($name)) {
-            return $this.Steps[$name]
+        if ($this.Exists($slug)) {
+            return $this.Steps[$slug]
         }
 
         return $null
     }
 
 
-    [object] GetResult([string]$name) {
+    [object] GetResult([string]$slug) {
         <#
         .SYNOPSIS
-        Gets the result of a step by name
+        Gets the result of a step by slug
 
-        .PARAMETER name
-        The name of the step to retrieve the result for
+        .PARAMETER slug
+        The slug of the step to retrieve the result for
 
         .OUTPUTS
         System.Object
         - The result of the step, or $null if it doesn't exist
         #>
-        if ($this.IsProcessed($name)) {
-            return $this.Get($name).GetResult()
+        if ($this.IsProcessed($slug)) {
+            return $this.Get($slug).GetResult()
         }
 
         return $null
     }
 
 
-    [bool] IsProcessed([string]$name) {
+    [bool] IsProcessed([string]$slug) {
         <#
         .SYNOPSIS
-        Checks if a step has been processed (run) by name
+        Checks if a step has been processed (run) by slug
 
-        .PARAMETER name
-        The name of the step to check
+        .PARAMETER slug
+        The slug of the step to check
 
         .OUTPUTS
         System.Boolean
         - $true  if the step has been processed
         - $false if the step has not been processed or does not exist
         #>
-        if ($this.Exists($name)) {
-            return $this.Get($name).IsProcessed()
+        if ($this.Exists($slug)) {
+            return $this.Get($slug).IsProcessed()
         }
 
         return $false
     }
     
 
-    [bool] Exists([string]$name) {
+    [bool] Exists([string]$slug) {
         <#
         .SYNOPSIS
-        Checks if a step exists by name
+        Checks if a step exists by slug
 
-        .PARAMETER name
-        The name of the step to check
+        .PARAMETER slug
+        The slug of the step to check
 
         .OUTPUTS
         System.Boolean
         - $true  if the step exists
         - $false if the step does not exist
         #>
-        return $this.Steps.ContainsKey($name)
+        return $this.Steps.ContainsKey($slug)
     }
 
     static [void] Reset() {

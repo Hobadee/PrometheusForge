@@ -24,6 +24,7 @@ class StepTree : System.Collections.IEnumerable{
 
 
     [string] $name = $null
+    [string] $slug = $null
     [System.Collections.Generic.List[StepTree]] $children = $null
     [tags] $tags = $null
 
@@ -43,8 +44,13 @@ class StepTree : System.Collections.IEnumerable{
         if (-not ($config.name -and $config.name -is [string])) {
             throw [System.ArgumentException]::new("Every item must contain a name") 
         }
+        # TODO: This regex validation is duplicated in Step - dedup, along with the name validation above, at some later time.
+        if (-not ($config.slug -and $config.slug -is [string] -and $config.slug -match '^[a-zA-Z0-9_-]+$')) {
+            throw [System.ArgumentException]::new("Every item must contain a slug matching '^[a-zA-Z0-9_-]+`$'")
+        }
         #Write-Debug "[StepTree]::new() Creating StepTree node '$($config.name)'"
         $this.name = $config.name
+        $this.slug = $config.slug
 
         $this.tags = [tags]::new()
         if ($null -ne $config.tags) {
@@ -190,7 +196,7 @@ class StepTree : System.Collections.IEnumerable{
         $stepSuccess = 0
         $stepFailure = 0
 
-        $step = [Steps]::GetInstance().Get($this.name)
+        $step = [Steps]::GetInstance().Get($this.slug)
 
         # Note: DO NOT wrap this in a try/catch as [Step]::Process() SHOULD
         # throw an unhandled exception if set to "abort" on error.
@@ -220,20 +226,20 @@ class StepTree : System.Collections.IEnumerable{
         # child runs with its new configuration during this same processing pass.
         if ($null -ne $step.plugin.Api) {
             foreach ($requestedOverride in $step.plugin.Api.Configuration.GetPendingOverrides()) {
-                $overrideName = $requestedOverride.key
+                $overrideSlug = $requestedOverride.key
                 $overrideConfig = $requestedOverride.value
 
                 if ($null -eq $overrideConfig -or $overrideConfig.type -ne 'step') {
-                    throw [System.NotSupportedException]::new("Override '$overrideName' must provide a step configuration.")
+                    throw [System.NotSupportedException]::new("Override '$overrideSlug' must provide a step configuration.")
                 }
-                if ($overrideConfig.name -ne $overrideName) {
-                    throw [System.ArgumentException]::new("Override '$overrideName' must provide a step configuration with the same name.")
+                if ($overrideConfig.slug -ne $overrideSlug) {
+                    throw [System.ArgumentException]::new("Override '$overrideSlug' must provide a step configuration with the same slug.")
                 }
-                if (-not [Steps]::GetInstance().Exists($overrideName)) {
-                    throw [System.ArgumentException]::new("No step named '$overrideName' exists to override.")
+                if (-not [Steps]::GetInstance().Exists($overrideSlug)) {
+                    throw [System.ArgumentException]::new("No step with slug '$overrideSlug' exists to override.")
                 }
 
-                [Log]::Write("[StepTree]::Process() - Replacing API-requested step '$overrideName'", "Debug")
+                [Log]::Write("[StepTree]::Process() - Replacing API-requested step '$overrideSlug'", "Debug")
                 [Steps]::GetInstance().Update([Step]::new($overrideConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingOverrides()

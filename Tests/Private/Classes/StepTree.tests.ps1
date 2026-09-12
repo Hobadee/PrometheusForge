@@ -10,16 +10,19 @@ Describe 'StepTree configuration overrides' {
         $rootConfig = @{
             type = 'section'
             name = 'Root'
+            slug = 'root'
             items = @(
                 @{
                     type = 'step'
                     name = 'Request replacement'
+                    slug = 'request-replacement'
                     plugin = 'TextOutput'
                     parameters = @{ message = 'requesting replacement'; method = 'Info' }
                 },
                 @{
                     type = 'step'
                     name = 'Target'
+                    slug = 'target'
                     plugin = 'TextOutput'
                     result = 'originalResult'
                     parameters = @{ message = 'original'; method = 'Info' }
@@ -29,21 +32,22 @@ Describe 'StepTree configuration overrides' {
         $replacementConfig = @{
             type = 'step'
             name = 'Target'
+            slug = 'target'
             plugin = 'TextOutput'
             result = 'replacementResult'
             parameters = @{ message = 'replacement'; method = 'Info' }
         }
 
         $tree = [StepTree]::new($rootConfig)
-        $requestingStep = [Steps]::GetInstance().Get('Request replacement')
-        $requestingStep.plugin.Api.Configuration.RequestOverride('Target', $replacementConfig)
+        $requestingStep = [Steps]::GetInstance().Get('request-replacement')
+        $requestingStep.plugin.Api.Configuration.RequestOverride('target', $replacementConfig)
 
         $tree.Process() | Should -BeTrue
 
         $configuration = [Variables]::GetInstance()
         $configuration.HasKey('originalResult') | Should -BeFalse
         $configuration.Get('replacementResult').success | Should -BeTrue
-        [Steps]::GetInstance().Get('Target').config.parameters.message | Should -Be 'replacement'
+        [Steps]::GetInstance().Get('target').config.parameters.message | Should -Be 'replacement'
     }
 }
 
@@ -54,13 +58,13 @@ Describe 'StepTree tags' {
     }
 
     It 'populates tags from the item config' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; tags = @('a', 'b') })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root'; tags = @('a', 'b') })
         $tree.tags.GetTags() | Should -Contain 'a'
         $tree.tags.GetTags() | Should -Contain 'b'
     }
 
     It 'defaults to an empty tags collection when none are configured' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root' })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root' })
         $tree.tags.Count() | Should -Be 0
     }
 }
@@ -72,34 +76,34 @@ Describe 'StepTree checkConditionals' {
     }
 
     It 'runs when tags match neither include nor exclude' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; tags = @('other') })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root'; tags = @('other') })
         [Variables]::GetInstance().AddIncludeTag('include')
         [Variables]::GetInstance().AddExcludeTag('exclude')
         $tree.checkConditionals() | Should -BeTrue
     }
 
     It 'skips when tags match exclude only' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; tags = @('exclude') })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root'; tags = @('exclude') })
         [Variables]::GetInstance().AddExcludeTag('exclude')
         $tree.checkConditionals() | Should -BeFalse
     }
 
     It 'runs when tags match include only' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; tags = @('include') })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root'; tags = @('include') })
         [Variables]::GetInstance().AddIncludeTag('include')
         [Variables]::GetInstance().AddExcludeTag('exclude')
         $tree.checkConditionals() | Should -BeTrue
     }
 
     It 'runs when tags match both include and exclude and tagsPrecedence is unset' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; tags = @('shared') })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root'; tags = @('shared') })
         [Variables]::GetInstance().AddIncludeTag('shared')
         [Variables]::GetInstance().AddExcludeTag('shared')
         $tree.checkConditionals() | Should -BeTrue
     }
 
     It 'runs when tags match both include and exclude and tagsPrecedence is include' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; tags = @('shared') })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root'; tags = @('shared') })
         [Variables]::GetInstance().AddIncludeTag('shared')
         [Variables]::GetInstance().AddExcludeTag('shared')
         [Variables]::GetInstance().Set('tagsPrecedence', 'include')
@@ -107,7 +111,7 @@ Describe 'StepTree checkConditionals' {
     }
 
     It 'skips when tags match both include and exclude and tagsPrecedence is exclude' {
-        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; tags = @('shared') })
+        $tree = [StepTree]::new(@{ type = 'section'; name = 'Root'; slug = 'root'; tags = @('shared') })
         [Variables]::GetInstance().AddIncludeTag('shared')
         [Variables]::GetInstance().AddExcludeTag('shared')
         [Variables]::GetInstance().Set('tagsPrecedence', 'exclude')

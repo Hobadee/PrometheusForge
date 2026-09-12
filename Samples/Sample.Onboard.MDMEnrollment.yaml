@@ -5,6 +5,7 @@ description: MDM enrollment steps
 
 steps:
   - name: Install MDM Agent
+    slug: install-mdm-agent
     tags:
       - enroll-mdm
     plugin: runCommand
@@ -16,6 +17,7 @@ steps:
     result: mdmAgentInstalled
 
   - name: Enroll Device
+    slug: enroll-device
     tags:
       - enroll-mdm
     when: "${mdmAgentInstalled} == true"
@@ -28,6 +30,7 @@ steps:
     result: deviceEnrolled
 
   - name: Apply MDM Policies
+    slug: apply-mdm-policies
     tags:
       - enroll-mdm
     when: "${deviceEnrolled} == true"

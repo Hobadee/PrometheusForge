@@ -36,6 +36,7 @@ class SourceFactory {
             if ($resolvedConfig -is [System.Collections.IEnumerable] -and -not ($resolvedConfig -is [string]) -and -not ($resolvedConfig -is [System.Collections.IDictionary])) {
                 $resolvedConfig = [pscustomobject]@{
                     name = if ($null -ne $config.name -and $config.name -is [string]) { $config.name } else { 'Imported section' }
+                    slug = if ($null -ne $config.slug -and $config.slug -is [string]) { $config.slug } else { 'imported-section' }
                     type = 'section'
                     items = @($resolvedConfig)
                 }
@@ -45,6 +46,7 @@ class SourceFactory {
             if ($resolvedConfig.type -eq 'step') {
                 $resolvedConfig = [pscustomobject]@{
                     name = if ($null -ne $resolvedConfig.name -and $resolvedConfig.name -is [string]) { $resolvedConfig.name } else { 'Imported section' }
+                    slug = if ($null -ne $resolvedConfig.slug -and $resolvedConfig.slug -is [string]) { $resolvedConfig.slug } else { 'imported-section' }
                     type = 'section'
                     items = @($resolvedConfig)
                 }

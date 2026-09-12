@@ -25,12 +25,15 @@ variables:
 root:
   - type: section
     name: root
+    slug: root
     items:
       - type: section
         name: Documentation
+        slug: documentation
         items:
           - type: step
             name: Generate random password
+            slug: generate-random-password
             plugin: PasswordGenerator
             result: password
             onError: abort
@@ -41,6 +44,7 @@ root:
               length: 16
           - type: step
             name: Generate user PIN
+            slug: generate-user-pin
             plugin: PasswordGenerator
             parameters:
               length: 6
@@ -52,15 +56,18 @@ root:
             defer_binding: true
       - type: section
         name: Pre-Creation
+        slug: pre-creation
         description: Various pre-creation steps that need to happen.
         items:
           - type: section
             name: Purchase Hardware
+            slug: purchase-hardware
             tags:
               - Purchase
             items:
               - type: step
                 name: Laptop
+                slug: laptop
                 plugin: TextOutput
                 parameters:
                   message: Purchasing laptop for {{ fullName }}...
@@ -68,6 +75,7 @@ root:
                   - Laptop
               - type: step
                 name: YubiKey
+                slug: yubikey
                 plugin: TextOutput
                 parameters:
                   message: Purchasing YubiKey for {{ fullName }}...
@@ -75,6 +83,7 @@ root:
                   - YubiKey
               - type: step
                 name: Phone
+                slug: phone
                 plugin: TextOutput
                 parameters:
                   message: Purchasing phone for {{ fullName }}...
@@ -82,6 +91,7 @@ root:
                   - Phone
           - type: step
             name: Purchase Google Fi phone line
+            slug: purchase-google-fi-phone-line
             plugin: TextOutput
             parameters:
               message: Purchasing Google Fi phone line for {{ fullName }}...
@@ -90,6 +100,7 @@ root:
               - Google Fi
           - type: step
             name: Purchase Zoom license
+            slug: purchase-zoom-license
             plugin: TextOutput
             parameters:
               message: Purchasing Zoom license for {{ fullName }}...
@@ -99,6 +110,7 @@ root:
               - Zoom
           - type: step
             name: Pre-Creation Complete
+            slug: pre-creation-complete
             description: A "milestone" marker for task management systems
             plugin: TextOutput
             parameters:
@@ -108,29 +120,35 @@ root:
               - milestone
       - type: step
         name: Imported Sample Content
+        slug: imported-sample-content
         plugin: ImportConfig
         parameters:
           uri: "{{sampleImportPath}}"
           sourcePluginName: yamlSource
       - type: section
         name: User Creation/Accounts Setup
+        slug: user-creation-accounts-setup
         items:
           - type: section
             name: Create user in Okta
+            slug: create-user-in-okta
             items:
               - type: step
                 name: Assign generated password
+                slug: assign-generated-password
                 plugin: TextOutput
                 parameters:
                   message: Password for {{ fullName }} is {{ password.object.generatedPassword }}
                     #method: Info
           - type: section
             name: Assign user Okta applications
+            slug: assign-user-okta-applications
             tags:
               - Software
             items:
               - type: step
                 name: Google
+                slug: google
                 plugin: TextOutput
                 parameters:
                   message: Assigning Google applications to {{ fullName }}...
@@ -139,6 +157,7 @@ root:
                   - Google
               - type: step
                 name: Office365
+                slug: office365
                 plugin: TextOutput
                 parameters:
                   message: Assigning Office365 applications to {{ fullName }}...
@@ -147,6 +166,7 @@ root:
                   - Office
               - type: step
                 name: Zoom
+                slug: zoom
                 plugin: TextOutput
                 parameters:
                   message: Assigning Zoom applications to {{ fullName }}...
@@ -155,6 +175,7 @@ root:
                   - Zoom
       - type: section
         name: Setup Phase
+        slug: setup-phase
         tags:
           - setup-computer
           - initial-config
@@ -162,12 +183,14 @@ root:
         items:
           - type: section
             name: Hardware Configuration
+            slug: hardware-configuration
             tags:
               - setup-computer
               - hardware
             items:
               - type: step
                 name: Install Base OS
+                slug: install-base-os
                 tags:
                   - setup-computer
                 plugin: TextOutput
@@ -176,6 +199,7 @@ root:
                 result: osInstalled
               # - type: step
               #   name: Install Drivers
+              #   slug: install-drivers
               #   tags:
               #     - setup-computer
               #     - hardware
@@ -191,6 +215,7 @@ root:
               #   result: driversInstalled
           - type: section
             name: Network Setup
+            slug: network-setup
             when: "{{driversInstalled}} == true"
             tags:
               - setup-computer
@@ -198,6 +223,7 @@ root:
             items:
               - type: step
                 name: Configure Network
+                slug: configure-network
                 tags:
                   - setup-computer
                   - network
@@ -207,6 +233,7 @@ root:
                 result: networkConfigured
               # - type: step
               #   name: Connect to Domain
+              #   slug: connect-to-domain
               #   tags:
               #     - setup-computer
               #     - network
@@ -219,6 +246,7 @@ root:
               #   result: domainJoined
       - type: section
         name: User Enrollment
+        slug: user-enrollment
         tags:
           - create-user
           - create-accounts
@@ -227,12 +255,14 @@ root:
         items:
           - type: section
             name: Account Creation
+            slug: account-creation
             tags:
               - create-user
               - create-accounts
             items:
               - type: step
                 name: Create User Account
+                slug: create-user-account
                 tags:
                   - create-user
                   - create-accounts
@@ -242,6 +272,7 @@ root:
                 result: userCreated
               - type: step
                 name: Configure User Permissions
+                slug: configure-user-permissions
                 tags:
                   - create-user
                 plugin: TextOutput
@@ -250,17 +281,20 @@ root:
                 result: permissionsConfigured
           - type: section
             name: Mobile Device Management
+            slug: mobile-device-management
             tags:
               - enroll-mdm
             description: External configuration for MDM enrollment
             items:
               - type: step
                 name: Enroll in MDM
+                slug: enroll-in-mdm
                 plugin: TextOutput
                 parameters:
                   message: "Enrolling device in MDM..."
       - type: section
         name: Software Deployment
+        slug: software-deployment
         tags:
           - setup-computer
           - deploy
@@ -268,6 +302,7 @@ root:
         items:
           - type: step
             name: Deploy Applications
+            slug: deploy-applications
             plugin: TextOutput
             parameters:
               message: "Deploying required applications..."

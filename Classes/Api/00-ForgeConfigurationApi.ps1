@@ -30,7 +30,7 @@ class ForgeConfigurationApi {
 
         .DESCRIPTION
         StepTree.Process() consumes queued overrides after a step runs. The replacement
-        config must describe a step with the same name as key; other override shapes are
+        config must describe a step with the same slug as key; other override shapes are
         intentionally out of scope for the current MVP.
 
         Yes - we run AFTER - we cannot replace ourself since we are the "override" step that requests the change.

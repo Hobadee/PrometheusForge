@@ -9,9 +9,11 @@ metadata:
 root:
   - type: section
     name: root
+    slug: root
     items:
       - type: step
         name: Section 2.1
+        slug: section-2-1
         plugin: TextOutput
         parameters:
           message: Executing Section 2 - Imported
