@@ -28,8 +28,6 @@ sections:
             plugin: textOutput
               command: "powershell -Command Write-Host 'Installing drivers...'"
 #              message: "Installing base operating system..."
-            result: osInstalled
-
           - name: Install Drivers
             slug: install-drivers
             tags:
@@ -42,7 +40,6 @@ sections:
               timeout: 600
               retries: 3
               stopOnError: true
-            result: driversInstalled
       - name: Software Configuration
         slug: software-configuration
         tags:

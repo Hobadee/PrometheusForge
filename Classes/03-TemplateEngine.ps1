@@ -51,7 +51,7 @@
             return ""
         }
 
-        $pattern = '\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*\}\}'
+        $pattern = '\{\{\s*([a-zA-Z_\-][a-zA-Z0-9_\-.]*)\s*\}\}'
 
         return [regex]::Replace(
             $template,
@@ -163,6 +163,8 @@
         [TemplateEngine]::ResolvePath('pin.object.generatedPassword', $config)
         # Returns nested value when present; otherwise $null.
         #>
+        [Log]::Trace("[TemplateEngine]::ResolvePath - Path: $path")
+
         if ([string]::IsNullOrEmpty($path)) {
             return $null
         }
@@ -177,6 +179,7 @@
         $remainingSegments = @()
 
         if ($rootKey -eq 'step') {
+            [Log]::Trace("[TemplateEngine]::ResolvePath - Resolving step path: $path")
             # step.<slug>[.path...] resolves against the Steps registry, not Variables
             if ($pathSegments.Count -lt 2) {
                 return $null
@@ -193,6 +196,7 @@
             }
         }
         else {
+            [Log]::Trace("[TemplateEngine]::ResolvePath - Resolving variable path: $path")
             if ($null -eq $configuration -or -not $configuration.HasKey($rootKey)) {
                 return $null
             }

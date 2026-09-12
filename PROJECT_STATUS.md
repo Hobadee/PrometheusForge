@@ -1,8 +1,11 @@
 ﻿# Project Status
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 ## Recent Changes
+- Implemented `AsanaCreateProject` task plugin (`Classes/Plugins/Task/Asana/AsanaCreateProject.ps1`) to create Asana projects via `POST /projects` according to the Asana API specification. Supports `workspace` (and `workspaceGid` alias), `name`, `notes`, `html_notes`, `privacy_setting`, `default_access_level`, `color`, `icon`, and `default_view`.
+- Added static `[Log]::Trace([string]$message)` method to `Classes/00-Log.ps1` for tracing API payloads and responses.
+- Added comprehensive unit tests for `AsanaCreateProject` in `Tests/Private/Classes/Plugins/Task/Asana/AsanaCreateProject.tests.ps1` covering constructor, inheritance, metadata, registration, parameter validation (required and optional fields), and mocked execution.
 - Added a required `slug` field (must match `^[a-zA-Z0-9_-]+$`) to `Step` and `StepTree`, alongside the existing free-text `name`. `slug` is now the machine key used by the `Steps` registry (`Add`/`Remove`/`Update`/`Get`/`Exists`/`GetResult`/`IsProcessed`) and by `ForgeConfigurationApi.RequestOverride()`/`StepTree` override matching - `name` remains purely descriptive. Updated all sample YAML files and inline test fixtures (`StepTree.tests.ps1`, `Invoke-Forge.Tests.ps1`) to include `slug`. Synthetic section wrappers created by `SourceFactory`/`ImportConfig` for imports now also carry a `slug` (`imported-section` by default, or the wrapped step's own slug when present).
 - `TemplateEngine.ResolvePath()` now resolves `step.<slug>[.path...]` tokens directly against the `Steps` registry (live reference to `Step.result`, no copy/registration required), so step results are available in templates without needing to declare a `result:` alias. `result:` + `Variables` remains supported as an optional alias.
 - KNOWN TECH DEBT: the `slug` regex validation (and the pre-existing `name` required-string validation) is duplicated between `Step` and `StepTree` constructors. Needs deduping into a shared helper at some later time.
@@ -53,6 +56,14 @@ Last updated: 2026-09-11
 - Added variable import behavior that loads base config `variables` and then each overlay `variables` map into `Variables`, where later overlays overwrite earlier values.
 - Expanded `Invoke-Forge` public tests to validate ordered overlay precedence and missing-overlay error handling.
 
+## Where I left off
+
+2026-09-12
+Working on implementing `AsanaCreateProject`.  Basics work, but it's surfacing some other issues.  Template engine needs to be able to fully resolve nested items, as we can't access
+the result easily.
+
+
+
 ## TODO
 
 **Suggested Implementation Order**
@@ -61,6 +72,11 @@ Last updated: 2026-09-11
 2. Asana Plugin
 3. Advanced templating coverage beyond the current MVP
 4. Step addon overlay insertion semantics and lazy-loading design
+
+### Variable Checking
+Variable names MUST adhere to the same REGEX as slugs, otherwise we won't be able to resolve results.  Add appropriate checks and minimize code duplication.
+
+(Create a static "slug" class that does the check?)
 
 ### Asana Task Plugin
 My original goal was to create Asana checklists.  Since we are very near MVP now, I would like to make an Asana plugin.  Plugin should have the following parameters:

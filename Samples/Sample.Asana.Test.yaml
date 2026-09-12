@@ -7,7 +7,7 @@ metadata:
   created: 2026-07-10
 
 variables:
-  Plugin.Asana.WorkspaceGID: "<your-workspace-gid-here>"
+  Plugin-Asana-WorkspaceGID: "<your-workspace-gid-here>"
 
 root:
   - type: section
@@ -18,95 +18,100 @@ root:
         name: Create Asana Project
         slug: create-asana-project
         plugin: AsanaCreateProject
-        result: asanaProject
         tags:
           - asana
         parameters:
-          workspaceGid: "{Plugin.Asana.WorkspaceGID}"
-          name: "Sample Project"
-      - type: section
-        name: Asana Documentation Section
-        slug: asana-documentation-section
-        items:
-          - type: step
-            name: Create Asana Documentation Section
-            slug: create-asana-documentation-section
-            plugin: AsanaCreateSection
-            result: asanaDocumentationSection
-            parameters:
-              projectGid: "{asanaProject.gid}"
-              name: "Documentation"
-          - type: step
-            name: Asana Documentation - General Information
-            slug: asana-documentation-general-information
-            plugin: AsanaCreateTask
-            parameters:
-              projectGid: "{asanaProject.gid}"
-              sectionGid: "{asanaDocumentationSection.gid}"
-              name: "General Information"
-              notes: "Place general information about the onboarding in the notes here"
-          - type: step
-            name: Generate User Account password
-            slug: generate-user-account-password
-            plugin: PasswordGenerator
-            result: UserPassword
-            parameters:
-              length: 16
-          - type: step
-            name: Generate User Account PIN
-            slug: generate-user-account-pin
-            plugin: PasswordGenerator
-            parameters:
-              length: 6
-              includeNumbers: true
-              includeLowercase: false
-              includeUppercase: false
-              includeSpecial: false
-            result: UserPIN
-          - type: step
-            name: Asana Documentation - User Password
-            slug: asana-documentation-user-password
-            plugin: AsanaCreateTask
-            parameters:
-              projectGid: "{asanaProject.gid}"
-              sectionGid: "{asanaDocumentationSection.gid}"
-              name: "Generate a Password"
-              notes: "User Password: {UserPassword}"
-          - type: step
-            name: Asana Documentation - User PIN
-            slug: asana-documentation-user-pin
-            plugin: AsanaCreateTask
-            parameters:
-              projectGid: "{asanaProject.gid}"
-              sectionGid: "{asanaDocumentationSection.gid}"
-              name: "Generate a PIN"
-              notes: "User PIN: {UserPIN}"
-      - type: section
-        name: Asana Switches
-        slug: asana-switches
-        items:
-          - type: step
-            name: Create Asana Switches Section
-            slug: create-asana-switches-section
-            plugin: AsanaCreateSection
-            result: asanaSwitchesSection
-            parameters:
-              projectGid: "{asanaProject.gid}"
-              name: "Switches"
-          - type: step
-            name: Switches - Computer Type
-            slug: switches-computer-type
-            plugin: AsanaCreateTask
-            parameters:
-              projectGid: "{asanaProject.gid}"
-              sectionGid: "{asanaSwitchesSection.gid}"
-              name: "Computer Type"
-              notes: "Select ONLY ONE computer type from the options below"
-          - type: step
-            name: Switches - Computer Type - PC
-            slug: switches-computer-type-pc
-            plugin: AsanaCreateTask
-            parameters:
-              projectGid: "{asanaProject.gid}"
-              sectionGid: "{asanaSwitchesSection.gid}"
-              name: "Switches - Computer Type - PC"
+          name: "Sample Project 3"
+          workspaceGid: "{{Plugin_Asana_WorkspaceGID}}"
+        retry:
+          retries: 1
+          delay: 0
+      - type: step
+        name: Debug
+        slug: debug-create-asana-project
+        plugin: TextOutput
+        parameters:
+          message: "Result: {{step.create-asana-project.result}}"
+        defer_binding: true
+      # - type: section
+      #   name: Asana Documentation Section
+      #   slug: asana-documentation-section
+      #   items:
+      #     - type: step
+      #       name: Create Asana Documentation Section
+      #       slug: create-asana-documentation-section
+      #       plugin: AsanaCreateSection
+      #       parameters:
+      #         projectGid: "{asanaProject.gid}"
+      #         name: "Documentation"
+      #     - type: step
+      #       name: Asana Documentation - General Information
+      #       slug: asana-documentation-general-information
+      #       plugin: AsanaCreateTask
+      #       parameters:
+      #         projectGid: "{asanaProject.gid}"
+      #         sectionGid: "{asanaDocumentationSection.gid}"
+      #         name: "General Information"
+      #         notes: "Place general information about the onboarding in the notes here"
+      #     - type: step
+      #       name: Generate User Account password
+      #       slug: generate-user-account-password
+      #       plugin: PasswordGenerator
+      #       parameters:
+      #         length: 16
+      #     - type: step
+      #       name: Generate User Account PIN
+      #       slug: generate-user-account-pin
+      #       plugin: PasswordGenerator
+      #       parameters:
+      #         length: 6
+      #         includeNumbers: true
+      #         includeLowercase: false
+      #         includeUppercase: false
+      #         includeSpecial: false
+      #     - type: step
+      #       name: Asana Documentation - User Password
+      #       slug: asana-documentation-user-password
+      #       plugin: AsanaCreateTask
+      #       parameters:
+      #         projectGid: "{asanaProject.gid}"
+      #         sectionGid: "{asanaDocumentationSection.gid}"
+      #         name: "Generate a Password"
+      #         notes: "User Password: {UserPassword}"
+      #     - type: step
+      #       name: Asana Documentation - User PIN
+      #       slug: asana-documentation-user-pin
+      #       plugin: AsanaCreateTask
+      #       parameters:
+      #         projectGid: "{asanaProject.gid}"
+      #         sectionGid: "{asanaDocumentationSection.gid}"
+      #         name: "Generate a PIN"
+      #         notes: "User PIN: {UserPIN}"
+      # - type: section
+      #   name: Asana Switches
+      #   slug: asana-switches
+      #   items:
+      #     - type: step
+      #       name: Create Asana Switches Section
+      #       slug: create-asana-switches-section
+      #       plugin: AsanaCreateSection
+      #       parameters:
+      #         projectGid: "{asanaProject.gid}"
+      #         name: "Switches"
+      #     - type: step
+      #       name: Switches - Computer Type
+      #       slug: switches-computer-type
+      #       plugin: AsanaCreateTask
+      #       parameters:
+      #         projectGid: "{asanaProject.gid}"
+      #         sectionGid: "{asanaSwitchesSection.gid}"
+      #         name: "Computer Type"
+      #         notes: "Select ONLY ONE computer type from the options below"
+      #     - type: step
+      #       name: Switches - Computer Type - PC
+      #       slug: switches-computer-type-pc
+      #       plugin: AsanaCreateTask
+      #       parameters:
+      #         projectGid: "{asanaProject.gid}"
+      #         sectionGid: "{asanaSwitchesSection.gid}"
+      #         name: "Switches - Computer Type - PC"

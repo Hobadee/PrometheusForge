@@ -24,9 +24,9 @@ class AsanaApiClient {
 
     static [AsanaApiClient] $Instance = $null  # Singleton object; Explicitly initialize to $null
 
-    static [string] $VarKey_PAT = 'Plugin.Asana.PAT'
-    static [string] $VarKey_OAuthUsername = 'Plugin.Asana.Username'
-    static [string] $VarKey_BaseUri = 'Plugin.Asana.BaseUri'
+    static [string] $VarKey_PAT = 'Plugin_Asana_PAT'
+    static [string] $VarKey_OAuthUsername = 'Plugin_Asana_Username'
+    static [string] $VarKey_BaseUri = 'Plugin_Asana_BaseUri'
 
     [string] $baseUri = "https://app.asana.com/api/1.0"
 
@@ -151,12 +151,16 @@ class AsanaApiClient {
             ContentType = "application/json"
         }
 
+        [Log]::Trace("Asana API request: $method $uri with body: $($body | ConvertTo-Json -Depth 20)")
+
         if ($null -ne $body) {
             $requestParams.Body = (@{ data = $body } | ConvertTo-Json -Depth 20)
         }
 
         try {
-            return Invoke-RestMethod @requestParams
+            $rtn = Invoke-RestMethod @requestParams
+            [Log]::Trace("Asana API response: $($rtn | ConvertTo-Json -Depth 20)")
+            return $rtn
         }
         catch {
             # Asana returns error details as JSON (e.g. { errors: [ { message: ... } ] });

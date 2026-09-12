@@ -35,7 +35,6 @@ root:
             name: Generate random password
             slug: generate-random-password
             plugin: PasswordGenerator
-            result: password
             onError: abort
             retry:
               retries: 5
@@ -52,7 +51,6 @@ root:
               includeLowercase: false
               includeUppercase: false
               includeSpecial: false
-            result: PIN
             defer_binding: true
       - type: section
         name: Pre-Creation
@@ -196,7 +194,6 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: "Installing base operating system..."
-                result: osInstalled
               # - type: step
               #   name: Install Drivers
               #   slug: install-drivers
@@ -230,7 +227,6 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: "Configuring network adapter..."
-                result: networkConfigured
               # - type: step
               #   name: Connect to Domain
               #   slug: connect-to-domain
@@ -269,7 +265,6 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: "Creating user account..."
-                result: userCreated
               - type: step
                 name: Configure User Permissions
                 slug: configure-user-permissions
@@ -278,7 +273,6 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: "Configuring user permissions..."
-                result: permissionsConfigured
           - type: section
             name: Mobile Device Management
             slug: mobile-device-management

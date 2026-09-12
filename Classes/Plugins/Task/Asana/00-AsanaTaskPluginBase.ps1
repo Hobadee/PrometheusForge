@@ -92,6 +92,7 @@ class AsanaTaskPluginBase : TaskPluginInterface {
         .OUTPUTS
         System.Object - the parsed JSON response (typically has a top-level "data" property).
         #>
+        [Log]::Trace("AsanaTaskPluginBase::InvokeAsanaApi() - Invoking API with method $method, path $path, body: $($body | Out-String)")
         return [AsanaApiClient]::GetInstance().InvokeApi($method, $path, $body)
     }
 

@@ -102,6 +102,11 @@ class Log {
     }
 
 
+    static [void] Trace([string] $message) {
+        [Log]::Write($message, [LogLevel]::Trace)
+    }
+
+
     static [void] Info([string] $message) {
         [Log]::Write($message, [LogLevel]::Info)
     }

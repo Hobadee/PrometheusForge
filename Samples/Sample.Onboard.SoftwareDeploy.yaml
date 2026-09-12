@@ -21,8 +21,6 @@ sections:
           command: "powershell -Command Write-Host 'Installing Office 365 for ${userName}...'"
           timeout: 1800
           stopOnError: false
-        result: officeInstalled
-
       - name: Install Productivity Tools
         slug: install-productivity-tools
         tags:
@@ -34,8 +32,6 @@ sections:
           command: "powershell -Command Write-Host 'Installing productivity suite...'"
           timeout: 900
           stopOnError: false
-        result: productivityToolsInstalled
-
   - name: Security Software
     slug: security-software
     tags:
@@ -52,8 +48,6 @@ sections:
           command: "powershell -Command Write-Host 'Installing endpoint protection...'"
           timeout: 600
           stopOnError: true
-        result: antivirusInstalled
-
       - name: Configure Firewall
         slug: configure-firewall
         tags:
@@ -63,4 +57,3 @@ sections:
         plugin: textOutput
         options:
           message: "Configuring Windows Firewall for organization: ${organizationName}"
-        result: firewallConfigured
