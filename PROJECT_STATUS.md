@@ -1,8 +1,12 @@
 ﻿# Project Status
 
-Last updated: 2026-09-12
+Last updated: 2026-09-17
 
 ## Recent Changes
+- Implemented `AsanaAddTasksToSection` to add a `taskGids` array to a `sectionGid`. The plugin validates both inputs and performs the required `POST /sections/{section_gid}/addTask` call once per task, with focused Pester coverage.
+- Implemented `AsanaCreateTask` to create tasks with `POST /tasks`. It supports `name`, `resource_subtype`, `approval_status`, `completed`, due/start timestamps or dates, `html_notes`, `notes`, `assignee`, `parent`, `projects`, and `workspace`; validation enforces Asana's enum, type, required-location, date-format, and field-combination constraints. Added focused Pester coverage in `Tests/Private/Classes/Plugins/Task/Asana/AsanaCreateTask.tests.ps1`.
+- Implemented `AsanaCreateSection` to create project sections with `POST /projects/{project_gid}/sections`, including mutually exclusive `insert_before` and `insert_after` support. Added focused Pester coverage for validation and mocked API execution.
+- Added opt-in JSON rendering for hashtable template values. Set the `templateHashtableFormat` variable to `json` to render `{{ variable }}` as compact JSON; the default string representation remains unchanged.
 - Implemented `AsanaCreateProject` task plugin (`Classes/Plugins/Task/Asana/AsanaCreateProject.ps1`) to create Asana projects via `POST /projects` according to the Asana API specification. Supports `workspace` (and `workspaceGid` alias), `name`, `notes`, `html_notes`, `privacy_setting`, `default_access_level`, `color`, `icon`, and `default_view`.
 - Added static `[Log]::Trace([string]$message)` method to `Classes/00-Log.ps1` for tracing API payloads and responses.
 - Added comprehensive unit tests for `AsanaCreateProject` in `Tests/Private/Classes/Plugins/Task/Asana/AsanaCreateProject.tests.ps1` covering constructor, inheritance, metadata, registration, parameter validation (required and optional fields), and mocked execution.
@@ -174,6 +178,18 @@ Ideally, we should be able to eventually complete all the following types of ove
 - Section -> Step
 
 The first 2 should be fairly easy.  Polymorphic overlays will be more difficult.
+
+
+### Template late-binding
+I can't think of any situation where templates would benefit from early binding.
+We should convert calls to templatization to late-binding, as that will solve
+the near universal binding errors when templates are early-bound.
+
+This may have the follow-on effect of requiring all items to be late-binding
+and not allowing any instances of early-binding.  Investigate.
+
+(We do still want early-binding ideally as it allows for sytax checks
+before processing begins)
 
 
 ### Templating system

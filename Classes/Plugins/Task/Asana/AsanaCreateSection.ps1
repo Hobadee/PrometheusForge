@@ -4,7 +4,8 @@ class AsanaCreateSection : AsanaTaskPluginBase {
     Task plugin that creates a new Asana section within a project.
 
     .DESCRIPTION
-    Boilerplate only - no Asana API calls are implemented yet.
+    Creates a section in a project via the POST /projects/{project_gid}/sections API endpoint.
+    Supports name, insert_before, and insert_after fields.
     #>
 
     AsanaCreateSection() : base() {
@@ -32,10 +33,13 @@ class AsanaCreateSection : AsanaTaskPluginBase {
 
         .DESCRIPTION
         Expected parameters:
-        - name: The name of the section to create.
-        - projectGid: The gid of the project to create the section in. May be a literal
-          gid or a { fromStep, path } reference (see AsanaTaskPluginBase.ResolveGid()),
-          typically pointing at the result of an earlier AsanaCreateProject step.
+        - name: The name of the section to create (required). Cannot be an empty string.
+        - projectGid: The gid of the project to create the section in (required), as a string.
+          Typically templated from the result of an earlier AsanaCreateProject step.
+        - insert_before (optional): An existing section gid before which the new section should be
+          inserted. Cannot be provided together with insert_after.
+        - insert_after (optional): An existing section gid after which the new section should be
+          inserted. Cannot be provided together with insert_before.
         #>
         if ([string]::IsNullOrWhiteSpace([string]$params.name)) {
             throw [System.ArgumentException]::new("Parameters must include a 'name' value.", 'name')
@@ -44,6 +48,10 @@ class AsanaCreateSection : AsanaTaskPluginBase {
         if ($null -eq $params.projectGid) {
             throw [System.ArgumentException]::new("Parameters must include a 'projectGid' value.", 'projectGid')
         }
+
+        if ($null -ne $params.insert_before -and $null -ne $params.insert_after) {
+            throw [System.ArgumentException]::new("Parameters cannot include both 'insert_before' and 'insert_after'.", 'insert_before')
+        }
     }
 
     [object] Execute() {
@@ -51,12 +59,31 @@ class AsanaCreateSection : AsanaTaskPluginBase {
         .SYNOPSIS
         Creates a new Asana section within a project.
 
-        .NOTES
-        Not implemented - boilerplate only.
+        .DESCRIPTION
+        Resolves the target project's gid and makes a POST request to the Asana
+        /projects/{project_gid}/sections endpoint.
+
+        .OUTPUTS
+        System.Object - the parsed JSON response from the Asana API (typically containing data with section details).
         #>
-        throw [System.NotImplementedException]::new("AsanaCreateSection.Execute() is not yet implemented")
+        $projectGid = [string]$this.parameters.projectGid
+
+        $body = @{
+            name = [string]$this.parameters.name
+        }
+
+        if ($null -ne $this.parameters.insert_before) {
+            $body['insert_before'] = [string]$this.parameters.insert_before
+        }
+
+        if ($null -ne $this.parameters.insert_after) {
+            $body['insert_after'] = [string]$this.parameters.insert_after
+        }
+
+        return $this.InvokeAsanaApi('POST', "/projects/$projectGid/sections", $body)
     }
 }
 
 # Register the AsanaCreateSection plugin with the task plugin system
 [taskPluginRegistry]::GetInstance().RegisterPlugin([AsanaCreateSection])
+

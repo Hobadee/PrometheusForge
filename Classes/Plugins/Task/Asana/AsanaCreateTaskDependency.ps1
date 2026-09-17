@@ -32,10 +32,8 @@ class AsanaCreateTaskDependency : AsanaTaskPluginBase {
 
         .DESCRIPTION
         Expected parameters:
-        - taskGid: The gid of the task that has a dependency (the dependent task). May be
-          a literal gid or a { fromStep, path } reference (see AsanaTaskPluginBase.ResolveGid()).
-        - dependsOnTaskGid: The gid of the task that must be completed first. May be a
-          literal gid or a { fromStep, path } reference.
+        - taskGid: The gid of the task that has a dependency (the dependent task), as a string.
+        - dependsOnTaskGid: The gid of the task that must be completed first, as a string.
         #>
         if ($null -eq $params.taskGid) {
             throw [System.ArgumentException]::new("Parameters must include a 'taskGid' value.", 'taskGid')

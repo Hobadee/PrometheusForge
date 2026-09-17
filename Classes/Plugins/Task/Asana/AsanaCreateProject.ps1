@@ -51,7 +51,30 @@ class AsanaCreateProject : AsanaTaskPluginBase {
         if ([string]::IsNullOrWhiteSpace([string]$params.workspaceGid)) {
             throw [System.ArgumentException]::new("Parameters must include a 'workspaceGid' value.", 'workspaceGid')
         }
+
+        if ($null -ne $params.color) {
+            $validColors = @(
+                "dark-pink", "dark-green", "dark-blue", "dark-red", "dark-teal", "dark-brown", "dark-orange", "dark-purple", "dark-warm-gray",
+                "light-pink", "light-green", "light-blue", "light-red", "light-teal", "light-brown", "light-orange", "light-purple", "light-warm-gray",
+                "none", "null"
+            )
+            if ($validColors -notcontains $params.color) {
+                throw [System.ArgumentException]::new("Invalid color value. Must be one of: $($validColors -join ', ')", 'color')
+            }
+        }
+
+        if ($null -ne $params.icon) {
+            $validIcons = @(
+                "list", "board", "timeline", "calendar", "rocket", "people", "graph", "star", "bug", "light_bulb", "globe", "gear", "notebook",
+                "computer", "check", "target", "html", "megaphone", "chat_bubbles", "briefcase", "page_layout", "mountain_flag", "puzzle",
+                "presentation", "line_and_symbols", "speed_dial", "ribbon", "shoe", "shopping_basket", "map", "ticket", "coins"
+            )
+            if ($validIcons -notcontains $params.icon) {
+                throw [System.ArgumentException]::new("Invalid icon value. Must be one of: $($validIcons -join ', ')", 'icon')
+            }
+        }
     }
+
 
     [object] Execute() {
         <#

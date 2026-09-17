@@ -48,6 +48,25 @@ Describe 'TemplateEngine' {
 
             $result | Should -Be 'missing='
         }
+
+        It 'preserves the default string representation of hashtables' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('payload', @{ name = 'Ada' })
+
+            $result = [TemplateEngine]::ExpandString('payload={{payload}}', $configuration)
+
+            $result | Should -Be 'payload=System.Collections.Hashtable'
+        }
+
+        It 'renders hashtables as compact JSON when configured' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('templateHashtableFormat', 'json')
+            $configuration.Set('payload', @{ name = 'Ada' })
+
+            $result = [TemplateEngine]::ExpandString('payload={{payload}}', $configuration)
+
+            $result | Should -Be 'payload={"name":"Ada"}'
+        }
     }
 
     Context 'ExpandTopLevelValues' {

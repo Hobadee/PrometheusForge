@@ -101,6 +101,12 @@ class TaskPluginInterface {
         Derived plugins must implement ValidateParameters() to perform plugin-specific validation.
         This method is called automatically if parameters are passed to the constructor.
         #>
+
+        # We allow null parameters, but must initialize an empty hashtable for later validation checks
+        if ($null -eq $params) {
+            $params = @{}
+        }
+
         $this.ValidateParameters($params)
         $this.parameters = $params
     }

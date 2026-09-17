@@ -11,6 +11,8 @@
     - Root values are retrieved from the Variables singleton key/value store.
     - Nested segments are resolved across hashtables/dictionaries and object properties.
     - Unresolved or null values resolve to an empty string when rendering templates.
+        - Hashtable values render as their default type name unless the `templateHashtableFormat`
+            variable is set to `json`, in which case they render as compact JSON.
 
     MVP scope intentionally keeps expansion constrained:
     - Expand top-level string fields only when processing parameter objects.
@@ -64,10 +66,44 @@
                     return ""
                 }
 
-                return [string]$resolvedValue
+                return [TemplateEngine]::FormatResolvedValue($resolvedValue, $configuration)
             }
         )
     }
+
+
+    static [string] FormatResolvedValue([object]$value, [Variables]$configuration) {
+        <#
+        .SYNOPSIS
+        Formats a resolved template value for output.
+
+        .DESCRIPTION
+        Converts the resolved value into a string representation.
+        Special handling is applied for hashtables if a specific format is requested in the configuration.
+
+        .PARAMETER value
+        The resolved value to format.
+
+        .PARAMETER configuration
+        The Variables instance used as the variable source.
+
+        .NOTES
+        While this method will always be needed, the specific method of formatting resolved values will change in the future.
+        Future versions SHOULD NOT take global config, and instead take formatting config from inside the template itself.
+
+        .OUTPUTS
+        [string] The formatted string representation of the resolved value.
+        #>
+        if ($value -is [System.Collections.Hashtable] -and $null -ne $configuration) {
+            $format = [string]$configuration.Get('templateHashtableFormat')
+            if ($format -eq 'json') {
+                return [string](ConvertTo-Json -InputObject $value -Compress -Depth 20)
+            }
+        }
+
+        return [string]$value
+    }
+
 
     static [object] ExpandTopLevelValues([object]$inputObject, [Variables]$configuration) {
         <#
@@ -193,6 +229,7 @@
             $currentValue = $step.result
             if ($pathSegments.Count -gt 2) {
                 $remainingSegments = $pathSegments[2..($pathSegments.Count - 1)]
+                [Log]::Trace("[TemplateEngine]::ResolvePath - Remaining segments: $($remainingSegments -join '.') for path: $path")
             }
         }
         else {

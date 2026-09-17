@@ -8,6 +8,7 @@ metadata:
 
 variables:
   Plugin-Asana-WorkspaceGID: "<your-workspace-gid-here>"
+  templateHashtableFormat: json
 
 root:
   - type: section
@@ -15,44 +16,132 @@ root:
     slug: root
     items:
       - type: step
+        name: Current Time
+        slug: current-time
+        plugin: CurrentTime
+      - type: step
+        name: Generate user Password
+        slug: generate-user-password
+        plugin: PasswordGenerator
+        parameters:
+          length: 16
+          includeNumbers: true
+          includeLowercase: true
+          includeUppercase: true
+          includeSpecial: true
+      - type: step
+        name: Generate user PIN
+        slug: generate-user-pin
+        plugin: PasswordGenerator
+        parameters:
+          length: 6
+          includeNumbers: true
+          includeLowercase: false
+          includeUppercase: false
+          includeSpecial: false
+      - type: step
         name: Create Asana Project
         slug: create-asana-project
         plugin: AsanaCreateProject
         tags:
           - asana
         parameters:
-          name: "Sample Project 3"
+          name: "Sample Project {{step.current-time.object}}"
           workspaceGid: "{{Plugin_Asana_WorkspaceGID}}"
+          notes: "This is a sample Asana project created via the AsanaCreateProject plugin.  `test data in backticks`"
+#          html_notes: "<p>This is a sample Asana project created via the AsanaCreateProject plugin.  <code>test data in backticks</code></p>"
         retry:
           retries: 1
           delay: 0
-      - type: step
-        name: Debug
-        slug: debug-create-asana-project
-        plugin: TextOutput
-        parameters:
-          message: "Result: {{step.create-asana-project.result}}"
         defer_binding: true
-      # - type: section
-      #   name: Asana Documentation Section
-      #   slug: asana-documentation-section
-      #   items:
-      #     - type: step
-      #       name: Create Asana Documentation Section
-      #       slug: create-asana-documentation-section
-      #       plugin: AsanaCreateSection
-      #       parameters:
-      #         projectGid: "{asanaProject.gid}"
-      #         name: "Documentation"
-      #     - type: step
-      #       name: Asana Documentation - General Information
-      #       slug: asana-documentation-general-information
-      #       plugin: AsanaCreateTask
-      #       parameters:
-      #         projectGid: "{asanaProject.gid}"
-      #         sectionGid: "{asanaDocumentationSection.gid}"
-      #         name: "General Information"
-      #         notes: "Place general information about the onboarding in the notes here"
+      # - type: step
+      #   name: Debug GID
+      #   slug: debug-create-asana-project-gid
+      #   plugin: TextOutput
+      #   parameters:
+      #     message: "Result: {{step.create-asana-project.object.data.gid}}"
+      #   defer_binding: true
+      - type: section
+        name: Asana Documentation Section
+        slug: asana-documentation-section
+        items:
+          - type: step
+            name: Create Asana Documentation Section
+            slug: create-asana-documentation-section
+            plugin: AsanaCreateSection
+            parameters:
+              projectGid: "{{step.create-asana-project.object.data.gid}}"
+              name: "Documentation"
+            defer_binding: true
+
+
+
+
+          - type: step
+            name: Asana Documentation - General Information
+            slug: asana-documentation-general-information
+            plugin: AsanaCreateTask
+            parameters:
+              projects:
+                - "{{step.create-asana-project.object.data.gid}}"
+              name: "General Information"
+              notes: "Place general information about the onboarding in the notes here"
+            defer_binding: true
+            retry:
+              on_failure: fail
+              retries: 1
+              delay: 0
+
+
+          - type: step
+            name: Debug Documentation - General Information
+            slug: debug-create-asana-documentation-general-information
+            plugin: TextOutput
+            parameters:
+              message: "Result: {{step.asana-documentation-general-information.error}}"
+            defer_binding: true
+
+
+
+
+          # - type: step
+          #   name: Asana Documentation - User Password
+          #   slug: asana-documentation-user-password
+          #   plugin: AsanaCreateTask
+          #   parameters:
+          #     projects:
+          #       - "{{step.create-asana-project.object.data.gid}}"
+          #     name: "User Password"
+          #     notes: "Password: {{step.generate-user-password.object.generatedPassword}}"
+          #   defer_binding: true
+          # - type: step
+          #   name: Asana Documentation - User PIN
+          #   slug: asana-documentation-user-pin
+          #   plugin: AsanaCreateTask
+          #   parameters:
+          #     projects:
+          #       - "{{step.create-asana-project.object.data.gid}}"
+          #     name: "User PIN"
+          #     notes: "PIN: {{step.generate-user-pin.object.generatedPassword}}"
+          #   defer_binding: true
+          # - type: step
+          #   name: Asana Documentation - Add Tasks to Section
+          #   slug: asana-documentation-add-tasks-to-section
+          #   plugin: AsanaAddTasksToSection
+          #   parameters:
+          #     sectionGid: "{{step.create-asana-documentation-section.object.data.gid}}"
+          #     taskGids:
+          #       - "{{step.asana-documentation-general-information.object.data.gid}}"
+          #       - "{{step.asana-documentation-user-password.object.data.gid}}"
+          #       - "{{step.asana-documentation-user-pin.object.data.gid}}"
+          #   defer_binding: true
+          # - type: step
+          #   name: Debug Documentation - General Notes
+          #   slug: debug-create-asana-documentation-general-notes
+          #   plugin: TextOutput
+          #   parameters:
+          #     message: "Result: {{step.asana-documentation-general-information}}"
+          #   defer_binding: true
       #     - type: step
       #       name: Generate User Account password
       #       slug: generate-user-account-password

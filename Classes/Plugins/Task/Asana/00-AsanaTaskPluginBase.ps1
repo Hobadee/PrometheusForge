@@ -8,20 +8,18 @@ class AsanaTaskPluginBase : TaskPluginInterface {
     *creating* Asana objects (projects, sections, tasks, task dependencies) - no reads,
     updates, or deletes of any other Asana data.
 
-    Centralizes:
-    - Pushing connection config into the [AsanaApiClient] singleton, which owns authentication
-      (read from [Variables], never from step/plugin parameters) and HTTP calls.
-    - A helper for resolving a "gid" (Asana's resource id) either from a literal value in
-      YAML or from a previously-registered Step result, so later steps can chain off of
-      ids created by earlier steps (e.g. use a created project's gid as the parent for a
-      section created in a later step).
+    Centralizes pushing connection config into the [AsanaApiClient] singleton, which owns
+    authentication (read from [Variables], never from step/plugin parameters) and HTTP calls.
+    Gid parameters (e.g. projectGid, taskGid) are always plain templated strings - plugins
+    read them directly from $this.parameters, no resolution helper needed.
 
     .NOTES
     This class is NOT registered with [taskPluginRegistry] - only concrete derived plugins
     (AsanaCreateProject, AsanaCreateSection, AsanaCreateTask, AsanaCreateTaskDependency)
     are registered.
 
-    This is boilerplate only; ResolveGid() and derived Execute() methods are not implemented yet.
+    Derived Execute() methods other than AsanaCreateProject and AsanaCreateSection are still
+    boilerplate only.
     #>
 
     AsanaTaskPluginBase() : base() {
@@ -94,34 +92,6 @@ class AsanaTaskPluginBase : TaskPluginInterface {
         #>
         [Log]::Trace("AsanaTaskPluginBase::InvokeAsanaApi() - Invoking API with method $method, path $path, body: $($body | Out-String)")
         return [AsanaApiClient]::GetInstance().InvokeApi($method, $path, $body)
-    }
-
-    [string] ResolveGid([object]$value) {
-        <#
-        .SYNOPSIS
-        Resolves an Asana gid from either a literal string or a reference to a
-        previously-registered Step result.
-
-        .DESCRIPTION
-        Supports two shapes for a "gid" parameter (e.g. parentProjectGid, taskGid):
-        - A literal string gid, e.g. "1234567890".
-        - A reference object pointing at a Step result registered via that step's
-          'result:' config key, e.g.:
-              { fromStep: "createdProject", path: "object.data.gid" }
-          'fromStep' names the key the earlier step's full result hashtable was stored
-          under via $this.Api.Variables (Step.Process() does this when config.result is set).
-          'path' is a dot-notation path into that stored result used to locate the gid.
-
-        .PARAMETER value
-        The raw parameter value to resolve (string or reference object).
-
-        .OUTPUTS
-        System.String - the resolved gid.
-
-        .NOTES
-        Not implemented - boilerplate only.
-        #>
-        throw [System.NotImplementedException]::new("ResolveGid is not yet implemented")
     }
 
 }
