@@ -37,7 +37,11 @@ class AsanaAddTasksToSection : AsanaTaskPluginBase {
         $sectionGid = [string]$this.parameters.sectionGid
         $responses = [System.Collections.Generic.List[object]]::new()
 
-        foreach ($taskGid in $this.parameters.taskGids) {
+        # Asana adds newest tasks to the top of the section, so reverse the order to maintain the original order
+        $taskGids = @($this.parameters.taskGids)
+        [array]::Reverse($taskGids)
+
+        foreach ($taskGid in $taskGids) {
             $responses.Add($this.InvokeAsanaApi('POST', "/sections/$sectionGid/addTask", @{ task = [string]$taskGid }))
         }
 

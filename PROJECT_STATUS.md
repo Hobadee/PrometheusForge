@@ -3,6 +3,7 @@
 Last updated: 2026-09-17
 
 ## Recent Changes
+- Extended `TemplateEngine.ExpandTopLevelValues()` to expand templated string elements in arrays assigned to top-level hashtable or PSCustomObject properties, with focused unit coverage for both input shapes.
 - Implemented `AsanaAddTasksToSection` to add a `taskGids` array to a `sectionGid`. The plugin validates both inputs and performs the required `POST /sections/{section_gid}/addTask` call once per task, with focused Pester coverage.
 - Implemented `AsanaCreateTask` to create tasks with `POST /tasks`. It supports `name`, `resource_subtype`, `approval_status`, `completed`, due/start timestamps or dates, `html_notes`, `notes`, `assignee`, `parent`, `projects`, and `workspace`; validation enforces Asana's enum, type, required-location, date-format, and field-combination constraints. Added focused Pester coverage in `Tests/Private/Classes/Plugins/Task/Asana/AsanaCreateTask.tests.ps1`.
 - Implemented `AsanaCreateSection` to create project sections with `POST /projects/{project_gid}/sections`, including mutually exclusive `insert_before` and `insert_after` support. Added focused Pester coverage for validation and mocked API execution.
@@ -289,3 +290,9 @@ null return on invalid input in one place, but throw in another
 ### Appropriate error handling
 Ensure everywhere that can throw, is either caught properly and handled
 elsewhere, or SHOULD fall through to a fatal user-facing error.
+
+
+## Bugs
+
+### Retries
+Bug in Abort/Retry/Fail code.  Abort doesn't actually abort the entire run.  (It should)

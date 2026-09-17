@@ -40,6 +40,14 @@ Describe 'AsanaCreateTask Plugin - Parameter Validation' {
         { $plugin.ValidateParameters(@{ name = 'Task'; projects = @() }) } | Should -Throw -ExceptionType $exceptionType
         { $plugin.ValidateParameters(@{ name = 'Task'; projects = @('') }) } | Should -Throw -ExceptionType $exceptionType
     }
+
+    It 'validates html_notes as Asana rich text' {
+        $exceptionType = [System.ArgumentException]
+        { $plugin.ValidateParameters(@{ name = 'Task'; workspace = '12345'; html_notes = 'Details' }) } | Should -Throw -ExceptionType $exceptionType
+        { $plugin.ValidateParameters(@{ name = 'Task'; workspace = '12345'; html_notes = '<body><script>bad</script></body>' }) } | Should -Throw -ExceptionType $exceptionType
+        { $plugin.ValidateParameters(@{ name = 'Task'; workspace = '12345'; html_notes = '<body><strong>Details</strong></body>' }) } | Should -Not -Throw
+        { $plugin.ValidateParameters(@{ name = 'Task'; workspace = '12345'; html_notes = '<body><h1>Title</h1><img/><hr/></body>' }) } | Should -Not -Throw
+    }
 }
 
 Describe 'AsanaCreateTask Plugin - Execution' {

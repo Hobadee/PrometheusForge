@@ -54,6 +54,10 @@ class AsanaCreateTask : AsanaTaskPluginBase {
             }
         }
 
+        if ($null -ne $params.html_notes) {
+            $this.ValidateRichText('html_notes', [string]$params.html_notes, @('h1', 'h2', 'hr', 'img'))
+        }
+
         if ($null -ne $params.resource_subtype) {
             $validResourceSubtypes = @('default_task', 'milestone', 'approval', 'custom')
             if ($validResourceSubtypes -notcontains $params.resource_subtype) {

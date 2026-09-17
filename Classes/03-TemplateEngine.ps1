@@ -15,8 +15,8 @@
             variable is set to `json`, in which case they render as compact JSON.
 
     MVP scope intentionally keeps expansion constrained:
-    - Expand top-level string fields only when processing parameter objects.
-    - Do not recursively expand nested objects/arrays.
+    - Expand top-level string fields and array elements when processing parameter objects.
+    - Do not recursively expand nested objects.
 
     .NOTES
     This class is intentionally static-only and has no instance state.
@@ -144,6 +144,9 @@
                 if ($inputObject[$key] -is [string]) {
                     $inputObject[$key] = [TemplateEngine]::ExpandString($inputObject[$key], $configuration)
                 }
+                elseif ($inputObject[$key] -is [System.Collections.IList]) {
+                    $inputObject[$key] = [TemplateEngine]::ExpandTopLevelValues($inputObject[$key], $configuration)
+                }
             }
 
             return $inputObject
@@ -161,6 +164,9 @@
             foreach ($property in $inputObject.PSObject.Properties) {
                 if ($property.Value -is [string]) {
                     $property.Value = [TemplateEngine]::ExpandString($property.Value, $configuration)
+                }
+                elseif ($property.Value -is [System.Collections.IList]) {
+                    $property.Value = [TemplateEngine]::ExpandTopLevelValues($property.Value, $configuration)
                 }
             }
 

@@ -74,9 +74,6 @@ root:
               name: "Documentation"
             defer_binding: true
 
-
-
-
           - type: step
             name: Asana Documentation - General Information
             slug: asana-documentation-general-information
@@ -85,56 +82,49 @@ root:
               projects:
                 - "{{step.create-asana-project.object.data.gid}}"
               name: "General Information"
-              notes: "Place general information about the onboarding in the notes here"
+              notes: "Place general information about the onboarding in the comments below"
+              #html_notes: "<body>Place general information about the onboarding in the notes here:<hr/><pre></pre></body>"
             defer_binding: true
-            retry:
-              on_failure: fail
-              retries: 1
-              delay: 0
 
+          # - type: step
+          #   name: Debug Documentation - General Information
+          #   slug: debug-create-asana-documentation-general-information
+          #   plugin: TextOutput
+          #   parameters:
+          #     message: "Result: {{step.asana-documentation-general-information.error}}"
+          #   defer_binding: true
 
           - type: step
-            name: Debug Documentation - General Information
-            slug: debug-create-asana-documentation-general-information
-            plugin: TextOutput
+            name: Asana Documentation - User Password
+            slug: asana-documentation-user-password
+            plugin: AsanaCreateTask
             parameters:
-              message: "Result: {{step.asana-documentation-general-information.error}}"
+              projects:
+                - "{{step.create-asana-project.object.data.gid}}"
+              name: "User Password"
+              notes: "Password: {{step.generate-user-password.object.generatedPassword}}"
             defer_binding: true
-
-
-
-
-          # - type: step
-          #   name: Asana Documentation - User Password
-          #   slug: asana-documentation-user-password
-          #   plugin: AsanaCreateTask
-          #   parameters:
-          #     projects:
-          #       - "{{step.create-asana-project.object.data.gid}}"
-          #     name: "User Password"
-          #     notes: "Password: {{step.generate-user-password.object.generatedPassword}}"
-          #   defer_binding: true
-          # - type: step
-          #   name: Asana Documentation - User PIN
-          #   slug: asana-documentation-user-pin
-          #   plugin: AsanaCreateTask
-          #   parameters:
-          #     projects:
-          #       - "{{step.create-asana-project.object.data.gid}}"
-          #     name: "User PIN"
-          #     notes: "PIN: {{step.generate-user-pin.object.generatedPassword}}"
-          #   defer_binding: true
-          # - type: step
-          #   name: Asana Documentation - Add Tasks to Section
-          #   slug: asana-documentation-add-tasks-to-section
-          #   plugin: AsanaAddTasksToSection
-          #   parameters:
-          #     sectionGid: "{{step.create-asana-documentation-section.object.data.gid}}"
-          #     taskGids:
-          #       - "{{step.asana-documentation-general-information.object.data.gid}}"
-          #       - "{{step.asana-documentation-user-password.object.data.gid}}"
-          #       - "{{step.asana-documentation-user-pin.object.data.gid}}"
-          #   defer_binding: true
+          - type: step
+            name: Asana Documentation - User PIN
+            slug: asana-documentation-user-pin
+            plugin: AsanaCreateTask
+            parameters:
+              projects:
+                - "{{step.create-asana-project.object.data.gid}}"
+              name: "User PIN"
+              notes: "PIN: {{step.generate-user-pin.object.generatedPassword}}"
+            defer_binding: true
+          - type: step
+            name: Asana Documentation - Add Tasks to Section
+            slug: asana-documentation-add-tasks-to-section
+            plugin: AsanaAddTasksToSection
+            parameters:
+              sectionGid: "{{step.create-asana-documentation-section.object.data.gid}}"
+              taskGids:
+                - "{{step.asana-documentation-general-information.object.data.gid}}"
+                - "{{step.asana-documentation-user-password.object.data.gid}}"
+                - "{{step.asana-documentation-user-pin.object.data.gid}}"
+            defer_binding: true
           # - type: step
           #   name: Debug Documentation - General Notes
           #   slug: debug-create-asana-documentation-general-notes

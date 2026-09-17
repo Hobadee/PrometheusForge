@@ -89,6 +89,20 @@ Describe 'TemplateEngine' {
             $expanded.nested.note | Should -Be '{{userName}}'
         }
 
+        It 'expands string items in top-level hashtable arrays' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('userName', 'ada')
+            $configuration.Set('role', 'developer')
+
+            $parameters = @{
+                items = @('{{userName}}', '{{role}}')
+            }
+
+            $expanded = [TemplateEngine]::ExpandTopLevelValues($parameters, $configuration)
+
+            $expanded.items | Should -Be @('ada', 'developer')
+        }
+
         It 'expands only top-level string properties in pscustomobjects' {
             $configuration = [Variables]::GetInstance()
             $configuration.Set('department', 'IT')
@@ -106,6 +120,20 @@ Describe 'TemplateEngine' {
             $expanded.message | Should -Be 'Dept IT'
             $expanded.retries | Should -Be 3
             $expanded.nested.label | Should -Be '{{department}}'
+        }
+
+        It 'expands string items in top-level pscustomobject arrays' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('firstName', 'Ada')
+            $configuration.Set('lastName', 'Lovelace')
+
+            $parameters = [pscustomobject]@{
+                items = @('{{firstName}}', '{{lastName}}')
+            }
+
+            $expanded = [TemplateEngine]::ExpandTopLevelValues($parameters, $configuration)
+
+            $expanded.items | Should -Be @('Ada', 'Lovelace')
         }
 
         It 'expands top-level string values inside sample-style parameter lists' {

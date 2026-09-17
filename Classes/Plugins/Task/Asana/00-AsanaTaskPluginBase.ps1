@@ -22,11 +22,50 @@ class AsanaTaskPluginBase : TaskPluginInterface {
     boilerplate only.
     #>
 
+    static [string[]] $UniversalRichTextTags = @('body', 'strong', 'em', 'u', 's', 'code', 'ol', 'ul', 'li', 'a', 'blockquote', 'pre')
+
     AsanaTaskPluginBase() : base() {
         <#
         .SYNOPSIS
         Constructor for the AsanaTaskPluginBase class.
         #>
+    }
+
+    [void] ValidateRichText([string]$fieldName, [string]$html, [string[]]$additionalAllowedTags) {
+        <#
+        .SYNOPSIS
+        Validates a rich text field against Asana's supported HTML subset.
+
+        .DESCRIPTION
+        Per https://developers.asana.com/docs/rich-text, rich text fields must be wrapped in
+        <body> tags and may only contain the universal tag set plus any field-specific tags
+        (e.g. tasks additionally allow h1/h2/hr/img).
+
+        .PARAMETER fieldName
+        Name of the field being validated, used in error messages.
+
+        .PARAMETER html
+        The rich text HTML content to validate.
+
+        .PARAMETER additionalAllowedTags
+        Extra tag names (lowercase, no brackets/slashes) allowed beyond the universal set.
+        #>
+        if ($null -eq $html) {
+            return
+        }
+
+        if ($html -notmatch '^\s*<body>[\s\S]*</body>\s*$') {
+            throw [System.ArgumentException]::new("Parameter '$fieldName' must be wrapped in <body> tags.", $fieldName)
+        }
+
+        $allowedTags = @([AsanaTaskPluginBase]::UniversalRichTextTags) + @($additionalAllowedTags)
+        $tagMatches = [regex]::Matches($html, '<\/?([a-zA-Z0-9]+)\b[^>]*>')
+        foreach ($match in $tagMatches) {
+            $tagName = $match.Groups[1].Value.ToLowerInvariant()
+            if ($allowedTags -notcontains $tagName) {
+                throw [System.ArgumentException]::new("Parameter '$fieldName' contains unsupported tag '<$tagName>'.", $fieldName)
+            }
+        }
     }
 
     [void] ValidateParameters([object]$params) {
