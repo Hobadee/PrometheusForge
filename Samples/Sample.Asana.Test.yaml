@@ -64,6 +64,9 @@ root:
       - type: section
         name: Asana Documentation Section
         slug: asana-documentation-section
+        tags:
+          - asana
+          - documentation
         items:
           - type: step
             name: Create Asana Documentation Section
@@ -125,6 +128,117 @@ root:
                 - "{{step.asana-documentation-user-password.object.data.gid}}"
                 - "{{step.asana-documentation-user-pin.object.data.gid}}"
             defer_binding: true
+
+      - type: section
+        name: Asana Flags Section
+        slug: asana-flags-section
+        items:
+          - type: step
+            name: Create Asana Flags Section
+            slug: create-asana-flags-section
+            plugin: AsanaCreateSection
+            parameters:
+              projectGid: "{{step.create-asana-project.object.data.gid}}"
+              name: "Flags"
+            defer_binding: true
+
+          - type: section
+            name: Asana Flags - Computer Type
+            slug: asana-flags-computer-type
+            tags:
+              - computer
+              - hardware
+            items:
+              - type: step
+                name: Asana Flags - Computer Type
+                slug: asana-flags-computer-type
+                plugin: AsanaCreateTask
+                parameters:
+                  projects:
+                    - "{{step.create-asana-project.object.data.gid}}"
+                  name: "Computer Type"
+                  notes: "Mark as complete ONE AND ONLY ONE computer type"
+                defer_binding: true
+              - type: step
+                name: Asana Flags - Computer Type - PC
+                slug: asana-flags-computer-type-pc
+                plugin: AsanaCreateTask
+                parameters:
+                  name: "Computer Type - PC"
+                  notes: "User will receive a PC"
+                  parent: "{{step.asana-flags-computer-type.object.data.gid}}"
+                defer_binding: true
+                tags:
+                  - pc
+              - type: step
+                name: Asana Flags - Computer Type - Mac
+                slug: asana-flags-computer-type-mac
+                plugin: AsanaCreateTask
+                parameters:
+                  name: "Computer Type - Mac"
+                  notes: "User will receive a Mac"
+                  parent: "{{step.asana-flags-computer-type.object.data.gid}}"
+                defer_binding: true
+                tags:
+                  - mac
+              - type: step
+                name: Asana Flags - Add Tasks to Section
+                slug: asana-flags-add-tasks-to-section
+                plugin: AsanaAddTasksToSection
+                parameters:
+                  sectionGid: "{{step.create-asana-flags-section.object.data.gid}}"
+                  taskGids:
+                    - "{{step.asana-flags-computer-type.object.data.gid}}"
+                defer_binding: true
+
+
+      # - type: section
+      #   name: Asana Test Dependancy Section
+      #   slug: asana-test-dependancy-section
+      #   items:
+      #     - type: step
+      #       name: Create Asana Test Section
+      #       slug: create-asana-test-section
+      #       plugin: AsanaCreateSection
+      #       parameters:
+      #         projectGid: "{{step.create-asana-project.object.data.gid}}"
+      #         name: "Test"
+      #       defer_binding: true
+
+      #     - type: step
+      #       name: Asana Test - Dependancy
+      #       slug: asana-create-test-dependancy
+      #       plugin: AsanaCreateTask
+      #       parameters:
+      #         projects:
+      #           - "{{step.create-asana-project.object.data.gid}}"
+      #         name: "Dependancy"
+      #         notes: "Mark as complete the dependancy task"
+      #       defer_binding: true
+      #     - type: step
+      #       name: Asana Test - Add Dependency
+      #       slug: asana-test-add-dependency
+      #       plugin: AsanaCreateTaskDependency
+      #       parameters:
+      #         taskGid: "{{step.asana-create-test-dependancy.object.data.gid}}"
+      #         relatedTaskGids:
+      #           - "{{step.asana-flags-computer-type-pc.object.data.gid}}"
+      #         relation: "predecessor"
+      #       defer_binding: true
+
+      #     - type: step
+      #       name: Asana Test - Add Tasks to Section
+      #       slug: asana-test-add-tasks-to-section
+      #       plugin: AsanaAddTasksToSection
+      #       parameters:
+      #         sectionGid: "{{step.create-asana-test-section.object.data.gid}}"
+      #         taskGids:
+      #           - "{{step.asana-create-test-dependancy.object.data.gid}}"
+      #       defer_binding: true
+
+
+
+
           # - type: step
           #   name: Debug Documentation - General Notes
           #   slug: debug-create-asana-documentation-general-notes
