@@ -168,6 +168,15 @@ root:
                   notes: "Mark as complete ONE AND ONLY ONE computer type"
                 defer_binding: true
               - type: step
+                name: Asana Flags - Add Tasks to Section
+                slug: asana-flags-add-tasks-to-section
+                plugin: AsanaAddTasksToSection
+                parameters:
+                  sectionGid: "{{step.create-asana-flags-section.object.data.gid}}"
+                  taskGids:
+                    - "{{step.asana-flags-computer-type.object.data.gid}}"
+                defer_binding: true
+              - type: step
                 name: Asana Flags - Computer Type - PC
                 slug: asana-flags-computer-type-pc
                 plugin: AsanaCreateTask
@@ -189,29 +198,72 @@ root:
                 defer_binding: true
                 tags:
                   - mac
-              - type: step
-                name: Asana Flags - Add Tasks to Section
-                slug: asana-flags-add-tasks-to-section
-                plugin: AsanaAddTasksToSection
-                parameters:
-                  sectionGid: "{{step.create-asana-flags-section.object.data.gid}}"
-                  taskGids:
-                    - "{{step.asana-flags-computer-type.object.data.gid}}"
-                defer_binding: true
 
 
-      # - type: section
-      #   name: Asana Test Dependancy Section
-      #   slug: asana-test-dependancy-section
-      #   items:
-      #     - type: step
-      #       name: Create Asana Test Section
-      #       slug: create-asana-test-section
-      #       plugin: AsanaCreateSection
-      #       parameters:
-      #         projectGid: "{{step.create-asana-project.object.data.gid}}"
-      #         name: "Test"
-      #       defer_binding: true
+      - type: section
+        name: Asana Procurement
+        slug: asana-procurement
+        items:
+          - type: step
+            name: Create Procurement Section
+            slug: create-asana-procurement-section
+            plugin: AsanaCreateSection
+            parameters:
+              projectGid: "{{AsanaProjectGID}}"
+              name: "Procurement"
+            defer_binding: true
+          - type: step
+            name: Purchase PC Laptop
+            slug: asana-procurement-laptop-pc
+            plugin: AsanaCreateTask
+            parameters:
+              projects:
+                - "{{AsanaProjectGID}}"
+              name: "Purchase PC Laptop"
+              notes: "Purchase a PC laptop"
+            defer_binding: true
+          - type: step
+            name: Purchase Mac Laptop
+            slug: asana-procurement-laptop-mac
+            plugin: AsanaCreateTask
+            parameters:
+              projects:
+                - "{{AsanaProjectGID}}"
+              name: "Purchase Mac Laptop"
+              notes: "Purchase a Mac laptop"
+            defer_binding: true
+
+          - type: step
+            name: Laptop PC Dependency
+            slug: asana-procurement-laptop-pc-dependency
+            plugin: AsanaCreateTaskDependency
+            parameters:
+              taskGid: "{{step.asana-procurement-laptop-pc.object.data.gid}}"
+              relatedTaskGids:
+                - "{{step.asana-flags-computer-type-pc.object.data.gid}}"
+              relation: "predecessor"
+            defer_binding: true
+          - type: step
+            name: Laptop Mac Dependency
+            slug: asana-procurement-laptop-mac-dependency
+            plugin: AsanaCreateTaskDependency
+            parameters:
+              taskGid: "{{step.asana-procurement-laptop-mac.object.data.gid}}"
+              relatedTaskGids:
+                - "{{step.asana-flags-computer-type-mac.object.data.gid}}"
+              relation: "successor"
+            defer_binding: true
+
+          - type: step
+            name: Add Tasks to Procurement Section
+            slug: asana-procurement-add-tasks-to-section
+            plugin: AsanaAddTasksToSection
+            parameters:
+              sectionGid: "{{step.create-asana-procurement-section.object.data.gid}}"
+              taskGids:
+                - "{{step.asana-procurement-laptop-pc.object.data.gid}}"
+                - "{{step.asana-procurement-laptop-mac.object.data.gid}}"
+            defer_binding: true
 
       #     - type: step
       #       name: Asana Test - Dependancy
