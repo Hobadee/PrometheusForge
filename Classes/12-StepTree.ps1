@@ -155,13 +155,13 @@ class StepTree : System.Collections.IEnumerable{
         # Run by default if no conditionals trigger
         $rtn = $true
 
+        if ($matchesExclude) {
+            $rtn = $false
+        }
+
         if ($matchesInclude -and $matchesExclude) {
             $precedence = [Variables]::GetInstance().Get('tagsPrecedence')
             $rtn = $precedence -ne 'exclude'
-        }
-
-        if ($matchesExclude) {
-            $rtn = $false
         }
 
         return $rtn
