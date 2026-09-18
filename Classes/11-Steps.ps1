@@ -91,12 +91,12 @@ class Steps {
     [void] AddOrUpdate([Step]$step) {
         <#
         .SYNOPSIS
-        Adds a new step or updates an existing step by name
+        Adds a new step or updates an existing step by slug
 
         .PARAMETER step
         The Step object to add or update
         #>
-        if ($this.Exists($step.name)) {
+        if ($this.Exists($step.slug)) {
             $this.Update($step)
         } else {
             $this.Add($step)

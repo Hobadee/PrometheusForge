@@ -1,7 +1,13 @@
 class RegisterVariable : TaskPluginInterface {
     <#
     .SYNOPSIS
-    Simple plugin for registering a variable so it's easier to access later
+    Simple plugin for registering a variable so it's easier to access later.
+
+    .PARAMETER name
+    The variable name to register in the workflow variable store.
+
+    .PARAMETER value
+    The value to associate with that variable name; it may be a scalar, list, object, or $null.
     #>
 
     [string]$name = $null
@@ -28,16 +34,6 @@ class RegisterVariable : TaskPluginInterface {
 
 
     [void] ValidateParameters([object]$params) {
-        <#
-        .SYNOPSIS
-        Validates and extracts the name/value parameters for the RegisterVariable plugin.
-
-        .DESCRIPTION
-        Requires:
-        - name: A non-null, non-empty string identifying the Variables key to register.
-        - value: The value to store under that key. Any type is accepted, including $null.
-        #>
-
         if ($null -ne $params.name -and $params.name -isnot [string]) {
             throw [System.ArgumentException]::new("Parameter 'name' must be a string")
         }

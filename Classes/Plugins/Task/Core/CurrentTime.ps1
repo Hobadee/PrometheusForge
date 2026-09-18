@@ -6,6 +6,10 @@ class CurrentTime : TaskPluginInterface {
     .NOTES
     A better template system should be able to insert basic varaible such as current date/time
     making this obsolete.  We are not there yet.
+
+    .PARAMETER $null
+    This plugin accepts no parameters. Any value supplied is ignored; the plugin simply
+    returns the current date and time.
     #>
 
     CurrentTime() : base(){

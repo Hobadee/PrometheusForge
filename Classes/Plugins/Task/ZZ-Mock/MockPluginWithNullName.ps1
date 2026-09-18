@@ -1,4 +1,11 @@
 class MockPluginWithNullName : TaskPluginInterface {
+    <#
+    .SYNOPSIS
+    Invalid mock plugin used to verify null plugin names are rejected.
+
+    .PARAMETER $null
+    This mock plugin accepts no required parameters; the invalid condition is the null name returned by PluginInfo().
+    #>
     MockPluginWithNullName() : base() {}
     
     static [hashtable] PluginInfo() {

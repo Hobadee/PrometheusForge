@@ -1,4 +1,14 @@
 class TextOutput : TaskPluginInterface {
+    <#
+    .SYNOPSIS
+    Writes a message to the configured log sink.
+
+    .PARAMETER message
+    The text to write to the log stream. This is the primary output payload.
+
+    .PARAMETER method
+    Optional log level or method name to pass to [Log]::Write(), such as 'Info', 'Warn', 'Error', or 'Trace'.
+    #>
 
     [string] $message = $null
     [string] $method = $null
@@ -30,13 +40,6 @@ class TextOutput : TaskPluginInterface {
     }
 
     [void] ValidateParameters([object]$params) {
-        <#
-        .SYNOPSIS
-        Validates the parameters for the TextOutput plugin.
-
-        .DESCRIPTION
-        Ensures that the 'message' parameter is present and not null/empty.
-        #>
         if ($null -eq $params) {
             throw [System.ArgumentException]::new("Parameters cannot be null")
         }

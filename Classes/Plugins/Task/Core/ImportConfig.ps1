@@ -12,6 +12,12 @@ class ImportConfig : TaskPluginInterface {
     Unlike the built-in "type: import" StepTree handling (which happens at tree-construction time),
     this plugin runs at execution time like any other task - so it can be conditional, retried, or
     templated the same way as any other step.
+
+    .PARAMETER URI
+    The resource path or location that the selected source plugin should load.
+
+    .PARAMETER SourcePluginName
+    The source plugin identifier, such as 'yamlSource', used to resolve the loader.
     #>
 
     ImportConfig() : base(){
@@ -33,15 +39,6 @@ class ImportConfig : TaskPluginInterface {
     }
 
     [void] ValidateParameters([object]$params) {
-        <#
-        .SYNOPSIS
-        Validates the parameters for the ImportConfig plugin.
-
-        .DESCRIPTION
-        Requires:
-        - URI: the location to load, passed to the named source plugin.
-        - SourcePluginName: the registered source plugin to use for loading (e.g. 'yamlSource').
-        #>
         if ($null -eq $params) {
             throw [System.ArgumentException]::new("Parameters cannot be null")
         }

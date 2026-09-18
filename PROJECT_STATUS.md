@@ -1,72 +1,23 @@
 ﻿# Project Status
 
-Last updated: 2026-09-17
+Last updated: 2026-09-18
+
+Prometheus Forge is now a YAML-driven workflow engine built around a `StepTree` execution model, a run-scoped `Steps` registry, and plugin-based source/task execution. The project currently supports loading and processing configuration trees from YAML, applying base and overlay variables, resolving templated values, and running steps with tag-based include/exclude filtering and plugin-requested overrides/inserts.
+
+Current capabilities include:
+- workflow definition and execution through `Invoke-Forge` with file validation, overlay handling, and import resolution
+- `Step`/`StepTree` hierarchy with slug-based identity, run-state tracking, and recursive depth-first execution
+- variable storage and map-based ingestion via `Variables.SetMany()`, including `tagsInclude`/`tagsExclude` handling
+- template expansion for nested variables and list/object-shaped inputs, with unresolved placeholders falling back to empty strings
+- plugin infrastructure for source definitions, task execution, and a minimal plugin-facing API surface for configuration changes
+- Asana task/project/section operations and a lightweight terminal logging layer
+- test coverage for key public and private behaviors, plus reset logic to prevent cross-run singleton leakage
+
+The project is operating as a working MVP for workflow automation and Asana integration, but broader overlay semantics, advanced templating behaviors, and some plugin/API refinements remain future work.
+
 
 ## Recent Changes
-- Extended `TemplateEngine.ExpandTopLevelValues()` to expand templated string elements in arrays assigned to top-level hashtable or PSCustomObject properties, with focused unit coverage for both input shapes.
-- Implemented `AsanaAddTasksToSection` to add a `taskGids` array to a `sectionGid`. The plugin validates both inputs and performs the required `POST /sections/{section_gid}/addTask` call once per task, with focused Pester coverage.
-- Implemented `AsanaCreateTask` to create tasks with `POST /tasks`. It supports `name`, `resource_subtype`, `approval_status`, `completed`, due/start timestamps or dates, `html_notes`, `notes`, `assignee`, `parent`, `projects`, and `workspace`; validation enforces Asana's enum, type, required-location, date-format, and field-combination constraints. Added focused Pester coverage in `Tests/Private/Classes/Plugins/Task/Asana/AsanaCreateTask.tests.ps1`.
-- Implemented `AsanaCreateSection` to create project sections with `POST /projects/{project_gid}/sections`, including mutually exclusive `insert_before` and `insert_after` support. Added focused Pester coverage for validation and mocked API execution.
-- Added opt-in JSON rendering for hashtable template values. Set the `templateHashtableFormat` variable to `json` to render `{{ variable }}` as compact JSON; the default string representation remains unchanged.
-- Implemented `AsanaCreateProject` task plugin (`Classes/Plugins/Task/Asana/AsanaCreateProject.ps1`) to create Asana projects via `POST /projects` according to the Asana API specification. Supports `workspace` (and `workspaceGid` alias), `name`, `notes`, `html_notes`, `privacy_setting`, `default_access_level`, `color`, `icon`, and `default_view`.
-- Added static `[Log]::Trace([string]$message)` method to `Classes/00-Log.ps1` for tracing API payloads and responses.
-- Added comprehensive unit tests for `AsanaCreateProject` in `Tests/Private/Classes/Plugins/Task/Asana/AsanaCreateProject.tests.ps1` covering constructor, inheritance, metadata, registration, parameter validation (required and optional fields), and mocked execution.
-- Added a required `slug` field (must match `^[a-zA-Z0-9_-]+$`) to `Step` and `StepTree`, alongside the existing free-text `name`. `slug` is now the machine key used by the `Steps` registry (`Add`/`Remove`/`Update`/`Get`/`Exists`/`GetResult`/`IsProcessed`) and by `ForgeConfigurationApi.RequestOverride()`/`StepTree` override matching - `name` remains purely descriptive. Updated all sample YAML files and inline test fixtures (`StepTree.tests.ps1`, `Invoke-Forge.Tests.ps1`) to include `slug`. Synthetic section wrappers created by `SourceFactory`/`ImportConfig` for imports now also carry a `slug` (`imported-section` by default, or the wrapped step's own slug when present).
-- `TemplateEngine.ResolvePath()` now resolves `step.<slug>[.path...]` tokens directly against the `Steps` registry (live reference to `Step.result`, no copy/registration required), so step results are available in templates without needing to declare a `result:` alias. `result:` + `Variables` remains supported as an optional alias.
-- KNOWN TECH DEBT: the `slug` regex validation (and the pre-existing `name` required-string validation) is duplicated between `Step` and `StepTree` constructors. Needs deduping into a shared helper at some later time.
-- Added the terminal-only MVP `Log` singleton and `LogLevel` enum. `TextOutput` now routes its output through the logger, which prefixes messages with their level. Logger configuration currently supports enabling or disabling terminal output; file and other sinks remain future work.
-- Implemented tag-based include/exclude filtering (MVP TODO #1). `StepTree` now owns a `tags` object populated from each item's `tags` YAML list, and `checkConditionals()` compares it against `Variables.IncludeTags`/`ExcludeTags`: no match runs the step, an exclude-only match skips it, an include-only match runs it, and a match on both falls back to the `tagsPrecedence` variable (`"include"` runs, `"exclude"` skips, unset/empty defaults to running).
-- `Variables.SetMany()` now recognizes `tagsInclude`/`tagsExclude` entries in a variables map and appends them to `IncludeTags`/`ExcludeTags` across calls. This is intentionally inconsistent with ordinary variables, which overwrite earlier values. `tagsPrecedence` is read as a plain variable via `Variables.Get('tagsPrecedence')`.
-- Updated `Sample.Onboard.Overlay.yaml` to move tag filtering (`tagsInclude`/`tagsExclude`) under `variables:` (and documented `tagsPrecedence`), replacing the previous unused top-level `includeByTags`/`excludeByTags` keys.
-- Added `StepTree tags` and `StepTree checkConditionals` Pester coverage, plus `SetMany` tag-population coverage in the (duplicate) `Variables.tests.ps1`/`Configuration.tests.ps1` files.
-- Added an `AI-Assisted Development` section to `README.md` that transparently acknowledges AI assistance while clarifying that architecture, workflow design, decisions, and review are human-led.
-- Reworked `README.md` for user and collaborator onboarding: corrected the sample workflow path and PowerShell requirement, added feature and configuration summaries, documented installation, plugin development, testing, and roadmap guidance, and corrected introductory terminology.
-- Implemented plugin-requested step replacement through `ForgeConfigurationApi.RequestOverride()`. `StepTree.Process()` consumes queued overrides before traversing children and replaces the matching `Steps` entry with a newly constructed step. The MVP accepts only same-named `type: step` replacement configs; section replacement and cross-type replacement remain unsupported. Added focused `StepTree` coverage for replacement execution and registry update behavior.
-- Updated `Invoke-Forge.Tests.ps1` to replace deprecated `type: import` StepTree syntax with the `type: step` + `plugin: ImportConfig` pattern (including `defer_binding: true` when sibling steps rely on variables imported at runtime).
-- Updated sample YAML files (`Sample.Onboard.yaml`, `Sample.Onboard.ImportedSection.yaml`) to use plugin-based `ImportConfig` steps instead of legacy import directives.
-- Fixed cross-run singleton leakage: `Variables` and `Steps` are run-scoped singletons but were previously never cleared, so calling `Invoke-Forge`/`Test-Item`/`Test-Steps` more than once in the same session reused state from the prior run. Added `[Variables]::Reset()` (new) and used the existing `[Steps]::Reset()` to null out each singleton's `Instance`. Added `Private/Reset-ForgeState.ps1` as the single call site that resets both, and wired it into the top of `Invoke-Forge`, `Test-Item`, and `Test-Steps`. Plugin registries (`sourcePluginRegistry`, `taskPluginRegistry`) are intentionally NOT reset since their registrations happen once at module load and must persist across runs. Any new run-scoped singleton should add its own `Reset()` and be wired into `Reset-ForgeState`.
-- Scaffolded an optional plugin-facing API surface: `Classes/Api/ForgeApi.ps1` (top-level facade), `Classes/Api/ForgeVariableApi.ps1` (wraps `Variables`), and `Classes/Api/ForgeConfigurationApi.ps1` (MVP stub that only records requested overrides; no override-merging consumer yet). `TaskPluginInterface` now exposes `$this.Api` (settable via `SetApi()`), and `taskPluginRegistry.GetPlugin()` injects a fresh `ForgeApi` into every plugin instance it creates. This is opt-in: existing plugins are unaffected since `Api` defaults to `$null` and nothing requires calling it.
-- Completed the `Item*` to `Step*` architecture migration. `StepTree` now owns hierarchy and execution order, while the run-scoped `Steps` registry owns executable `Step` objects keyed by name. `Invoke-Forge` and the test entry points construct and process `StepTree` instances; the deprecated `Item` model and `ItemFactory` path are no longer used for normal workflow execution.
-- Refactored `Steps` storage to match registry design: dictionary is now instance-scoped (`$this.Steps`) under the singleton instance instead of static class storage.
-- Superseded prior `Steps` static-storage null-access workaround with an instance-scoped dictionary refactor.
-- Renamed the project and PowerShell module to Prometheus Forge, including the public `Invoke-Forge` entry point, module manifest, build output, tests, and documentation.
-- Added explicit public coverage in `Tests/Public/Invoke-Forge.Tests.ps1` for running YAML workflows via both absolute and relative `-FilePath` values.
-- Added private registry coverage to assert duplicate registration of the same source plugin type is idempotent (no throw) in sourcePluginRegistry tests, while still preserving conflict checks for different types sharing the same plugin name.
-- Refactored variable ingestion into `Variables.SetMany()` and removed the old item-factory-specific document helper logic.
-- Rewired `Invoke-Forge` base and overlay variable application to call `Variables.SetMany()`.
-- Simplified variable-shape handling to dictionary/map-only semantics aligned with source plugin contract (`IDictionary`), and added private unit coverage for `SetMany`.
-- Imported YAML handling now loads top-level `variables` before resolving the imported root and normalizes imported content into `StepTree` nodes.
-- Added an end-to-end public regression proving variables from an imported YAML file are available to later sibling steps in `Tests/Public/Invoke-Forge.Tests.ps1`.
-- Wired import URIs through `TemplateEngine` before source plugin construction so YAML imports can use templated file paths.
-- Added a focused regression test for templated YAML imports to confirm the expanded URI reaches the source plugin constructor.
-- Expanded comment-based help in `sourcePluginInterface.ValidateConfig()` to explicitly document every enforced rule (non-null config, IDictionary shape, required/parseable `version >= 1.0`, and required `variables` and/or `root`).
-- Tightened `sourcePluginInterface.ValidateConfig()` so imported configs must declare `version >= 1.0` and include at least one of `variables` or `root`.
-- Updated private Pester coverage for source plugins to exercise version and section validation, and refreshed `yamlSource` fixture data to match the new schema.
-- Split `sourcePluginInterface` contract coverage out of `yamlSource.tests.ps1` into a dedicated private test file: `Tests/Private/Classes/Plugins/sourcePluginInterface.tests.ps1`.
-- Kept `Tests/Private/Classes/Plugins/Source/yamlSource.tests.ps1` focused on concrete `yamlSource` behavior and aligned assertions with current constructor/metadata behavior.
-- Fixed template expansion for sample-style YAML parameter lists by teaching `TemplateEngine.ExpandTopLevelValues()` to traverse `IList` inputs and expand each top-level element in place.
-- Added regression coverage for list-shaped parameters in both `TemplateEngine` unit tests and `Invoke-Forge` end-to-end tests.
-- Implemented MVP templating runtime with a new `TemplateEngine` class and load-order file `Classes/03-TemplateEngine.ps1`.
-- Added a new `sourcePlugin` family with `sourcePluginInterface` and a first `yamlSource` implementation for loading YAML configuration data.
-- `Step` construction expands top-level string plugin parameters before `SetParameters()` validation.
-- Added nested variable path support for templates (e.g., `{{ pin.object.generatedPassword }}`) resolved from `Variables` values.
-- Implemented unresolved-template fallback to empty string for MVP.
-- Added private unit coverage in `Tests/Private/Classes/TemplateEngine.tests.ps1`.
-- Added Step/StepTree templating integration coverage.
-- Extended `Tests/Public/Invoke-Forge.Tests.ps1` with an end-to-end templating test validating base+overlay variable resolution.
-- Completed the StepTree execution model, including recursive depth-first processing, tree collection helpers, dynamic child insertion through `ForgeConfigurationApi.Insert()`, and the PowerShell class-binder return-type workaround.
-- Implemented `Invoke-Forge` as a real entry point that accepts `-FilePath`, validates the file, supports common PowerShell common parameters, parses YAML, and runs all loaded items.
-- Added public tests for `Invoke-Forge` covering successful execution and missing-file errors.
-- Implemented Variable Overlay ingestion in `Invoke-Forge` via `-Overlay` (`[string[]]`) so multiple overlays can be passed and processed in provided order.
-- Added variable import behavior that loads base config `variables` and then each overlay `variables` map into `Variables`, where later overlays overwrite earlier values.
-- Expanded `Invoke-Forge` public tests to validate ordered overlay precedence and missing-overlay error handling.
-
-## Where I left off
-
-2026-09-12
-Working on implementing `AsanaCreateProject`.  Basics work, but it's surfacing some other issues.  Template engine needs to be able to fully resolve nested items, as we can't access
-the result easily.
-
+- MVP is ready to go!
 
 
 ## TODO
@@ -83,30 +34,9 @@ Variable names MUST adhere to the same REGEX as slugs, otherwise we won't be abl
 
 (Create a static "slug" class that does the check?)
 
+
 ### Asana Task Plugin
-My original goal was to create Asana checklists.  Since we are very near MVP now, I would like to make an Asana plugin.  Plugin should have the following parameters:
-- Name (becomes Asana task name)
-- Description (becomes Asana description)
-- Parent (If a nested task, the name of the `Step` object containing the return information of the parent)
-- DependancyParent (Asana tasks that need to be completed before this one.  Name of `Step` object containing return information)
-- DependancyChild (Asana tasks that can only be completed after this one.  Name of the `Step` object(s) containing return information)
-- Type (Item, Section, Milestone, Project.  Various parameters ignored for certain types)
-- Color (For Projects)
-- Icon (For Projects)
-
-It's unlikely we will use DependancyChild, as it's more likely the parent object is created before the child object, but it isn't 100% certain
-
-We will want a singleton attached to the Asana plugin to handle API connection to Asana.  Configuration will be global via a YAML "variables" section or CLI args.
-Configuration variables we need:
-- Personal Access Token
-
-#### Asana API Reference
-https://developers.asana.com/reference/rest-api-reference
-https://developers.asana.com/reference/createproject
-https://developers.asana.com/reference/createsectionforproject
-https://developers.asana.com/reference/createtask
-https://developers.asana.com/reference/adddependenciesfortask
-https://developers.asana.com/reference/adddependentsfortask
+Later Asana plugin functions *MAY* need OAuth.  Investigate and implement if needed
 
 
 ### StepTree Metrics
@@ -122,20 +52,21 @@ The logger should take configuration to be able to output to terminal, file, or 
 
 Possibly implement sinks as plugins?
 
-Create LogEntry class and store each entry there with timestamp, facility, message, trace, and other metrics, allowing us to replay or bulk flush logs to a sink later
+Create LogEntry class and store each entry there with timestamp, facility, message, trace, and other metrics, allowing us to replay, filter, or bulk flush logs to a sink later
+
+#### Complicating issue:
+How do we set a log location?  We can make the plugin a singleton, but how is
+the config passed to it initally?  Passing via normal plugin config args has
+1 of 2 issues; Either you need to pass an idential config every time (even if
+just via templates) or you have the possibility that you add an earlier step
+before the config is initialized.
+
+Best bet is to probably store config in a variable, but this seems a little odd
+as well.  Think about this some.
 
 
-### API permission settings
+### Forge API permission settings
 Plugins should declare which `ForgeApi` categories they actually use (e.g. via a new `Apis`/`RequiredApis` key in `PluginInfo()`). Calls to an API category a plugin did not declare should fail (e.g. `ForgeApi` only populates/exposes declared sub-APIs, or each sub-API checks a declared-capabilities set before executing). Not implemented yet — `ForgeApi`/`ForgeVariableApi`/`ForgeConfigurationApi` currently grant full access to every injected plugin.
-
-
-### Completed architecture: StepTree and Steps
-The deprecated `Item` terminology and legacy item model have been removed from normal workflow execution. The current architecture separates the workflow into two independently managed concerns:
-
-- `StepTree` stores hierarchy and execution order, with nodes referring to actions by name.
-- `Steps` stores the executable action objects, keyed by their unique step names.
-
-This separation allows execution order and tree content to evolve without changing executable action objects. YAML imports, plugin-requested child insertion, and plugin-requested step replacement are supported through this model. File-based overlay replacement semantics remain future work.
 
 
 ### Step replacement overlays
@@ -154,31 +85,19 @@ Implementation will be done by splitting out the data into 2 sections;
 - tree/step layer containing original ordering/hirearchy with a name reference
 - Action objects, keyed by name
 
-#### Import model
-Imported data is split into two related structures:
-Viewing things as a "database", we will have the following "tables":
-- StepTree
-- Steps
 
-Both will have "Primary Keys" of the step name.  On load, we will load the
-hierarchy into the `StepTree`. This consists of `Step.Name` references.
-(This would also be the logical place to store/test conditions in future
-versions, although this won't be present in MVP)  When we run, we will simply
-traverse the `StepTree`, find the matching `Step` object in `Steps`, and run it.
+### Step names
+To ensure name uniqueness, we could auto-build names based on
+hirearchy, so YAML authors don't need to worry about the entire project but
+rather just their section.
 
-The biggest thing here is that we should check and enforce name uniqueness, or
-the user will foot-gun themselves.  (Possibly auto-build names based on
-hirearchy so YAML authors don't need to worry about the entire project but
-rather just their section?)
+This isn't a terrible idea, but would make result resolution extremely difficult
+We would likely need to go back to the old model of explicitely registering results
+which I want to avoid because a significant number of results need to be registered;
+better to auto-register everything and you can grab whenever
 
-#### Overlay Targets
-Ideally, we should be able to eventually complete all the following types of overlays:
-- Step -> Step
-- Section -> Section
-- Step -> Section
-- Section -> Step
-
-The first 2 should be fairly easy.  Polymorphic overlays will be more difficult.
+This adds significant work for the YAML author to ensure no duplicates, but deal
+with it for now.
 
 
 ### Template late-binding
@@ -193,7 +112,7 @@ and not allowing any instances of early-binding.  Investigate.
 before processing begins)
 
 
-### Templating system
+### Advanced Templating system
 The project has a working MVP for variable substitution, but the remaining work is the broader runtime surface area that still needs deliberate design and coverage.
 
 Remaining scope:
@@ -209,6 +128,14 @@ Notes:
 
 ### Step addon overlays
 The basic YAML-import flow is working, but the remaining design questions are about insertion semantics and long-term behavior rather than the parser itself.
+
+Ideally, we should be able to eventually complete all the following types of overlays:
+- Step -> Step
+- Section -> Section
+- Step -> Section
+- Section -> Step
+
+The first 2 should be fairly easy.  Polymorphic overlays will be more difficult.
 
 Remaining work:
 - define how imported steps/sections are inserted into the current `StepTree` location
@@ -253,28 +180,6 @@ it's parents return ID and using that to nest itself when it creates itself in
 some external system.
 
 This is a VERY LOW priority.
-
-
-### Log Plugin
-Plugin similar to TextOutput, but called "Log" instead.
-
-MVP will just have different log levels that just prefix the output with the
-level name.  Colored output based on type would be nice as well.  Log levels
-passed as either name or number.
-
-Later versions should log to a location based on URI.  Try to support as many
-URI locations as possible.  Basic is just a file, but if we could log to a real
-logserver as well, that would be awesome.
-
-#### Complicating issue:
-How do we set a log location?  We can make the plugin a singleton, but how is
-the config passed to it initally?  Passing via normal plugin config args has
-1 of 2 issues; Either you need to pass an idential config every time (even if
-just via templates) or you have the possibility that you add an earlier step
-before the config is initialized.
-
-Best bet is to probably store config in a variable, but this seems a little odd
-as well.  Think about this some.
 
 
 ## Cleanup Items

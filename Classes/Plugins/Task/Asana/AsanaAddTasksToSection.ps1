@@ -6,6 +6,12 @@ class AsanaAddTasksToSection : AsanaTaskPluginBase {
     .DESCRIPTION
     Adds each task to a section via the POST /sections/{section_gid}/addTask API endpoint.
     Asana accepts one task per request, so this plugin sends one request for each task gid.
+
+    .PARAMETER sectionGid
+    The Asana project section GID to receive the tasks.
+    
+    .PARAMETER taskGids
+    An array of Asana task GIDs to add to the section. Each value is added in the order provided after the list is reversed for display ordering.
     #>
 
     AsanaAddTasksToSection() : base() {

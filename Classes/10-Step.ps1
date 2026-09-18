@@ -22,19 +22,15 @@ class Step{
         Initializes a new instance of the Step class
         #>
         
-        #Write-Debug "[Step]::new() Creating Step: $($config.name)"
-        if (-not ($config.name -and $config.name -is [string])) {
-            [Log]::Debug("[Step]::new() Failed attempt to create a Step with an invalid name: $($config.name)")
-            throw [System.ArgumentException]::new("Every step must contain a name") 
-        }
-
         # TODO: This regex validation is duplicated in StepTree - dedup, along with the name validation above, at some later time.
         if (-not ($config.slug -and $config.slug -is [string] -and $config.slug -match '^[a-zA-Z0-9_-]+$')) {
             [Log]::Debug("[Step]::new() Failed attempt to create a Step with an invalid slug: $($config.slug)")
             throw [System.ArgumentException]::new("Every step must contain a slug matching '^[a-zA-Z0-9_-]+`$'")
         }
 
-        $this.name = $config.name
+        if ($null -ne $config.name){
+            $this.name = $config.name
+        }
         $this.slug = $config.slug
         $this.config = $config
 

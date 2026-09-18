@@ -41,15 +41,14 @@ class StepTree : System.Collections.IEnumerable{
         The node configuration
         #>
 
-        if (-not ($config.name -and $config.name -is [string])) {
-            throw [System.ArgumentException]::new("Every item must contain a name") 
-        }
         # TODO: This regex validation is duplicated in Step - dedup, along with the name validation above, at some later time.
         if (-not ($config.slug -and $config.slug -is [string] -and $config.slug -match '^[a-zA-Z0-9_-]+$')) {
             throw [System.ArgumentException]::new("Every item must contain a slug matching '^[a-zA-Z0-9_-]+`$'")
         }
-        #Write-Debug "[StepTree]::new() Creating StepTree node '$($config.name)'"
+
+        if($null -ne $config.name){
         $this.name = $config.name
+        }
         $this.slug = $config.slug
 
         $this.tags = [tags]::new()

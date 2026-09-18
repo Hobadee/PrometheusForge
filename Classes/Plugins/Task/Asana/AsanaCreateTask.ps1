@@ -5,6 +5,48 @@ class AsanaCreateTask : AsanaTaskPluginBase {
 
     .DESCRIPTION
     Creates a task via the POST /tasks API endpoint.
+
+    .PARAMETER name
+    Required task title.
+
+    .PARAMETER workspace
+    Optional workspace GID for the task.
+
+    .PARAMETER projects
+    Optional array of project GIDs to associate with the task.
+
+    .PARAMETER parent
+    Optional parent task GID for a subtask.
+
+    .PARAMETER assignee
+    Optional assignee user GID.
+
+    .PARAMETER notes
+    Optional plain-text task description.
+
+    .PARAMETER html_notes
+    Optional rich-text HTML task description.
+
+    .PARAMETER resource_subtype
+    Optional Asana task subtype such as 'default_task', 'milestone', 'approval', or 'custom'.
+
+    .PARAMETER approval_status
+    Optional approval state when using approval tasks.
+
+    .PARAMETER completed
+    Optional Boolean indicating whether the task is complete.
+
+    .PARAMETER due_at
+    Optional ISO 8601 UTC due timestamp.
+
+    .PARAMETER due_on
+    Optional YYYY-MM-DD due date.
+
+    .PARAMETER start_at
+    Optional ISO 8601 UTC start timestamp.
+
+    .PARAMETER start_on
+    Optional YYYY-MM-DD start date.
     #>
 
     AsanaCreateTask() : base() {
@@ -26,14 +68,6 @@ class AsanaCreateTask : AsanaTaskPluginBase {
     }
 
     [void] ValidateAsanaParameters([object]$params) {
-        <#
-        .SYNOPSIS
-        Validates parameters required to create an Asana task.
-
-        .DESCRIPTION
-        A task must provide a non-empty name and a workspace, project, or parent task.
-        Dates use ISO 8601 UTC timestamps or YYYY-MM-DD calendar dates, as required by Asana.
-        #>
         if ([string]::IsNullOrWhiteSpace([string]$params.name)) {
             throw [System.ArgumentException]::new("Parameters must include a 'name' value.", 'name')
         }

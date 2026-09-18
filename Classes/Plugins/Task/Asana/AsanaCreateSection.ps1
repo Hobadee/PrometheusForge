@@ -6,6 +6,18 @@ class AsanaCreateSection : AsanaTaskPluginBase {
     .DESCRIPTION
     Creates a section in a project via the POST /projects/{project_gid}/sections API endpoint.
     Supports name, insert_before, and insert_after fields.
+
+    .PARAMETER name
+    Required section title.
+
+    .PARAMETER projectGid
+    Required project GID under which the new section will be created.
+
+    .PARAMETER insert_before
+    Optional GID of an existing section that should come after the new section.
+
+    .PARAMETER insert_after
+    Optional GID of an existing section that should come before the new section.
     #>
 
     AsanaCreateSection() : base() {
@@ -27,20 +39,6 @@ class AsanaCreateSection : AsanaTaskPluginBase {
     }
 
     [void] ValidateAsanaParameters([object]$params) {
-        <#
-        .SYNOPSIS
-        Validates parameters required to create an Asana section.
-
-        .DESCRIPTION
-        Expected parameters:
-        - name: The name of the section to create (required). Cannot be an empty string.
-        - projectGid: The gid of the project to create the section in (required), as a string.
-          Typically templated from the result of an earlier AsanaCreateProject step.
-        - insert_before (optional): An existing section gid before which the new section should be
-          inserted. Cannot be provided together with insert_after.
-        - insert_after (optional): An existing section gid after which the new section should be
-          inserted. Cannot be provided together with insert_before.
-        #>
         if ([string]::IsNullOrWhiteSpace([string]$params.name)) {
             throw [System.ArgumentException]::new("Parameters must include a 'name' value.", 'name')
         }

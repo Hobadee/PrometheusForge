@@ -7,6 +7,36 @@ class AsanaCreateProject : AsanaTaskPluginBase {
     Creates a project in Asana via the POST /projects API endpoint.
     Supports workspace, name, notes, html_notes, privacy_setting,
     default_access_level, color, icon, and default_view fields.
+
+    .PARAMETER name
+    Required project title to create in Asana.
+
+    .PARAMETER workspace
+    The Asana workspace GID to create the project in. This is accepted as a synonym for workspaceGid.
+
+    .PARAMETER workspaceGid
+    The Asana workspace GID to create the project in. This is accepted as a synonym for workspace.
+
+    .PARAMETER notes
+    Optional plain-text description for the project.
+
+    .PARAMETER html_notes
+    Optional rich-text HTML description for the project.
+
+    .PARAMETER privacy_setting
+    Optional Asana privacy mode for the project.
+
+    .PARAMETER default_access_level
+    Optional team access level for new members.
+
+    .PARAMETER color
+    Optional project color key.
+
+    .PARAMETER icon
+    Optional project icon key.
+
+    .PARAMETER default_view
+    Optional view mode for the project.
     #>
 
     AsanaCreateProject() : base() {
@@ -28,22 +58,6 @@ class AsanaCreateProject : AsanaTaskPluginBase {
     }
 
     [void] ValidateAsanaParameters([object]$params) {
-        <#
-        .SYNOPSIS
-        Validates parameters required to create an Asana project.
-
-        .DESCRIPTION
-        Expected parameters:
-        - name: The name of the project to create (required).
-        - workspace: The gid of the workspace to create the project in (required). Also accepts workspaceGid.
-        - notes (optional): Free-form notes/description for the project.
-        - html_notes (optional): HTML formatted notes/description for the project.
-        - privacy_setting (optional): The privacy setting of the project (e.g. 'public_to_workspace', 'private_to_team', 'private').
-        - default_access_level (optional): The default access level of the project (e.g. 'admin', 'editor', 'commenter', 'viewer').
-        - color (optional): Color of the project.
-        - icon (optional): Icon for the project.
-        - default_view (optional): Default view of the project (e.g. 'list', 'board', 'calendar', 'timeline').
-        #>
         if ([string]::IsNullOrWhiteSpace([string]$params.name)) {
             throw [System.ArgumentException]::new("Parameters must include a 'name' value.", 'name')
         }

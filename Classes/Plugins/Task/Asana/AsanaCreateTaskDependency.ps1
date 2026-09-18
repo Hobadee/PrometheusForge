@@ -11,6 +11,15 @@ class AsanaCreateTaskDependency : AsanaTaskPluginBase {
     task must complete first:
     - 'predecessor': relatedTaskGids must be completed before taskGid can start (addDependencies).
     - 'successor': relatedTaskGids happen after taskGid is completed (addDependents).
+
+    .PARAMETER taskGid
+    Required anchor task GID that will be connected to related tasks.
+
+    .PARAMETER relatedTaskGids
+    Required array of task GIDs to add as predecessors or successors.
+
+    .PARAMETER relation
+    Required relationship direction; use 'predecessor' to make the related tasks finish before the anchor, or 'successor' to make them happen after the anchor.
     #>
 
     AsanaCreateTaskDependency() : base() {
@@ -32,17 +41,6 @@ class AsanaCreateTaskDependency : AsanaTaskPluginBase {
     }
 
     [void] ValidateAsanaParameters([object]$params) {
-        <#
-        .SYNOPSIS
-        Validates parameters required to link Asana tasks as predecessors/successors.
-
-        .DESCRIPTION
-        Expected parameters:
-        - taskGid: The gid of the anchor task, as a string.
-        - relatedTaskGids: An array of task gids to relate to the anchor task.
-        - relation: Either 'predecessor' (relatedTaskGids must complete before taskGid) or
-          'successor' (relatedTaskGids happen after taskGid).
-        #>
         if ([string]::IsNullOrWhiteSpace([string]$params.taskGid)) {
             throw [System.ArgumentException]::new("Parameters must include a non-empty 'taskGid' value.", 'taskGid')
         }
