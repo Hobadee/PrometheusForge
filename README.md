@@ -97,7 +97,13 @@ A `makefile` is provided for *NIX users to ease build and test workflows from a 
 - `make test`
 - `make clean`
 
-Additionally, `make shell` will put you in a PowerShell instance with the module loaded
+There are also some special additional `make` targets:
+- `make shell`
+    will put you in a PowerShell instance with the module loaded
+- `make production`
+    Installs the production dependancies (YAML PS module)
+- `make dev`
+    Installs development dependancies (PoshCode Module Builder)
 
 ## AI-Assisted Development
 
