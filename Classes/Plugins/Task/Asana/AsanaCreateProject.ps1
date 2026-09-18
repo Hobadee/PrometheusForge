@@ -11,11 +11,8 @@ class AsanaCreateProject : AsanaTaskPluginBase {
     .PARAMETER name
     Required project title to create in Asana.
 
-    .PARAMETER workspace
-    The Asana workspace GID to create the project in. This is accepted as a synonym for workspaceGid.
-
     .PARAMETER workspaceGid
-    The Asana workspace GID to create the project in. This is accepted as a synonym for workspace.
+    The Asana workspace GID to create the project in.
 
     .PARAMETER notes
     Optional plain-text description for the project.
@@ -101,11 +98,13 @@ class AsanaCreateProject : AsanaTaskPluginBase {
         .OUTPUTS
         System.Object - the parsed JSON response from the Asana API (typically containing data with project details).
         #>
-        $workspace = if ($null -ne $this.parameters.workspace) { $this.parameters.workspace } else { $this.parameters.workspaceGid }
+        if ([string]::IsNullOrWhiteSpace([string]$this.parameters.workspaceGid)) {
+            throw [System.ArgumentException]::new("Parameters must include a 'workspaceGid' value.", 'workspaceGid')
+        }
 
         $body = @{
             name      = [string]$this.parameters.name
-            workspace = [string]$workspace
+            workspace = [string]$this.parameters.workspaceGid
         }
 
         if ($null -ne $this.parameters.notes) {

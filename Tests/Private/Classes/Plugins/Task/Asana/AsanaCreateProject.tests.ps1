@@ -63,7 +63,7 @@ Describe 'AsanaCreateProject Plugin - Parameter Validation' {
     Context 'Name Validation' {
         It 'Should throw ArgumentException when name is missing' {
             $params = @{
-                workspace = '12345'
+                workspaceGid = '12345'
             }
             $exceptionType = [System.ArgumentException]
             { $plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
@@ -71,8 +71,8 @@ Describe 'AsanaCreateProject Plugin - Parameter Validation' {
 
         It 'Should throw ArgumentException when name is empty string' {
             $params = @{
-                name      = ''
-                workspace = '12345'
+                name         = ''
+                workspaceGid = '12345'
             }
             $exceptionType = [System.ArgumentException]
             { $plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
@@ -80,8 +80,8 @@ Describe 'AsanaCreateProject Plugin - Parameter Validation' {
 
         It 'Should throw ArgumentException when name is whitespace' {
             $params = @{
-                name      = '   '
-                workspace = '12345'
+                name         = '   '
+                workspaceGid = '12345'
             }
             $exceptionType = [System.ArgumentException]
             { $plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
@@ -89,7 +89,7 @@ Describe 'AsanaCreateProject Plugin - Parameter Validation' {
     }
 
     Context 'Workspace Validation' {
-        It 'Should throw ArgumentException when workspace and workspaceGid are missing' {
+        It 'Should throw ArgumentException when workspaceGid is missing' {
             $params = @{
                 name = 'Test Project'
             }
@@ -97,19 +97,19 @@ Describe 'AsanaCreateProject Plugin - Parameter Validation' {
             { $plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
         }
 
-        It 'Should throw ArgumentException when workspace is empty string' {
+        It 'Should throw ArgumentException when workspaceGid is empty string' {
             $params = @{
-                name      = 'Test Project'
-                workspace = ''
+                name         = 'Test Project'
+                workspaceGid = ''
             }
             $exceptionType = [System.ArgumentException]
             { $plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
         }
 
-        It 'Should throw ArgumentException when workspace is whitespace' {
+        It 'Should throw ArgumentException when workspaceGid is whitespace' {
             $params = @{
-                name      = 'Test Project'
-                workspace = '   '
+                name         = 'Test Project'
+                workspaceGid = '   '
             }
             $exceptionType = [System.ArgumentException]
             { $plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
@@ -117,14 +117,6 @@ Describe 'AsanaCreateProject Plugin - Parameter Validation' {
     }
 
     Context 'Valid Parameters' {
-        It 'Should pass validation when required fields are provided with workspace' {
-            $params = @{
-                name      = 'Test Project'
-                workspace = '12345'
-            }
-            { $plugin.ValidateParameters($params) } | Should -Not -Throw
-        }
-
         It 'Should pass validation when required fields are provided with workspaceGid' {
             $params = @{
                 name         = 'Test Project'
@@ -136,7 +128,7 @@ Describe 'AsanaCreateProject Plugin - Parameter Validation' {
         It 'Should pass validation with all optional fields' {
             $params = @{
                 name                 = 'Test Project'
-                workspace            = '12345'
+                workspaceGid         = '12345'
                 notes                = 'Some notes'
                 html_notes           = '<body>Some html notes</body>'
                 privacy_setting      = 'public_to_workspace'
@@ -189,8 +181,8 @@ Describe 'AsanaCreateProject Plugin - Execution' {
 
             $plugin = [AsanaCreateProject]::new()
             $plugin.SetParameters(@{
-                name      = 'My New Project'
-                workspace = '123456789'
+                name         = 'My New Project'
+                workspaceGid = '123456789'
             })
 
             $result = $plugin.Execute()
@@ -232,7 +224,7 @@ Describe 'AsanaCreateProject Plugin - Execution' {
             $plugin = [AsanaCreateProject]::new()
             $plugin.SetParameters(@{
                 name                 = 'Full Project'
-                workspace            = '123456789'
+                workspaceGid         = '123456789'
                 notes                = 'Project notes'
                 html_notes           = '<body>Project notes</body>'
                 privacy_setting      = 'public_to_workspace'
@@ -281,8 +273,8 @@ Describe 'AsanaCreateProject Plugin - Execution' {
 
             $plugin = [AsanaCreateProject]::new()
             $plugin.SetParameters(@{
-                name      = 'RunTask Project'
-                workspace = '123456789'
+                name         = 'RunTask Project'
+                workspaceGid = '123456789'
             })
 
             $runResult = $plugin.RunTask()

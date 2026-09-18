@@ -95,12 +95,21 @@ class AsanaApiClient {
         #>
         $variables = [Variables]::GetInstance()
 
-        # Retrieve the base URI from the variables, falling back to the current value if not set.
-        $this.baseUri = $variables.GetOrDefault([AsanaApiClient]::VarKey_BaseUri, $this.baseUri)
+        # TODO: AI slop.  It works, but need to understand and clean up.
+        $baseUriKeys = @([AsanaApiClient]::VarKey_BaseUri, 'Plugin.Asana.BaseUri')
+        $baseUriKey = $baseUriKeys | Where-Object { $variables.HasKey($_) } | Select-Object -First 1
+        if ($null -ne $baseUriKey) {
+            $this.baseUri = [string]$variables.Get($baseUriKey)
+        }
 
         # Check for existence of PAT and OAuth credentials in the variables.
-        $oauth = $variables.HasKey([AsanaApiClient]::VarKey_OAuthUsername)
-        $pat = $variables.HasKey([AsanaApiClient]::VarKey_PAT)
+        $oauthKeys = @([AsanaApiClient]::VarKey_OAuthUsername, 'Plugin.Asana.Username')
+        $patKeys = @([AsanaApiClient]::VarKey_PAT, 'Plugin.Asana.PAT')
+        $oauth = ($oauthKeys | Where-Object { $variables.HasKey($_) } | Select-Object -First 1) -ne $null
+        $patKey = $patKeys | Where-Object { $variables.HasKey($_) } | Select-Object -First 1
+        $pat = $null -ne $patKey
+
+        # END AI slop
 
         # If neither PAT nor OAuth is configured, we can't actually do anything; throw an exception.
         if (-not $pat -and -not $oauth) {
@@ -113,7 +122,7 @@ class AsanaApiClient {
         }
         # Fall back to PAT authentication if OAuth is not configured.
         else {
-            $this.bearerToken = [string]$variables.Get([AsanaApiClient]::VarKey_PAT)
+            $this.bearerToken = [string]$variables.Get($patKey)
         }
     }
 
