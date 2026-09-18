@@ -4,6 +4,9 @@ class RegisterVariable : TaskPluginInterface {
     Simple plugin for registering a variable so it's easier to access later
     #>
 
+    [string]$name = $null
+    [object]$value = $null
+
     RegisterVariable() : base(){
         <#
         .SYNOPSIS
@@ -27,14 +30,23 @@ class RegisterVariable : TaskPluginInterface {
     [void] ValidateParameters([object]$params) {
         <#
         .SYNOPSIS
-        Currently no parameters are required for the RegisterVariable plugin.
+        Validates and extracts the name/value parameters for the RegisterVariable plugin.
 
         .DESCRIPTION
-        Requires: None.
+        Requires:
+        - name: A non-null, non-empty string identifying the Variables key to register.
+        - value: The value to store under that key. Any type is accepted, including $null.
         #>
-        # No validation needed as there are no parameters required for the RegisterVariable plugin.
 
-        throw [System.NotImplementedException]::new("RegisterVariable plugin is not implemented yet.")
+        if ($null -ne $params.name -and $params.name -isnot [string]) {
+            throw [System.ArgumentException]::new("Parameter 'name' must be a string")
+        }
+        if ([string]::IsNullOrEmpty($params.name)) {
+            throw [System.ArgumentException]::new("Parameter 'name' is required and must be a non-empty string")
+        }
+
+        $this.name = $params.name
+        $this.value = $params.value
     }
 
 
@@ -49,11 +61,12 @@ class RegisterVariable : TaskPluginInterface {
 
         $variables = [Variables]::GetInstance()
 
-        $params = @{$this.var = $this.val}
+        $variables.Set($this.name, $this.value)
 
-        $variables.Register($params)
-
-        return $true
+        return @{
+            name  = $this.name
+            value = $this.value
+        }
     }
 }
 

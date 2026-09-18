@@ -54,6 +54,14 @@ root:
           retries: 1
           delay: 0
         defer_binding: true
+      - type: step
+        name: Register Asana Project GID
+        slug: register-asana-project-gid
+        plugin: RegisterVariable
+        parameters:
+          name: "AsanaProjectGID"
+          value: "{{step.create-asana-project.object.data.gid}}"
+        defer_binding: true
       # - type: step
       #   name: Debug GID
       #   slug: debug-create-asana-project-gid
@@ -73,7 +81,7 @@ root:
             slug: create-asana-documentation-section
             plugin: AsanaCreateSection
             parameters:
-              projectGid: "{{step.create-asana-project.object.data.gid}}"
+              projectGid: "{{AsanaProjectGID}}"
               name: "Documentation"
             defer_binding: true
 
@@ -83,7 +91,7 @@ root:
             plugin: AsanaCreateTask
             parameters:
               projects:
-                - "{{step.create-asana-project.object.data.gid}}"
+                - "{{AsanaProjectGID}}"
               name: "General Information"
               notes: "Place general information about the onboarding in the comments below"
               #html_notes: "<body>Place general information about the onboarding in the notes here:<hr/><pre></pre></body>"
@@ -103,7 +111,7 @@ root:
             plugin: AsanaCreateTask
             parameters:
               projects:
-                - "{{step.create-asana-project.object.data.gid}}"
+                - "{{AsanaProjectGID}}"
               name: "User Password"
               notes: "Password: {{step.generate-user-password.object.generatedPassword}}"
             defer_binding: true
@@ -113,7 +121,7 @@ root:
             plugin: AsanaCreateTask
             parameters:
               projects:
-                - "{{step.create-asana-project.object.data.gid}}"
+                - "{{AsanaProjectGID}}"
               name: "User PIN"
               notes: "PIN: {{step.generate-user-pin.object.generatedPassword}}"
             defer_binding: true
@@ -138,7 +146,7 @@ root:
             slug: create-asana-flags-section
             plugin: AsanaCreateSection
             parameters:
-              projectGid: "{{step.create-asana-project.object.data.gid}}"
+              projectGid: "{{AsanaProjectGID}}"
               name: "Flags"
             defer_binding: true
 
@@ -155,7 +163,7 @@ root:
                 plugin: AsanaCreateTask
                 parameters:
                   projects:
-                    - "{{step.create-asana-project.object.data.gid}}"
+                    - "{{AsanaProjectGID}}"
                   name: "Computer Type"
                   notes: "Mark as complete ONE AND ONLY ONE computer type"
                 defer_binding: true
