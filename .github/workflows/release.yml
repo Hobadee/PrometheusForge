@@ -85,10 +85,14 @@ jobs:
             PrometheusForge-*.zip
 
       - name: Publish to PowerShell Gallery
-        if: ${{ startsWith(github.ref, 'refs/tags/') && secrets.PSGALLERY_API_KEY != '' }}
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         env:
           NuGetApiKey: ${{ secrets.PSGALLERY_API_KEY }}
         run: |
           $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrEmpty($env:NuGetApiKey)) {
+            Write-Host 'PSGALLERY_API_KEY secret not set; skipping PowerShell Gallery publish.'
+            exit 0
+          }
           Publish-Module -Path ./build/PrometheusForge -NuGetApiKey $env:NuGetApiKey -Repository PSGallery -Force

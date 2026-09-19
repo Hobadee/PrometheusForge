@@ -73,8 +73,8 @@ test-function: doTestFunction
 production: doInstallProduction
 # production: doInstallProduction
 
-dev: doInstallDevelopment
-# dev: doInstallDevelopment
+dev: doInstallDevelopment doInstallProduction
+# dev: doInstallDevelopment doInstallProduction
 
 build-module:
 	$(CMD_PWSH) -c 'Build-Module'
@@ -88,12 +88,11 @@ doTest:
 doTestFunction:
 	$(CMD_PWSH) -c 'Import-Module ./$(ODIR)/$(ONAME).psd1;test -Verbose -Debug'
 
+doInstallDevelopment:
+	$(CMD_PWSH) -c 'Install-Module Pester -Scope CurrentUser -Force;Install-Module -Name ModuleBuilder -Scope CurrentUser -Force'
+
 doInstallProduction:
-	$(CMD_PWSH) -c 'Import-Module ./$(ODIR)/$(ONAME).psd1;Install-Module -Name powershell-yaml -MinimumVersion 0.4.12 -Scope CurrentUser -Force'
-
-doInstallDevelopment: doInstallProduction
-	$(CMD_PWSH) -c 'Import-Module ./$(ODIR)/$(ONAME).psd1;Install-Module -Name ModuleBuilder -Scope CurrentUser -Force'
-
+	$(CMD_PWSH) -c 'Install-Module -Name powershell-yaml -MinimumVersion 0.4.12 -Scope CurrentUser -Force'
 
 clean:
 	$(CMD_DEL) $(ODIR)/*
