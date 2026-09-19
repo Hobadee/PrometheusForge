@@ -18,6 +18,7 @@ The project is operating as a working MVP for workflow automation and Asana inte
 
 ## Recent Changes
 - MVP is ready to go!
+- Added GitHub Actions release automation to build, test, package, and tag a distributable PowerShell module release.
 
 
 ## TODO

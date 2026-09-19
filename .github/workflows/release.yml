@@ -1,0 +1,94 @@
+name: Build and package PowerShell module
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  MODULE_NAME: PrometheusForge
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install required PowerShell modules
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module -Name ModuleBuilder -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module -Name Pester -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module -Name powershell-yaml -MinimumVersion 0.4.12 -Scope CurrentUser -Force -SkipPublisherCheck
+
+      - name: Build the PowerShell module
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Build-Module
+
+          $moduleRoot = Join-Path $PWD 'build/PrometheusForge'
+          if (-not (Test-Path $moduleRoot)) {
+            throw "Expected module output not found at $moduleRoot"
+          }
+
+          Get-ChildItem $moduleRoot -Recurse | Select-Object FullName
+
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module ./build/PrometheusForge/PrometheusForge.psd1 -Force
+          Invoke-Pester -Path './Tests' -Output Detailed
+
+      - name: Create distributable archive
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $version = $env:GITHUB_REF_NAME
+          if ($version.StartsWith('v')) {
+            $version = $version.Substring(1)
+          }
+
+          $source = Join-Path $PWD 'build/PrometheusForge'
+          $stagingRoot = Join-Path $PWD 'release-package'
+          $archivePath = Join-Path $PWD "PrometheusForge-$version.zip"
+
+          Remove-Item -Path $stagingRoot -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -Path $stagingRoot -ItemType Directory -Force | Out-Null
+
+          Copy-Item -Path (Join-Path $source '*') -Destination $stagingRoot -Recurse -Force
+          Copy-Item -Path (Join-Path $PWD 'README.md') -Destination (Join-Path $stagingRoot 'README.md') -Force
+          Copy-Item -Path (Join-Path $PWD 'LICENSE.md') -Destination (Join-Path $stagingRoot 'LICENSE.md') -Force
+
+          Compress-Archive -Path (Join-Path $stagingRoot '*') -DestinationPath $archivePath -Force
+
+          "ARCHIVE_PATH=$archivePath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            PrometheusForge-*.zip
+
+      - name: Publish to PowerShell Gallery
+        if: ${{ startsWith(github.ref, 'refs/tags/') && secrets.PSGALLERY_API_KEY != '' }}
+        shell: pwsh
+        env:
+          NuGetApiKey: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Publish-Module -Path ./build/PrometheusForge -NuGetApiKey $env:NuGetApiKey -Repository PSGallery -Force
