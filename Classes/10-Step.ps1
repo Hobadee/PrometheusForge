@@ -40,14 +40,14 @@ class Step{
 
         # We don't actually *REQUIRE* parameters - plugins *MAY* have no parameters.  (Although it is probably rare.)  So we will just warn if they are missing, but not throw an exception.
         if (-not ($this.config.parameters -and $this.config.parameters -is [object])){
-            [Log]::Warning("[Step]::new() Step $($this.config.name) does not include plugin parameters.  This may be valid if the plugin does not require parameters, but it is unusual.")
+            [Log]::Debug("[Step]::new() Step $($this.config.name) does not include plugin parameters.  This may be valid if the plugin does not require parameters, but it is unusual.")
         }
 
         if($true -ne $this.config.defer_binding){
             $this.InitializePlugin()
         }
         else {
-            [Log]::Verbose("Step $($this.name) is configured for late binding. Plugin will be resolved at execution time.")
+            [Log]::Debug("Step $($this.name) is configured for late binding. Plugin will be resolved at execution time.")
         }
     }
 

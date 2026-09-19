@@ -63,6 +63,37 @@ root:
         $result | Should -BeTrue
     }
 
+    It 'runs the items when FilePath is a relative YAML path from the invocation directory' {
+        $workDir = Join-Path $TestDrive 'invocation-root'
+        New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+
+        $yamlPath = Join-Path $workDir 'workflow-relative-from-cwd.yaml'
+        @'
+name: Test workflow relative from cwd
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    slug: root-section
+    items:
+      - type: step
+        name: Write output
+        slug: write-output
+        plugin: TextOutput
+        parameters:
+          message: hello from invocation directory
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        Push-Location $workDir
+        try {
+            $result = Invoke-Forge -FilePath 'workflow-relative-from-cwd.yaml'
+            $result | Should -BeTrue
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
     It 'runs the items from a readable YAML file' {
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         @'

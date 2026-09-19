@@ -31,10 +31,18 @@ class yamlSource : sourcePluginInterface {
 
 
     [bool] ValidateURI() {
-        # If caller passed a relative path, make it absolute using current working directory.
+        # Resolve relative paths from the caller's current working directory, not from the module source tree.
         if (-not $this.URI.IsAbsoluteUri) {
-            $fullPath = [System.IO.Path]::GetFullPath($this.URI.OriginalString)
-            $this.URI = [System.Uri]::new($fullPath)   # becomes file:///...
+            try {
+                $resolvedPath = (Resolve-Path -LiteralPath $this.URI.OriginalString -ErrorAction Stop).Path
+            }
+            catch [System.Management.Automation.ItemNotFoundException] {
+                throw [System.IO.FileNotFoundException]::new(
+                    "YAML source '$($this.URI.OriginalString)' was not found.",
+                    $this.URI.OriginalString
+                )
+            }
+            $this.URI = [System.Uri]::new($resolvedPath)
         }
 
         if (-not $this.URI.IsFile) {

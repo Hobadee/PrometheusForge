@@ -43,6 +43,34 @@ nested:
         $result.nested.enabled | Should -BeTrue
     }
 
+    It 'loads YAML from a relative path using the current PowerShell working directory' {
+        $cwd = Join-Path $TestDrive 'working-directory'
+        New-Item -ItemType Directory -Path $cwd -Force | Out-Null
+
+        $yamlPath = Join-Path $cwd 'relative-config.yaml'
+        @'
+version: 1.0
+name: relative-config
+variables:
+    region: us-west-2
+root:
+    name: root-node
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        Push-Location $cwd
+        try {
+            $plugin = [yamlSource]::new('relative-config.yaml')
+            $result = $plugin.Load()
+
+            $result.name | Should -Be 'relative-config'
+            $result.variables.region | Should -Be 'us-west-2'
+            $result.root.name | Should -Be 'root-node'
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
     It 'throws when the source file does not exist' {
         $missingPath = Join-Path $TestDrive 'missing.yaml'
 
@@ -50,10 +78,3 @@ nested:
         { [yamlSource]::new($missingPath) } | Should -Throw -ExceptionType $exceptionType
     }
 }
-
-
-<#
-Need to test the following items:
-- YAML by relative path
-- YAML by absolute path
-#>

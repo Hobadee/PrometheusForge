@@ -217,7 +217,8 @@ class StepTree : System.Collections.IEnumerable{
             }
             $null {
                 # Step was not found, so we don't count it as a step
-                [Log]::Write("[StepTree]::Process() - Step '$($this.name)' not found.", "Warning")
+                # This is actually expected for sections, which do not have a corresponding step in the registry.
+                [Log]::Write("[StepTree]::Process() - Step '$($this.name)' not found.", "debug")
             }
         }
 
