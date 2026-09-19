@@ -52,6 +52,21 @@ To view all options and examples for the public command:
 Get-Help Invoke-Forge -Full
 ```
 
+### Example
+This is what a real command might look like:
+- `onboard.yaml` would hold the bulk of an onboarding configuration and pull in several other sub-configurations
+- Variables to change the run behavior can be passed directly on the command line.  Here we are enabling debug logging.
+  Command-line variables take precedence over any overlays, but can still be overwritten during the actual run
+- Multiple overlays can be passed, and will overwrite each other with the last taking the highest precedence
+  - `.env.yaml` is a good place to store API keys - make sure you `.gitignore` it!
+  - `clientA.yaml` can be various variables related to a specific client, department, or other modification you may need to make
+    Future versions will allow overwriting steps or even entire sections with overlay versions instead.
+  - `newUserDetails` would contain user-specific details in this onboarding situation
+
+```powershell
+Invoke-Forge -FilePath onboard.yaml -Variables @{ logTerminalLevel = 'debug'} -Overlay .env.yaml, clientA.yaml, newUserDetails.yaml
+```
+
 ## Configuration Model
 
 Prometheus Forge applies configuration serially.  Later values override earlier values where supported. Individual steps can be replaced to account for implementation
@@ -108,7 +123,9 @@ There are also some special additional `make` targets:
 ## AI-Assisted Development
 
 AI tools were used to assist with implementation, documentation, and testing. Prometheus Forge's architecture,
-workflow model, design decisions, and code review remain human-led and thoughtfully designed.
+workflow model, design decisions, and code review remain human-led and thoughtfully designed.  Areas that were
+completely AI generated without any human thought or review have generally be labelled as such, although this
+isn't a 100% guarantee.
 
 ## Roadmap
 
