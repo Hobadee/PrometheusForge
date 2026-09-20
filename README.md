@@ -42,7 +42,7 @@ Install-Module -Name powershell-yaml -MinimumVersion 0.4.12 -Scope CurrentUser
 ## Quick Start
 
 ```powershell
-Import-Module .\PrometheusForge.psd1
+Install-Module PrometheusForge
 Invoke-Forge -FilePath .\Samples\Sample.Onboard.yaml
 ```
 

@@ -68,6 +68,11 @@ class TextOutput : TaskPluginInterface {
             $this.parameters.method = "Info"
         }
 
+        # Note: in a default run, this will NOT output to the terminal!
+        # Terminal output defaults to [LogLevel]::Warning, whereas this
+        # defaults to [LogLevel]::Info.
+        # Not sure if there is a better way to handle things.  Ignore for now.
+        # TODO: Resolve this issue.
         [Log]::Write($this.parameters.message, $this.parameters.method)
 
         return $this

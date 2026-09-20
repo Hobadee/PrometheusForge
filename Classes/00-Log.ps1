@@ -1,5 +1,5 @@
 enum LogLevel {
-    Emergency  = 0
+    Emergency = 0
     Alert     = 1
     Critical  = 2
     Error     = 3
