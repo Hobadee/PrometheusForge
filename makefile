@@ -96,3 +96,6 @@ doInstallProduction:
 
 clean:
 	$(CMD_DEL) $(ODIR)/*
+
+release: clean build-module test
+#	$(CMD_PWSH) -c 'Publish-Module -Path ./$(ODIR) -Scope CurrentUser -Force'

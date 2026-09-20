@@ -55,7 +55,7 @@ Describe 'AsanaAddTasksToSection Plugin - Execution' {
 
         $result = @($plugin.Execute())
         $result.Count | Should -Be 2
-        Assert-MockCalled -ModuleName PrometheusForge -CommandName Invoke-RestMethod -Times 2 -Exactly -ParameterFilter {
+        Should -Invoke -ModuleName PrometheusForge -CommandName Invoke-RestMethod -Times 2 -Exactly -ParameterFilter {
             (($Body | ConvertFrom-Json).data.task -in @('12345', '67890'))
         }
     }

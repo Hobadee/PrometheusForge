@@ -458,7 +458,7 @@ Describe 'PasswordGenerator Plugin - Execute Method' {
     Context 'Execute Randomness and Idempotence' {
         It 'Should generate different passwords on successive executions' {
             $plugin = [PasswordGenerator]::new()
-            $plugin.SetParameters(@{})
+            $plugin.SetParameters(@{ length = 32 })
             $plugin.Execute()
             $password1 = $plugin.generatedPassword
             
@@ -485,7 +485,7 @@ Describe 'PasswordGenerator Plugin - Execute Method' {
         It 'Should update generatedPassword on each Execute call' {
             $plugin = [PasswordGenerator]::new()
             
-            $plugin.SetParameters(@{ length = 10 })
+            $plugin.SetParameters(@{ length = 32 })
             $plugin.Execute()
             $password1 = $plugin.generatedPassword
             
