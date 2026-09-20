@@ -33,6 +33,11 @@
 
     .NOTES
     This function supports standard PowerShell common parameters such as -Verbose and -Debug.
+
+    Passing Verbose on it's own sets the log level to Info.
+    Passing Debug on it's own sets the log level to Debug.
+    Passing both Verbose and Debug sets the log level to Trace.
+
     #>
     [CmdletBinding()]
     param (
@@ -47,17 +52,32 @@
 
     Reset-ForgeState
 
-    # Code to get `-Verbose` and `-Debug` flags, if we want to pass those to [Log] somehow?
-    #$verboseSet = $PSBoundParameters.ContainsKey('Verbose')
-    #$debugSet = $PSBoundParameters.ContainsKey('Debug')
-    #$verboseEnabled = $PSBoundParameters['Verbose'] -eq $true
-    #$debugEnabled = $PSBoundParameters['Debug'] -eq $true
+
+    $configuration = [Variables]::GetInstance()
+
+
+    # With [CmdletBinding()], use $PSCmdlet to get preference variables from caller scope
+    $verboseEnabled = $PSBoundParameters['Verbose'] -eq $true
+    $debugEnabled = $PSBoundParameters['Debug'] -eq $true
+
+    # Verbose = Info
+    # Debug = Debug
+    # Verbose & Debug = Trace
+    if ($verboseEnabled -and $debugEnabled) {
+        $configuration.Set('logTerminalLevel', 'Trace')
+    }
+    elseif ($verboseEnabled) {
+        $configuration.Set('logTerminalLevel', 'Info')
+    }
+    elseif ($debugEnabled) {
+        $configuration.Set('logTerminalLevel', 'Debug')
+    }
+
 
     $mainPlugin = [sourcePluginFactory]::GetPlugin('yamlSource', $FilePath)
     [Log]::Info("Loading configuration from '$($mainPlugin.URI.LocalPath)'.")
     $cfg = $mainPlugin.Load()
 
-    $configuration = [Variables]::GetInstance()
     $configuration.SetMany($cfg.variables)
 
     if ($null -ne $Overlay) {
