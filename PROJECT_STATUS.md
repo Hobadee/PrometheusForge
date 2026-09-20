@@ -17,6 +17,7 @@ The project is operating as a working MVP for workflow automation and Asana inte
 
 
 # Recent Changes
+- Split logging into `[Log]` (static factory/entry point, `Classes/Factories/Log.ps1`), `[Logs]` (run-scoped singleton holding all entries and doing terminal output), and `[LogEntry]` (single searchable entry). `[Log]::Write($message)` defaults to Info. Tests split to match under `Tests/Private/Classes`. PowerShell classes don't support default method parameter values, so `LogEntry` uses explicit constructor overloads.
 - MVP is ready to go!
 - Added GitHub Actions release automation to build, test, package, and tag a distributable PowerShell module release.
 

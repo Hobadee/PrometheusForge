@@ -34,9 +34,7 @@ root:
           message: hello from absolute path
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Forge -FilePath $yamlPath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $yamlPath
     }
 
     It 'runs the items when FilePath is a relative YAML path' {
@@ -58,9 +56,7 @@ root:
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
         $relativePath = [System.IO.Path]::GetRelativePath((Get-Location).Path, $yamlPath)
-        $result = Invoke-Forge -FilePath $relativePath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $relativePath
     }
 
     It 'runs the items when FilePath is a relative YAML path from the invocation directory' {
@@ -86,8 +82,7 @@ root:
 
         Push-Location $workDir
         try {
-            $result = Invoke-Forge -FilePath 'workflow-relative-from-cwd.yaml'
-            $result | Should -BeTrue
+            Invoke-Forge -FilePath 'workflow-relative-from-cwd.yaml'
         }
         finally {
             Pop-Location
@@ -112,9 +107,7 @@ root:
           message: hello from lifecycle
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Forge -FilePath $yamlPath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $yamlPath
     }
 
     It 'throws when the YAML file does not exist' {
@@ -162,9 +155,7 @@ variables:
   retries: 3
 '@ | Set-Content -Path $overlayTwoPath -Encoding utf8
 
-        $result = Invoke-Forge -FilePath $yamlPath -Overlay $overlayOnePath, $overlayTwoPath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $yamlPath -Overlay $overlayOnePath, $overlayTwoPath
 
         $configuration = [Variables]::GetInstance()
         $configuration.Get('userName') | Should -Be 'overlay-two-user'
@@ -227,9 +218,7 @@ variables:
   userName: overlay-user
 '@ | Set-Content -Path $overlayPath -Encoding utf8
 
-        $result = Invoke-Forge -FilePath $yamlPath -Overlay $overlayPath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $yamlPath -Overlay $overlayPath
 
         $configuration = [Variables]::GetInstance()
         $stepResult = $configuration.Get('outputResult')
@@ -258,9 +247,7 @@ root:
           message: "User={{fullName}}"
 '@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Forge -FilePath $yamlPath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $yamlPath
 
         $configuration = [Variables]::GetInstance()
         $stepResult = $configuration.Get('outputResult')
@@ -313,9 +300,7 @@ root:
           message: trailing
 "@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Forge -FilePath $yamlPath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $yamlPath
 
         $configuration = [Variables]::GetInstance()
         $configuration.Get('importedResult').success | Should -BeTrue
@@ -362,9 +347,7 @@ root:
         defer_binding: true
 "@ | Set-Content -Path $yamlPath -Encoding utf8
 
-        $result = Invoke-Forge -FilePath $yamlPath
-
-        $result | Should -BeTrue
+        Invoke-Forge -FilePath $yamlPath
 
         $configuration = [Variables]::GetInstance()
         $configuration.Get('importedVariableResult').success | Should -BeTrue

@@ -40,7 +40,9 @@
         [string] $FilePath,
 
         [string[]] $Overlay = @(),
-        [hashtable] $Variables = @{}
+        [hashtable] $Variables = @{},
+
+        [switch] $OutputLogs
     )
 
     Reset-ForgeState
@@ -84,5 +86,8 @@
 
     $stepTree.Process() | Out-Null
 
-    return $true
+    if ($OutputLogs) {
+        return [Logs]::GetInstance()
+    }
+    
 }
