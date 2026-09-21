@@ -5,7 +5,7 @@ class Steps {
     [System.Collections.Generic.Dictionary[string, [Step]]] $Steps  # List of steps
 
 
-    Steps() {
+    hidden Steps() {
         <#
         .SYNOPSIS
         Initializes the Steps collection

@@ -144,8 +144,9 @@ class StepTree : System.Collections.IEnumerable{
         .OUTPUTS
         [bool] True if all conditionals are met, false otherwise
         #>
-        $includeTags = [Variables]::IncludeTags
-        $excludeTags = [Variables]::ExcludeTags
+        $variables = [Variables]::GetInstance()
+        $includeTags = $variables.IncludeTags
+        $excludeTags = $variables.ExcludeTags
 
         $matchesInclude = $includeTags.Count() -gt 0 -and $this.tags.HasTags($includeTags.GetTags())
         $matchesExclude = $excludeTags.Count() -gt 0 -and $this.tags.HasTags($excludeTags.GetTags())

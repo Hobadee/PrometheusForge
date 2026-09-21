@@ -21,6 +21,22 @@ class taskPluginRegistry {
     [System.Collections.Generic.Dictionary[string, [Type]]] $PluginRegistry  # List of registered plugins
 
 
+    # Hidden constructor to enforce singleton pattern
+    hidden taskPluginRegistry() {
+        <#
+        .SYNOPSIS
+        Constructor for the taskPluginRegistry class.
+
+        .DESCRIPTION
+        Initializes the plugin registry dictionary for the singleton instance.
+
+        .NOTES
+        No way of enforcing `private` constructor in PowerShell, but this is intended to be used only via GetInstance().
+        #>
+        $this.PluginRegistry = [System.Collections.Generic.Dictionary[string, [Type]]]::new()
+    }
+
+
     # Singleton handler
     static [taskPluginRegistry] GetInstance() {
         <#
@@ -35,21 +51,6 @@ class taskPluginRegistry {
             [taskPluginRegistry]::Instance = [taskPluginRegistry]::new()
         }
         return [taskPluginRegistry]::Instance
-    }
-
-
-    taskPluginRegistry() {
-        <#
-        .SYNOPSIS
-        Constructor for the taskPluginRegistry class.
-
-        .DESCRIPTION
-        Initializes the plugin registry dictionary for the singleton instance.
-
-        .NOTES
-        No way of enforcing `private` constructor in PowerShell, but this is intended to be used only via GetInstance().
-        #>
-        $this.PluginRegistry = [System.Collections.Generic.Dictionary[string, [Type]]]::new()
     }
 
 

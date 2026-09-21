@@ -2,10 +2,7 @@
 
 Describe 'TemplateEngine' {
     BeforeEach {
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
     }
 
     Context 'ExpandString' {

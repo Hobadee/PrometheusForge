@@ -9,11 +9,8 @@ BeforeAll {
 Describe 'Invoke-Forge' {
     BeforeEach {
         # Reset singleton instances before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
-        [Steps]::Instance = $null
+        [Variables]::Reset()
+        [Steps]::Reset()
     }
 
     It 'runs the items when FilePath is an absolute YAML path' {

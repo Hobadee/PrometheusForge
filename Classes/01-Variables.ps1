@@ -14,9 +14,9 @@
 
     static [Variables] $Instance = $null  # Singleton object; Explicitly initialize to $null
 
-    static [System.Collections.Generic.Dictionary[string, object]] $KeyValueStore = $null  # Key/value store; Explicitly initialize to $null
-    static [tags] $IncludeTags = $null  # Tags to include; Explicitly initialize to $null
-    static [tags] $ExcludeTags = $null  # Tags to exclude; Explicitly initialize to $null
+    [System.Collections.Generic.Dictionary[string, object]] $KeyValueStore = $null  # Key/value store; Explicitly initialize to $null
+    [tags] $IncludeTags = $null  # Tags to include; Explicitly initialize to $null
+    [tags] $ExcludeTags = $null  # Tags to exclude; Explicitly initialize to $null
 
 
     # TODO: Consider adding methods for exporting/importing Variables state
@@ -40,11 +40,11 @@
     }
 
 
-    # Constructor
-    Variables() {
-        [Variables]::KeyValueStore = [System.Collections.Generic.Dictionary[string, object]]::new()
-        [Variables]::IncludeTags = [tags]::new()
-        [Variables]::ExcludeTags = [tags]::new()
+    # Hidden constructor to enforce singleton pattern
+    hidden Variables() {
+        $this.KeyValueStore = [System.Collections.Generic.Dictionary[string, object]]::new()
+        $this.IncludeTags = [tags]::new()
+        $this.ExcludeTags = [tags]::new()
     }
 
 
@@ -93,7 +93,7 @@
         If the key already exists, its value will be overwritten.
         #>
         $this.ValidateKey($key)
-        [Variables]::KeyValueStore[$key] = $value
+        $this.KeyValueStore[$key] = $value
     }
 
 
@@ -125,14 +125,14 @@
                     # Append, don't overwrite existing tags
                     #[Variables]::IncludeTags.Clear()
                     foreach ($tag in $entries['tagsInclude']) {
-                        [Variables]::IncludeTags.AddTag($tag)
+                        $this.IncludeTags.AddTag($tag)
                     }
                 }
                 'tagsExclude' {
                     # Append, don't overwrite existing tags
                     #[Variables]::ExcludeTags.Clear()
                     foreach ($tag in $entries['tagsExclude']) {
-                        [Variables]::ExcludeTags.AddTag($tag)
+                        $this.ExcludeTags.AddTag($tag)
                     }
                 }
                 default {
@@ -158,7 +158,7 @@
         Returns $null if the key doesn't exist. Use HasKey() to check for existence first.
         #>
         $this.ValidateKey($key)
-        return [Variables]::KeyValueStore[$key]
+        return $this.KeyValueStore[$key]
     }
 
 
@@ -181,7 +181,7 @@
         #>
         $this.ValidateKey($key)
         if ($this.HasKey($key)) {
-            return [Variables]::KeyValueStore[$key]
+            return $this.KeyValueStore[$key]
         }
 
         return $defaultValue
@@ -200,7 +200,7 @@
         [bool] True if the key exists, false otherwise
         #>
         $this.ValidateKey($key)
-        return [Variables]::KeyValueStore.ContainsKey($key)
+        return $this.KeyValueStore.ContainsKey($key)
     }
 
 
@@ -216,7 +216,7 @@
         If the key doesn't exist, this method completes silently without error.
         #>
         $this.ValidateKey($key)
-        [Variables]::KeyValueStore.Remove($key)
+        $this.KeyValueStore.Remove($key)
     }
 
 
@@ -234,7 +234,7 @@
         .PARAMETER tag
         The tag to add
         #>
-        [Variables]::IncludeTags.AddTag($tag)
+        $this.IncludeTags.AddTag($tag)
     }
 
 
@@ -246,7 +246,7 @@
         .PARAMETER tag
         The tag to remove
         #>
-        [Variables]::IncludeTags.RemoveTag($tag)
+        $this.IncludeTags.RemoveTag($tag)
     }
 
 
@@ -261,7 +261,7 @@
         .OUTPUTS
         [bool] True if the tag exists in include tags
         #>
-        return [Variables]::IncludeTags.HasTag($tag)
+        return $this.IncludeTags.HasTag($tag)
     }
 
 
@@ -273,7 +273,7 @@
         .OUTPUTS
         [string[]] Array of all include tags
         #>
-        return [Variables]::IncludeTags.GetTags()
+        return $this.IncludeTags.GetTags()
     }
 
 
@@ -286,7 +286,7 @@
         .PARAMETER tag
         The tag to add
         #>
-        [Variables]::ExcludeTags.AddTag($tag)
+        $this.ExcludeTags.AddTag($tag)
     }
 
 
@@ -298,7 +298,7 @@
         .PARAMETER tag
         The tag to remove
         #>
-        [Variables]::ExcludeTags.RemoveTag($tag)
+        $this.ExcludeTags.RemoveTag($tag)
     }
 
 
@@ -313,7 +313,7 @@
         .OUTPUTS
         [bool] True if the tag exists in exclude tags
         #>
-        return [Variables]::ExcludeTags.HasTag($tag)
+        return $this.ExcludeTags.HasTag($tag)
     }
 
 
@@ -325,7 +325,7 @@
         .OUTPUTS
         [string[]] Array of all exclude tags
         #>
-        return [Variables]::ExcludeTags.GetTags()
+        return $this.ExcludeTags.GetTags()
     }
     
 }
