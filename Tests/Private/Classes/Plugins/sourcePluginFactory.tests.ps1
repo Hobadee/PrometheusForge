@@ -14,6 +14,14 @@ class FactoryMockPlugin : sourcePluginInterface {
     }
 }
 
+# These tests replace the sourcePluginRegistry singleton; restore the original afterwards so later test files still see the plugins registered at module load.
+BeforeAll {
+    $script:savedsourcePluginRegistry = [sourcePluginRegistry]::Instance
+}
+AfterAll {
+    [sourcePluginRegistry]::Instance = $script:savedsourcePluginRegistry
+}
+
 Describe 'sourcePluginFactory' {
     BeforeEach {
         [sourcePluginRegistry]::Instance = $null

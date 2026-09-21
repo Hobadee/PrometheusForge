@@ -158,8 +158,7 @@ This is a VERY LOW priority.
 # Cleanup Items
 
 ## Test Coverage
-Ask AI to check test coverage and ensure it's appropriate.  Ensure similar
-test types exist for all classes where applicable.
+Human-verify all test coverage.  It was AI generated; hopefully we aren't validating failures, but we don't know until a human verifies all the tests.
 
 ## Consistent throws/errors
 Ensure everything errors out or throws consistently.  For example, we shouldn't

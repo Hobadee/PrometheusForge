@@ -78,3 +78,54 @@ root:
         { [yamlSource]::new($missingPath) } | Should -Throw -ExceptionType $exceptionType
     }
 }
+
+Describe 'yamlSource error handling' {
+    It 'throws when a relative path does not exist' {
+        $exceptionType = [System.IO.FileNotFoundException]
+
+        { [yamlSource]::new('relative-path-that-does-not-exist.yaml') } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'throws for a non-file URI scheme' {
+        $exceptionType = [System.ArgumentException]
+
+        { [yamlSource]::new('https://example.com/config.yaml') } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'throws when the file cannot be read' {
+        $yamlPath = Join-Path $TestDrive 'unreadable.yaml'
+        "version: 1.0`nvariables:`n  a: 1" | Set-Content -Path $yamlPath -Encoding utf8
+        $plugin = [yamlSource]::new($yamlPath)
+        Mock -ModuleName PrometheusForge -CommandName Get-Content -MockWith { throw [System.IO.IOException]::new('file is locked') }
+        $exceptionType = [System.UnauthorizedAccessException]
+
+        { $plugin.Load() } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'throws when the YAML document is empty' {
+        $yamlPath = Join-Path $TestDrive 'empty.yaml'
+        '# only a comment' | Set-Content -Path $yamlPath -Encoding utf8
+        $plugin = [yamlSource]::new($yamlPath)
+        $exceptionType = [System.InvalidOperationException]
+
+        { $plugin.Load() } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'throws when the loaded YAML has no version' {
+        $yamlPath = Join-Path $TestDrive 'no-version.yaml'
+        "name: no version here`nvariables:`n  a: 1" | Set-Content -Path $yamlPath -Encoding utf8
+        $plugin = [yamlSource]::new($yamlPath)
+        $exceptionType = [System.InvalidOperationException]
+
+        { $plugin.Load() } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'throws when the YAML is not a mapping' {
+        $yamlPath = Join-Path $TestDrive 'list.yaml'
+        "- one`n- two" | Set-Content -Path $yamlPath -Encoding utf8
+        $plugin = [yamlSource]::new($yamlPath)
+        $exceptionType = [System.InvalidOperationException]
+
+        { $plugin.Load() } | Should -Throw -ExceptionType $exceptionType
+    }
+}

@@ -284,3 +284,56 @@ Describe 'AsanaCreateProject Plugin - Execution' {
         }
     }
 }
+
+Describe 'AsanaCreateProject Plugin - Additional Validation' {
+    BeforeEach {
+        $script:plugin = [AsanaCreateProject]::new()
+    }
+
+    Context 'color' {
+        It 'Should throw ArgumentException for an unsupported color' {
+            $params = @{ name = 'Test Project'; workspaceGid = '12345'; color = 'sparkly-rainbow' }
+            $exceptionType = [System.ArgumentException]
+
+            { $script:plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
+        }
+
+        It 'Should accept a supported color: <Color>' -ForEach @(
+            @{ Color = 'dark-pink' }
+            @{ Color = 'light-warm-gray' }
+            @{ Color = 'none' }
+        ) {
+            $params = @{ name = 'Test Project'; workspaceGid = '12345'; color = $Color }
+
+            { $script:plugin.ValidateParameters($params) } | Should -Not -Throw
+        }
+    }
+
+    Context 'icon' {
+        It 'Should throw ArgumentException for an unsupported icon' {
+            $params = @{ name = 'Test Project'; workspaceGid = '12345'; icon = 'unicorn' }
+            $exceptionType = [System.ArgumentException]
+
+            { $script:plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
+        }
+
+        It 'Should accept a supported icon: <Icon>' -ForEach @(
+            @{ Icon = 'list' }
+            @{ Icon = 'coins' }
+        ) {
+            $params = @{ name = 'Test Project'; workspaceGid = '12345'; icon = $Icon }
+
+            { $script:plugin.ValidateParameters($params) } | Should -Not -Throw
+        }
+    }
+
+    Context 'Execute guard' {
+        It 'Should throw when Execute() runs without a workspaceGid' {
+            # Validation normally prevents this; set the parameters directly to reach Execute()'s own guard.
+            $script:plugin.parameters = @{ name = 'Test Project' }
+            $exceptionType = [System.ArgumentException]
+
+            { $script:plugin.Execute() } | Should -Throw -ExceptionType $exceptionType
+        }
+    }
+}

@@ -247,3 +247,36 @@ Describe 'AsanaCreateSection Plugin - Execution' {
         }
     }
 }
+
+Describe 'AsanaCreateSection Plugin - insert_after' {
+    BeforeEach {
+        [Variables]::Reset()
+        [AsanaApiClient]::Reset()
+        $variables = [Variables]::GetInstance()
+        $variables.Set('Plugin.Asana.PAT', 'test-personal-access-token')
+        $variables.Set('Plugin.Asana.BaseUri', 'https://app.asana.com/api/1.0')
+    }
+
+    AfterEach {
+        [Variables]::Reset()
+        [AsanaApiClient]::Reset()
+    }
+
+    It 'Should include insert_after in the payload when provided' {
+        Mock -ModuleName PrometheusForge -CommandName Invoke-RestMethod -MockWith { return @{ data = @{ gid = '55555' } } }
+        $plugin = [AsanaCreateSection]::new()
+        $plugin.SetParameters(@{
+            name         = 'Next Actions'
+            projectGid   = '123456789'
+            insert_after = '222'
+        })
+
+        $result = $plugin.Execute()
+
+        $result.data.gid | Should -Be '55555'
+        Should -Invoke -ModuleName PrometheusForge -CommandName Invoke-RestMethod -Times 1 -Exactly -ParameterFilter {
+            $parsed = ($Body | ConvertFrom-Json).data
+            $parsed.insert_after -eq '222' -and $null -eq $parsed.insert_before
+        }
+    }
+}

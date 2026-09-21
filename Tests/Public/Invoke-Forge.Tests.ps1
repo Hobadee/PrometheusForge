@@ -352,3 +352,183 @@ root:
     }
 }
 
+
+Describe 'Invoke-Forge options' {
+    BeforeAll {
+        # Other test files reset the plugin registry singleton; re-import so the built-in plugins are registered.
+        Remove-Module PrometheusForge -ErrorAction SilentlyContinue
+        Import-Module (Join-Path $PSScriptRoot '..\..\build\PrometheusForge\PrometheusForge.psd1') -Force
+
+        function New-Workflow {
+            param([string] $Name, [string] $Content)
+            $path = Join-Path $TestDrive $Name
+            $Content | Set-Content -Path $path -Encoding utf8
+            return $path
+        }
+
+        $script:simpleWorkflow = New-Workflow 'simple.yaml' @'
+name: Simple workflow
+version: 1.0
+root:
+  type: section
+  name: Root section
+  slug: root-section
+  items:
+    - type: step
+      name: Write output
+      slug: write-output
+      plugin: TextOutput
+      parameters:
+        message: hello
+        method: Trace
+'@
+    }
+
+    BeforeEach {
+        [Variables]::Reset()
+        [Steps]::Reset()
+
+        # Keep terminal log output from leaking into the Pester output.
+        $script:writer = [System.IO.StringWriter]::new()
+        $script:originalWriter = [System.Console]::Out
+        [System.Console]::SetOut($script:writer)
+    }
+
+    AfterEach {
+        [System.Console]::SetOut($script:originalWriter)
+        $script:writer.Dispose()
+    }
+
+    AfterAll {
+        [Variables]::Reset()
+        [Steps]::Reset()
+        [Log]::Reset()
+    }
+
+    Context 'Logging switches' {
+        It 'leaves the terminal log level unset by default' {
+            Invoke-Forge -FilePath $script:simpleWorkflow
+
+            [Variables]::GetInstance().HasKey('logTerminalLevel') | Should -BeFalse
+        }
+
+        It 'uses the Info level for -Verbose' {
+            Invoke-Forge -FilePath $script:simpleWorkflow -Verbose 4>$null
+
+            [Variables]::GetInstance().Get('logTerminalLevel') | Should -Be 'Info'
+        }
+
+        It 'uses the Debug level for -Debug' {
+            Invoke-Forge -FilePath $script:simpleWorkflow -Debug 5>$null
+
+            [Variables]::GetInstance().Get('logTerminalLevel') | Should -Be 'Debug'
+        }
+
+        It 'uses the Trace level for -Verbose together with -Debug' {
+            Invoke-Forge -FilePath $script:simpleWorkflow -Verbose -Debug 4>$null 5>$null
+
+            [Variables]::GetInstance().Get('logTerminalLevel') | Should -Be 'Trace'
+        }
+
+        It 'writes log entries at the selected level to the terminal' {
+            Invoke-Forge -FilePath $script:simpleWorkflow -Verbose 4>$null
+
+            $script:writer.ToString() | Should -Match '\[INFO\] Loading configuration from'
+        }
+    }
+
+    Context 'OutputLogs' {
+        It 'returns nothing by default' {
+            Invoke-Forge -FilePath $script:simpleWorkflow | Should -BeNullOrEmpty
+        }
+
+        It 'returns the recorded log entries when -OutputLogs is set' {
+            $entries = @(Invoke-Forge -FilePath $script:simpleWorkflow -OutputLogs)
+
+            $entries.Count | Should -BeGreaterThan 0
+            $messages = $entries | ForEach-Object { $_.GetMessage() }
+            $messages | Should -Contain "Loading configuration from '$script:simpleWorkflow'."
+        }
+    }
+
+    Context 'Configuration handling' {
+        It 'throws when the workflow has no root section' {
+            $path = New-Workflow 'no-root.yaml' @'
+name: No root
+version: 1.0
+variables:
+  onlyVariables: true
+'@
+            $exceptionType = [System.ArgumentException]
+
+            { Invoke-Forge -FilePath $path } | Should -Throw -ExceptionType $exceptionType
+        }
+
+        It 'gives -Variables precedence over the workflow and overlay variables' {
+            $path = New-Workflow 'precedence.yaml' @'
+name: Precedence
+version: 1.0
+variables:
+  level: from-workflow
+  onlyInWorkflow: kept
+root:
+  type: section
+  name: Root section
+  slug: root-section
+'@
+            $overlay = New-Workflow 'precedence-overlay.yaml' @'
+name: Overlay
+version: 1.0
+variables:
+  level: from-overlay
+'@
+
+            Invoke-Forge -FilePath $path -Overlay $overlay -Variables @{ level = 'from-parameter' }
+
+            [Variables]::GetInstance().Get('level') | Should -Be 'from-parameter'
+            [Variables]::GetInstance().Get('onlyInWorkflow') | Should -Be 'kept'
+        }
+
+        It 'resets state left over from a previous run' {
+            [Variables]::GetInstance().Set('leftover', 'from previous run')
+
+            Invoke-Forge -FilePath $script:simpleWorkflow
+
+            [Variables]::GetInstance().HasKey('leftover') | Should -BeFalse
+        }
+
+        It 'skips steps whose tags match tagsExclude' {
+            $path = New-Workflow 'tags.yaml' @'
+name: Tags
+version: 1.0
+root:
+  type: section
+  name: Root section
+  slug: root-section
+  items:
+    - type: step
+      name: Always runs
+      slug: always-runs
+      plugin: TextOutput
+      result: alwaysResult
+      parameters:
+        message: always
+        method: Trace
+    - type: step
+      name: Skipped
+      slug: skipped
+      plugin: TextOutput
+      result: skippedResult
+      tags: [skipme]
+      parameters:
+        message: skipped
+        method: Trace
+'@
+
+            Invoke-Forge -FilePath $path -Variables @{ tagsExclude = @('skipme') }
+
+            [Variables]::GetInstance().HasKey('alwaysResult') | Should -BeTrue
+            [Variables]::GetInstance().HasKey('skippedResult') | Should -BeFalse
+        }
+    }
+}

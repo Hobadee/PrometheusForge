@@ -166,5 +166,12 @@ Describe 'Logs' {
         ) {
             [Logs]::GetInstance().GetColor($Level) | Should -Be $Color
         }
+
+        It 'falls back to white for an unknown level' {
+            # A plain [LogLevel]99 cast is rejected by PowerShell, so build the undefined value explicitly.
+            $unknownLevel = [System.Enum]::ToObject([LogLevel], 99)
+
+            [Logs]::GetInstance().GetColor($unknownLevel) | Should -Be ([System.ConsoleColor]::White)
+        }
     }
 }

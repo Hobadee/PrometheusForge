@@ -106,3 +106,57 @@ Describe 'AsanaCreateTask Plugin - Execution' {
         $plugin.Execute().data.gid | Should -Be '99999'
     }
 }
+
+Describe 'AsanaCreateTask Plugin - Additional Validation' {
+    BeforeEach {
+        $script:plugin = [AsanaCreateTask]::new()
+    }
+
+    It 'Should reject an empty <Field>' -ForEach @(
+        @{ Field = 'assignee' }
+        @{ Field = 'parent' }
+        @{ Field = 'workspace' }
+    ) {
+        $params = @{ name = 'Task'; workspace = '123'; parent = '456' }
+        $params[$Field] = '   '
+        $exceptionType = [System.ArgumentException]
+
+        { $script:plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'Should reject a non-string <Field>' -ForEach @(
+        @{ Field = 'notes' }
+        @{ Field = 'html_notes' }
+    ) {
+        $params = @{ name = 'Task'; workspace = '123' }
+        $params[$Field] = 12345
+        $exceptionType = [System.ArgumentException]
+
+        { $script:plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'Should reject providing both start_at and start_on' {
+        $params = @{
+            name     = 'Task'
+            workspace = '123'
+            start_at = '2026-01-01T00:00:00Z'
+            start_on = '2026-01-01'
+            due_at   = '2026-02-01T00:00:00Z'
+        }
+        $exceptionType = [System.ArgumentException]
+
+        { $script:plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
+    }
+
+    It 'Should require a due date when start_on is provided' {
+        $params = @{ name = 'Task'; workspace = '123'; start_on = '2026-01-01' }
+
+        { $script:plugin.ValidateParameters($params) } | Should -Throw "*'due_at' or 'due_on' is required when 'start_on'*"
+    }
+
+    It 'Should accept start_on together with due_on' {
+        $params = @{ name = 'Task'; workspace = '123'; start_on = '2026-01-01'; due_on = '2026-02-01' }
+
+        { $script:plugin.ValidateParameters($params) } | Should -Not -Throw
+    }
+}

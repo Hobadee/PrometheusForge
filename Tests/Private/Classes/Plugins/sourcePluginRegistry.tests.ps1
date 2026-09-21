@@ -56,6 +56,14 @@ class RegistryMockPluginDuplicateName : sourcePluginInterface {
     }
 }
 
+# These tests replace the sourcePluginRegistry singleton; restore the original afterwards so later test files still see the plugins registered at module load.
+BeforeAll {
+    $script:savedsourcePluginRegistry = [sourcePluginRegistry]::Instance
+}
+AfterAll {
+    [sourcePluginRegistry]::Instance = $script:savedsourcePluginRegistry
+}
+
 Describe 'sourcePluginRegistry Auto-Registration' {
     # Reset and re-register to simulate the effect of module load regardless of test run order.
     BeforeAll {

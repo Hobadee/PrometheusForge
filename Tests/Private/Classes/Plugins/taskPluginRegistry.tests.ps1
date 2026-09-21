@@ -1,5 +1,91 @@
 Using Module "../../../../build/PrometheusForge/PrometheusForge.psd1"
 
+# Mock plugins used only by these tests. They live here, not in the module, and are never
+# registered automatically; each test registers the ones it needs via RegisterPlugin().
+
+# Baseline valid plugin.
+class MockValidPlugin : TaskPluginInterface {
+    MockValidPlugin() : base() {}
+
+    static [hashtable] PluginInfo() {
+        return @{ name = 'MockValidPlugin'; version = '1.0.0' }
+    }
+
+    [void] ValidateParameters([object]$params) {}
+
+    [object] Execute() {
+        return @{ result = 'executed' }
+    }
+}
+
+# A second valid plugin, for tests that register more than one.
+class AnotherMockPlugin : TaskPluginInterface {
+    AnotherMockPlugin() : base() {}
+
+    static [hashtable] PluginInfo() {
+        return @{ name = 'AnotherMockPlugin'; version = '1.0.0' }
+    }
+
+    [void] ValidateParameters([object]$params) {}
+
+    [object] Execute() {
+        return @{ result = 'executed' }
+    }
+}
+
+# Invalid: the name is an empty string.
+class MockPluginWithoutName : TaskPluginInterface {
+    MockPluginWithoutName() : base() {}
+
+    static [hashtable] PluginInfo() {
+        return @{ name = ''; version = '1.0.0' }
+    }
+
+    [void] ValidateParameters([object]$params) {}
+
+    [object] Execute() {
+        return @{ result = 'executed' }
+    }
+}
+
+# Invalid: the name is $null.
+class MockPluginWithNullName : TaskPluginInterface {
+    MockPluginWithNullName() : base() {}
+
+    static [hashtable] PluginInfo() {
+        return @{ name = $null; version = '1.0.0' }
+    }
+
+    [void] ValidateParameters([object]$params) {}
+
+    [object] Execute() {
+        return @{ result = 'executed' }
+    }
+}
+
+# A different plugin type that reports the same name as MockValidPlugin, to exercise name conflicts.
+class ConflictingNamePlugin : TaskPluginInterface {
+    ConflictingNamePlugin() : base() {}
+
+    static [hashtable] PluginInfo() {
+        return @{ name = 'MockValidPlugin'; version = '2.0.0' }
+    }
+
+    [void] ValidateParameters([object]$params) {}
+
+    [object] Execute() {
+        return 'conflict'
+    }
+}
+
+# These tests replace the taskPluginRegistry singleton; restore the original afterwards so later test files still see the plugins registered at module load.
+BeforeAll {
+    $script:savedtaskPluginRegistry = [taskPluginRegistry]::Instance
+}
+AfterAll {
+    [taskPluginRegistry]::Instance = $script:savedtaskPluginRegistry
+}
+
 Describe 'taskPluginRegistry Singleton Pattern' {
     BeforeEach {
         # Reset the singleton instance before each test
@@ -190,6 +276,104 @@ Describe 'Plugin Registry Operations' {
             $registry.RegisterPlugin([MockValidPlugin])
             $storedType = $registry.PluginRegistry["MockValidPlugin"]
             $storedType.Name | Should -Be "MockValidPlugin"
+        }
+    }
+}
+
+Describe 'Plugin Registration - rejected types' {
+    BeforeEach {
+        [taskPluginRegistry]::Instance = $null
+        $registry = [taskPluginRegistry]::GetInstance()
+    }
+
+    It 'Should reject an instantiable type that does not implement taskPluginInterface' {
+        $exceptionType = [ArgumentException]
+
+        { $registry.RegisterPlugin([System.Text.StringBuilder]) } | Should -Throw -ExceptionType $exceptionType
+        $registry.PluginRegistry.Count | Should -Be 0
+    }
+
+    It 'Should reject a different plugin type that reuses a registered name' {
+        $registry.RegisterPlugin([MockValidPlugin])
+        $exceptionType = [ArgumentException]
+
+        { $registry.RegisterPlugin([ConflictingNamePlugin]) } | Should -Throw -ExceptionType $exceptionType
+
+        $registry.PluginRegistry['MockValidPlugin'] | Should -Be ([MockValidPlugin])
+    }
+}
+
+# GetPlugin() constructs plugins by looking their name up as a class name from inside the module, so these
+# tests use CurrentTime, a real module plugin, rather than the test-local mocks above.
+Describe 'Plugin Retrieval' {
+    BeforeEach {
+        [taskPluginRegistry]::Instance = $null
+        $registry = [taskPluginRegistry]::GetInstance()
+    }
+
+    Context 'GetPlugin' {
+        It 'Should return a fresh instance of a registered plugin' {
+            $registry.RegisterPlugin([CurrentTime])
+
+            $first = [taskPluginRegistry]::GetPlugin('CurrentTime')
+            $second = [taskPluginRegistry]::GetPlugin('CurrentTime')
+
+            $first | Should -BeOfType ([CurrentTime])
+            [object]::ReferenceEquals($first, $second) | Should -BeFalse
+        }
+
+        It 'Should inject a ForgeApi into the returned plugin' {
+            $registry.RegisterPlugin([CurrentTime])
+
+            $plugin = [taskPluginRegistry]::GetPlugin('CurrentTime')
+
+            $plugin.Api | Should -BeOfType ([ForgeApi])
+        }
+
+        It 'Should throw when the plugin is not registered' {
+            $exceptionType = [ArgumentException]
+
+            { [taskPluginRegistry]::GetPlugin('NotRegistered') } | Should -Throw -ExceptionType $exceptionType
+        }
+    }
+
+    Context 'GetPluginWithParameters' {
+        It 'Should return a plugin with its parameters set' {
+            $registry.RegisterPlugin([CurrentTime])
+
+            $plugin = [taskPluginRegistry]::GetPluginWithParameters('CurrentTime', @{ message = 'hello' })
+
+            $plugin | Should -BeOfType ([CurrentTime])
+            $plugin.parameters.message | Should -Be 'hello'
+        }
+
+        It 'Should throw when the parameters fail validation' {
+            $registry.RegisterPlugin([PasswordGenerator])
+
+            { [taskPluginRegistry]::GetPluginWithParameters('PasswordGenerator', @{ length = 0 }) } | Should -Throw
+        }
+
+        It 'Should throw when the plugin is not registered' {
+            $exceptionType = [ArgumentException]
+
+            { [taskPluginRegistry]::GetPluginWithParameters('NotRegistered', @{}) } | Should -Throw -ExceptionType $exceptionType
+        }
+    }
+
+    Context 'GetPluginNames' {
+        It 'Should return no names for an empty registry' {
+            @([taskPluginRegistry]::GetPluginNames()).Count | Should -Be 0
+        }
+
+        It 'Should return the name of every registered plugin' {
+            $registry.RegisterPlugin([MockValidPlugin])
+            $registry.RegisterPlugin([AnotherMockPlugin])
+
+            $names = [taskPluginRegistry]::GetPluginNames()
+
+            $names.Count | Should -Be 2
+            $names | Should -Contain 'MockValidPlugin'
+            $names | Should -Contain 'AnotherMockPlugin'
         }
     }
 }
