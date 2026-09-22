@@ -1,6 +1,6 @@
 ﻿# Project Status
 
-Last updated: 2026-09-20
+Last updated: 2026-09-21
 
 Prometheus Forge is now a YAML-driven workflow engine built around a `StepTree` execution model, a run-scoped `Steps` registry, and plugin-based source/task execution. The project currently supports loading and processing configuration trees from YAML, applying base and overlay variables, resolving templated values, and running steps with tag-based include/exclude filtering and plugin-requested overrides/inserts.
 
@@ -17,6 +17,12 @@ The project is operating as a working MVP for workflow automation and Asana inte
 
 
 # Recent Changes
+- Reworked the override ForgeAPI as the first step of "Robust Overlays" (see Next Steps below). `ForgeConfigurationApi.RequestOverride(key, config)` queues the raw config on a new run-scoped singleton, `[PendingOverrides]` (`Classes/13-PendingOverrides.ps1`, keyed by slug, wired into `Reset-ForgeState.ps1`). `StepTree.Process()` now checks `PendingOverrides` for its **own** slug via `ApplyPendingOverride()` at the start of every call - not just for the requesting step's queue - so an override applies wherever/whenever in the tree a matching slug is next visited. A config with `type -eq 'step'` is a leaf-only swap (only the registered `Step` changes); any other config is a whole-subtree replacement (children/tags too - new capability, previously rejected). Requesting a second override for a slug that hasn't been drained yet overwrites the first and logs a `[Log]::Warning`.
+  - Building the replacement `[Step]`/`[StepTree]` is deliberately deferred to `ApplyPendingOverride()`, not done eagerly in `RequestOverride()`: a structural override commonly reuses slugs still held by the subtree it's replacing (e.g. "keep this child, just change its parameters"). `ApplyPendingOverride()` calls the new `StepTree.Remove()` (recursively unregisters a subtree's `Steps` entries) on the node being replaced *first*, so the override's own construction always has clean slugs to register against - no orphaned registry entries either way. See the `'applies a [StepTree]-shaped override that reuses one of the old subtree's own child slugs'` test in `StepTree.tests.ps1` for the regression case this fixes.
+  - `Invoke-Forge` now iterates `[PendingOverrides]::GetInstance().GetPendingSlugs()` right after the tree finishes processing, logging a warning for every override that was requested but never had a matching slug to apply to (typo, or a target skipped by conditionals) - mitigates the "silent no-op" behavior change below. This logging lives in `Invoke-Forge`, not on `[PendingOverrides]` itself - raw output doesn't belong in that class, so it only exposes `GetPendingSlugs()` and the caller decides what to do with them.
+  - Behavior change (partially mitigated by the `Invoke-Forge` warning above): an override targeting a slug that's never visited by the tree is a no-op rather than an immediate throw, since validation moved from "one central drain point checks the registry" to "each node checks for its own slug." It's now surfaced as an end-of-run warning instead of a hard failure at request time - worth revisiting if fail-fast is wanted back.
+  - Removed `ForgeConfigurationApi.GetPendingOverrides()`/`ClearPendingOverrides()` - StepTree now talks to `[PendingOverrides]` directly, so the per-instance passthroughs no longer served a purpose.
+  - No `Invoke-Forge`-level (public API) test for this warning's wiring: exercising it end-to-end needs a plugin that calls `RequestOverride()` from within a real run, but `taskPluginRegistry.GetPlugin()` resolves plugins with `[Activator]::CreateInstance($pluginName)` from module scope (see Open Questions), which can't construct a plugin class defined only in a test file. Covered instead at the `StepTree`/`PendingOverrides` unit level.
 - Mock task plugins (`MockValidPlugin` etc.) moved out of `Classes/` (they were compiled into the shipped module) and into `Tests/Private/Classes/Plugins/taskPluginRegistry.tests.ps1`; tests register them explicitly with `RegisterPlugin()`. Because `GetPlugin()` resolves by class name from module scope, the retrieval tests use the real `CurrentTime` plugin instead of a mock.
 - Full test-suite coverage pass: 306 -> 647 tests, command coverage 74.2% -> 99.82% (1117/1119). New test files for `Step`, `Steps`, `tags`, `processorInterface`, `TaskPluginInterface`, the `Forge*Api` classes, `SourceFactory`, `ImportConfig`, `CurrentTime`, `TextOutput`, `AsanaApiClient`, `AsanaTaskPluginBase` and `AsanaCreateTaskDependency`; gaps filled in the existing StepTree, TemplateEngine, Log/Logs, yamlSource, registry, source/task interface, Asana, PasswordGenerator and Invoke-Forge tests. The registry test files now save/restore their singleton so they no longer leak an empty registry into later files.
   - The 2 uncovered commands are not coverable: `TemplateEngine.ResolvePath`'s `$pathSegments.Count -eq 0` branch is dead code (`-split` never returns 0 elements), and `AsanaTaskPluginBase`'s static `UniversalRichTextTags` initializer is not tracked by Pester.
@@ -32,7 +38,7 @@ These are items from TODO.md that we should work on next.
 Read TODO.md for further information on a particular item
 
 1. ~~Full test-suite coverage~~ (done - see Recent Changes)
-3. Robust Overlays - allow polymorphic overlaying and section overlays
+3. Robust Overlays - allow polymorphic overlaying and section overlays (in progress - see Recent Changes for the `PendingOverrides`/`[StepTree]`-override groundwork; still open: YAML-facing overlay syntax/merging semantics, deciding whether unmatched override targets should fail fast)
 2. Advanced templating coverage beyond the current MVP
 4. Conditional section/step execution
 
@@ -44,6 +50,8 @@ Found while writing the coverage tests. None were changed; they need a decision.
 - `SourceFactory.Create` / `ImportConfig.Execute` - `$resolvedConfig = if (...) { $loadedConfig.root } else { ... }` unrolls a one-element `root:` list into that single element, so a one-item list is not wrapped in the synthetic "Imported section"; the item's own name/slug are used instead.
 - `SourceFactory` is not referenced by any production code any more (only by comments in `StepTree`); `ImportConfig` duplicates its wrapping logic.
 - `taskPluginRegistry.GetPlugin()` builds instances with `[Activator]::CreateInstance($pluginName)`, i.e. it treats the plugin *name* as a class name resolved from module scope. It only works when a plugin's name equals its class name and the class lives in the module; it could use the `Type` already stored in `PluginRegistry` instead.
+- `RequestOverride` builds a `[StepTree]` override eagerly, at request time - if the override's config intentionally reuses a slug still registered by the subtree it's meant to replace (e.g. "keep this child, just change its params" expressed as a full section override), construction throws immediately, before `StepTree.Remove()` ever gets a chance to clear the old registration. Not hit by any current test/use case; flagged for whoever picks up the rest of "Robust Overlays."
+- An override whose target slug is never visited by the tree during a run now silently never applies (see Recent Changes), instead of the old immediate throw for a non-existent target. Intentional per the new per-node check design, but worth confirming that's still the desired UX now that overlay work is underway.
 
 # Testing Notes
 - Test files run in a different order than alphabetical paths (files in a folder before its subfolders), and static state is shared across files. Tests that need a plugin should register it in `BeforeAll` (`RegisterPlugin` is idempotent) rather than assume it exists; tests that replace a registry singleton must restore it in `AfterAll`.

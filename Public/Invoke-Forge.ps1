@@ -106,6 +106,13 @@
 
     $stepTree.Process() | Out-Null
 
+    # Surface any override that was requested but never had a matching slug to apply to
+    # (typo'd target, or a target that was skipped by conditionals).
+    foreach ($slug in [PendingOverrides]::GetInstance().GetPendingSlugs()) {
+        [Log]::Warning("An override was requested for slug '$slug' but was never applied; no step or section with that slug was processed during this run.")
+    }
+    
+
     if ($OutputLogs) {
         return [Logs]::GetInstance()
     }

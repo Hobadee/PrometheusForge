@@ -65,6 +65,22 @@ class Steps {
     }
 
 
+    [bool] RemoveIfExists([string]$slug) {
+        <#
+        .SYNOPSIS
+        Removes a step by slug if it exists
+
+        .PARAMETER slug
+        The slug of the step to remove
+        #>
+        if ($this.Exists($slug)) {
+            $this.Steps.Remove($slug)
+            return $true
+        }
+        return $false
+    }
+
+
     [void] Update([Step]$step) {
         <#
         .SYNOPSIS
@@ -179,6 +195,7 @@ class Steps {
         #>
         return $this.Steps.ContainsKey($slug)
     }
+
 
     static [void] Reset() {
         <#

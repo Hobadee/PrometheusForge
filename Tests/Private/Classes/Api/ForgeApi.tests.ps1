@@ -4,11 +4,13 @@ Describe 'ForgeApi' {
     BeforeEach {
         [Variables]::Reset()
         [Steps]::Reset()
+        [PendingOverrides]::Reset()
     }
 
     AfterAll {
         [Variables]::Reset()
         [Steps]::Reset()
+        [PendingOverrides]::Reset()
     }
 
     It 'exposes each API category' {
@@ -95,24 +97,48 @@ Describe 'ForgeTemplateApi' {
 }
 
 Describe 'ForgeConfigurationApi' {
+    BeforeAll {
+        # Other test files reset the plugin registry singleton; make sure the plugin these tests rely on exists.
+        [taskPluginRegistry]::GetInstance().RegisterPlugin([TextOutput])
+
+        function New-OverrideStepConfig {
+            param([string] $Slug)
+            return @{
+                type       = 'step'
+                name       = "Output $Slug"
+                slug       = $Slug
+                plugin     = 'TextOutput'
+                parameters = @{ message = "message from $Slug"; method = 'Trace' }
+            }
+        }
+    }
+
     BeforeEach {
+        [Log]::Reset()
+        [Steps]::Reset()
+        [Variables]::Reset()
+        [PendingOverrides]::Reset()
         $script:api = [ForgeConfigurationApi]::new()
     }
 
     Context 'Overrides' {
         It 'starts with no pending overrides' {
-            $script:api.GetPendingOverrides().Count | Should -Be 0
+            [PendingOverrides]::GetInstance().Count() | Should -Be 0
         }
 
-        It 'queues requested overrides in order' {
-            $script:api.RequestOverride('first', @{ slug = 'first' })
-            $script:api.RequestOverride('second', @{ slug = 'second' })
+        It 'queues the raw config as-is, without constructing a Step/StepTree yet' {
+            $script:api.RequestOverride('target', (New-OverrideStepConfig 'target'))
 
-            $pending = $script:api.GetPendingOverrides()
-            $pending.Count | Should -Be 2
-            $pending[0].key | Should -Be 'first'
-            $pending[0].value.slug | Should -Be 'first'
-            $pending[1].key | Should -Be 'second'
+            $pendingOverrides = [PendingOverrides]::GetInstance()
+            $pendingOverrides.HasOverride('target') | Should -BeTrue
+
+            $queued = $pendingOverrides.Drain('target')
+            $queued | Should -Not -BeOfType ([Step])
+            $queued.slug | Should -Be 'target'
+
+            # No registry side effects yet either - construction is deferred to
+            # StepTree.ApplyPendingOverride(), see its own tests for that behavior.
+            [Steps]::GetInstance().Exists('target') | Should -BeFalse
         }
 
         It 'rejects an empty override key: <Description>' -ForEach @(
@@ -122,16 +148,38 @@ Describe 'ForgeConfigurationApi' {
         ) {
             $exceptionType = [System.ArgumentException]
 
-            { $script:api.RequestOverride($Key, @{}) } | Should -Throw -ExceptionType $exceptionType
-            $script:api.GetPendingOverrides().Count | Should -Be 0
+            { $script:api.RequestOverride($Key, (New-OverrideStepConfig 'target')) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverrides]::GetInstance().Count() | Should -Be 0
         }
 
-        It 'clears pending overrides' {
-            $script:api.RequestOverride('first', @{ slug = 'first' })
+        It 'rejects a null value' {
+            $exceptionType = [System.ArgumentNullException]
 
-            $script:api.ClearPendingOverrides()
+            { $script:api.RequestOverride('target', $null) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverrides]::GetInstance().Count() | Should -Be 0
+        }
 
-            $script:api.GetPendingOverrides().Count | Should -Be 0
+        It 'rejects a value whose slug does not match key' {
+            $exceptionType = [System.ArgumentException]
+
+            { $script:api.RequestOverride('target', (New-OverrideStepConfig 'different')) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverrides]::GetInstance().Count() | Should -Be 0
+        }
+
+        It 'warns and keeps only the most recent override when requested twice for the same slug' {
+            $script:api.RequestOverride('target', (New-OverrideStepConfig 'target'))
+            $script:api.RequestOverride('target', @{
+                    type  = 'section'
+                    name  = 'Target'
+                    slug  = 'target'
+                })
+
+            $pendingOverrides = [PendingOverrides]::GetInstance()
+            $pendingOverrides.Count() | Should -Be 1
+            $pendingOverrides.Drain('target').type | Should -Be 'section'
+
+            $warnings = [Logs]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
+            $warnings.Count | Should -BeGreaterOrEqual 1
         }
     }
 
@@ -168,7 +216,7 @@ Describe 'ForgeConfigurationApi' {
         It 'keeps overrides and inserts in separate queues' {
             $script:api.Insert(@{ slug = 'inserted' })
 
-            $script:api.GetPendingOverrides().Count | Should -Be 0
+            [PendingOverrides]::GetInstance().Count() | Should -Be 0
         }
     }
 }

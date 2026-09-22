@@ -2,6 +2,12 @@
 This document serves as a list of things that we need or want to be completed at some point.  Eventually this will move to GitHub issues or similar
 but during heavy dev it's helpful to have a scratchpad on the local machine.
 
+## Lazy Loading
+Switch everything to lazy loading.  Possibly split validation into 2 parts - light validation that is done at load-time, and deep validation done at runtime.
+
+Perhaps some way of validating before variables are expanded, since that's the
+main reason we can't validate at load right now?
+
 ## Variable Checking
 Variable names MUST adhere to the same REGEX as slugs, otherwise we won't be able to resolve results.  Add appropriate checks and minimize code duplication.
 
@@ -153,6 +159,19 @@ it's parents return ID and using that to nest itself when it creates itself in
 some external system.
 
 This is a VERY LOW priority.
+
+
+## Section data as Steps
+As noted elsewhere, conditionals and tags should move into [Step] objects and be tracked via [Steps].  The logical following is that
+each [StepTree] object should also contain a matching entry in [Steps].  We can then easily update conditionals/tags on inserts/overrides.
+
+Additionally we can store return information in the StepTree's [Step] object.  Not sure how we would best access this later, but we could!
+
+
+## Functions to get step return data
+Just like we will be able to pull the logs singleton after a run, we should be able to pull the [Steps] singleton after a run to get result data.
+
+Not sure the best interface for this.
 
 
 # Cleanup Items

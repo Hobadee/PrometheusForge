@@ -81,6 +81,26 @@ Describe 'Steps' {
         }
     }
 
+    Context 'RemoveIfExists' {
+        It 'removes an existing step and returns $true' {
+            $steps = [Steps]::GetInstance()
+            $steps.Add((New-TestStep 'step-a'))
+
+            $result = $steps.RemoveIfExists('step-a')
+
+            $result | Should -BeTrue
+            $steps.Exists('step-a') | Should -BeFalse
+        }
+
+        It 'returns $false and does nothing when the step does not exist' {
+            $steps = [Steps]::GetInstance()
+
+            $result = $steps.RemoveIfExists('missing')
+
+            $result | Should -BeFalse
+        }
+    }
+
     Context 'Update' {
         It 'replaces an existing step that has not run' {
             $steps = [Steps]::GetInstance()

@@ -79,6 +79,62 @@ Current execution behavior:
 - The current built-in example plugin is `TextOutputPlugin`.
 
 
+## Insert vs. Override
+
+Prometheus Forge has two distinct mechanisms for composing a workflow out of smaller pieces of
+YAML. The terminology below isn't fully locked down yet, so treat the names as descriptive rather
+than final.
+
+### Insert
+
+An **insert** loads a separate YAML document and adds it as a new child at the current location in
+the tree, alongside whatever is already there. Nothing existing is removed or replaced.
+
+Inserts are useful for splitting a large workflow into smaller, reusable files and collecting them
+back together into a single master configuration - for example, keeping "create user", "enroll
+device", and "install software" as their own files and composing them from a top-level
+`onboard.yaml`.
+
+Inserts are handled by the `ImportConfig` task plugin, which loads a document via a source plugin
+(e.g. `yamlSource`) and queues it for insertion with `Api.Configuration.Insert()`:
+
+```yaml
+- type: step
+  name: Enroll Device
+  slug: enroll-device
+  plugin: ImportConfig
+  parameters:
+    uri: "./sections/enroll-device.yaml"
+    sourcePluginName: yamlSource
+```
+
+### Override
+
+An **override** replaces a step or section already in the tree, targeted by slug, with a different
+step or section. Unlike an insert, this removes what's currently there instead of adding alongside
+it.
+
+This is useful when a specific client or department needs a substantially different version of a
+step or section than the base configuration provides - for example, a client with its own custom
+user-onboarding step - without having to duplicate and maintain the rest of the workflow.
+
+Overrides are requested by a plugin via `Api.Configuration.RequestOverride(slug, config)`. The
+request is queued and applied the next time a tree node with that slug is processed
+(`StepTree.ApplyPendingOverride()`), so the override can target any node in the tree, not only
+children of the requesting step. A `type: step` override swaps only the step's implementation; the
+node's position, tags, and children are left untouched. Any other `type` (e.g. `section`) replaces
+the whole subtree - position, tags, and children included.
+
+Overrides are the "Robust Overlays" work described in `TODO.md`. A dedicated plugin for requesting
+one declaratively from YAML doesn't exist yet, so today it's only reachable from inside a plugin's
+`Execute()` method.
+
+> **Note:** the `-Overlay` parameter on `Invoke-Forge` (see Quick Start above) is a related but
+> separate concept - it layers *variables* and tag include/exclude filters on top of a base
+> configuration and cannot *YET* add, remove, or replace steps/sections. "Overlay" and "override" are
+> used close to interchangeably in places right now; expect this terminology to get tightened up as
+> the override feature matures.
+
 ## Plugin Development
 
 Task plugins implement the `taskPluginInterface` contract. Existing plugin examples are available in
