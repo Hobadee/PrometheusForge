@@ -252,6 +252,169 @@ root:
         $stepResult.object.parameters.message | Should -Be 'User=Ada Lovelace'
     }
 
+    It 'applies a step override queued by an overlay' {
+        $yamlPath = Join-Path $TestDrive 'workflow-step-override.yaml'
+        @'
+name: Test workflow
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    slug: root-section
+    items:
+      - type: step
+        name: Write output
+        slug: write-output
+        plugin: TextOutput
+        result: outputResult
+        parameters:
+          message: base message
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $overlayPath = Join-Path $TestDrive 'overlay-step-override.yaml'
+        @'
+name: overlay
+version: 1.0
+root:
+  - type: step
+    name: Write output
+    slug: write-output
+    plugin: TextOutput
+    result: outputResult
+    parameters:
+      message: overridden message
+'@ | Set-Content -Path $overlayPath -Encoding utf8
+
+        Invoke-Forge -FilePath $yamlPath -Overlay $overlayPath
+
+        $configuration = [Variables]::GetInstance()
+        $configuration.Get('outputResult').object.parameters.message | Should -Be 'overridden message'
+    }
+
+    It 'applies a step override queued by an overlay whose root is a single config, not a list' {
+        $yamlPath = Join-Path $TestDrive 'workflow-standalone-override.yaml'
+        @'
+name: Test workflow
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    slug: root-section
+    items:
+      - type: step
+        name: Write output
+        slug: write-output
+        plugin: TextOutput
+        result: outputResult
+        parameters:
+          message: base message
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $overlayPath = Join-Path $TestDrive 'overlay-standalone-override.yaml'
+        @'
+name: overlay
+version: 1.0
+root:
+  type: step
+  name: Write output
+  slug: write-output
+  plugin: TextOutput
+  result: outputResult
+  parameters:
+    message: overridden message
+'@ | Set-Content -Path $overlayPath -Encoding utf8
+
+        Invoke-Forge -FilePath $yamlPath -Overlay $overlayPath
+
+        $configuration = [Variables]::GetInstance()
+        $configuration.Get('outputResult').object.parameters.message | Should -Be 'overridden message'
+    }
+
+    It 'applies a section override queued by an overlay, replacing the target subtree' {
+        $yamlPath = Join-Path $TestDrive 'workflow-section-override.yaml'
+        @'
+name: Test workflow
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    slug: root-section
+    items:
+      - type: section
+        name: Replaceable section
+        slug: replaceable-section
+        items:
+          - type: step
+            name: Original step
+            slug: original-step
+            plugin: TextOutput
+            result: originalResult
+            parameters:
+              message: original
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $overlayPath = Join-Path $TestDrive 'overlay-section-override.yaml'
+        @'
+name: overlay
+version: 1.0
+root:
+  - type: section
+    name: Replacement section
+    slug: replaceable-section
+    items:
+      - type: step
+        name: Replacement step
+        slug: replacement-step
+        plugin: TextOutput
+        result: replacementResult
+        parameters:
+          message: replaced
+'@ | Set-Content -Path $overlayPath -Encoding utf8
+
+        Invoke-Forge -FilePath $yamlPath -Overlay $overlayPath
+
+        $configuration = [Variables]::GetInstance()
+        $configuration.HasKey('originalResult') | Should -BeFalse
+        $configuration.Get('replacementResult').object.parameters.message | Should -Be 'replaced'
+    }
+
+    It 'warns when an overlay override targets a slug that is never processed' {
+        $yamlPath = Join-Path $TestDrive 'workflow-unmatched-override.yaml'
+        @'
+name: Test workflow
+version: 1.0
+root:
+  - type: section
+    name: Root section
+    slug: root-section
+    items:
+      - type: step
+        name: Write output
+        slug: write-output
+        plugin: TextOutput
+        parameters:
+          message: base message
+'@ | Set-Content -Path $yamlPath -Encoding utf8
+
+        $overlayPath = Join-Path $TestDrive 'overlay-unmatched-override.yaml'
+        @'
+name: overlay
+version: 1.0
+root:
+  - type: step
+    name: Never matched
+    slug: does-not-exist
+    plugin: TextOutput
+    parameters:
+      message: never applied
+'@ | Set-Content -Path $overlayPath -Encoding utf8
+
+        $entries = @(Invoke-Forge -FilePath $yamlPath -Overlay $overlayPath -OutputLogs)
+
+        $messages = $entries | ForEach-Object { $_.GetMessage() }
+        $messages | Should -Contain "An override was requested for slug 'does-not-exist' but was never applied; no step or section with that slug was processed during this run."
+    }
+
     It 'imports another YAML file using the ImportConfig plugin' {
         $yamlPath = Join-Path $TestDrive 'workflow.yaml'
         $importedPath = Join-Path $TestDrive 'imported.yaml'
