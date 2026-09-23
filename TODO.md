@@ -49,8 +49,8 @@ Plugins should declare which `ForgeApi` categories they actually use (e.g. via a
 
 
 ## Step replacement overlays
-DONE - see `README.md` ("Insert vs. Override") for usage. Implemented via the `PendingOverrides`
-singleton + `StepTree.ApplyPendingOverride()`, not the tree/action-registry split originally
+DONE - see `README.md` ("Insert vs. Overlay") for usage. Implemented via the `PendingOverlays`
+singleton + `StepTree.ApplyPendingOverlay()`, not the tree/action-registry split originally
 sketched here; section replacement (originally scoped out) ended up in scope too.
 
 
@@ -98,7 +98,7 @@ Notes:
 The basic YAML-import flow is working, but the remaining design questions are about insertion semantics and long-term behavior rather than the parser itself.
 
 Polymorphic overlay replacement (Step->Step, Section->Section, Step->Section) is DONE.
-Section->Step needs a workaround, not a direct path - see `README.md` ("Insert vs. Override") for
+Section->Step needs a workaround, not a direct path - see `README.md` ("Insert vs. Overlay") for
 what's supported and why. Open decision: whether to relax the `type: step` guard so it can replace
 a section directly instead of needing that workaround (see `PROJECT_STATUS.md` Open Questions) - low priority.
 
@@ -149,7 +149,7 @@ This is a VERY LOW priority.
 
 ## Section data as Steps
 As noted elsewhere, conditionals and tags should move into [Step] objects and be tracked via [Steps].  The logical following is that
-each [StepTree] object should also contain a matching entry in [Steps].  We can then easily update conditionals/tags on inserts/overrides.
+each [StepTree] object should also contain a matching entry in [Steps].  We can then easily update conditionals/tags on inserts/overlays.
 
 Additionally we can store return information in the StepTree's [Step] object.  Not sure how we would best access this later, but we could!
 

@@ -4,11 +4,11 @@ class ForgeConfigurationApi {
     Plugin-facing API for requesting configuration changes.
 
     .DESCRIPTION
-    Provides plugins an entry point for queuing tree overrides (RequestOverride) and inline
-    insertions (Insert). Override requests are queued on the shared, run-scoped
-    [PendingOverrides] singleton rather than on this instance, so that any StepTree node - not
-    only children of the requesting step - can see and apply a pending override for its own
-    slug. See StepTree.ApplyPendingOverride().
+    Provides plugins an entry point for queuing tree overlays (RequestOverlay) and inline
+    insertions (Insert). Overlay requests are queued on the shared, run-scoped
+    [PendingOverlays] singleton rather than on this instance, so that any StepTree node - not
+    only children of the requesting step - can see and apply a pending overlay for its own
+    slug. See StepTree.ApplyPendingOverlay().
     #>
 
     hidden [System.Collections.Generic.List[object]] $pendingInserts
@@ -18,21 +18,21 @@ class ForgeConfigurationApi {
     }
 
 
-    <#############
-     # Overrides #
-     #############>
+    <############
+     # Overlays #
+     ############>
 
 
-    [void] RequestOverride([string] $key, [object] $config) {
+    [void] RequestOverlay([string] $key, [object] $config) {
         <#
         .SYNOPSIS
         Queues a step or section configuration to replace whatever currently occupies the
         StepTree location with slug key, the next time a node with that slug is processed.
 
         .DESCRIPTION
-        The raw config is queued on the shared [PendingOverrides] singleton, keyed by key.
+        The raw config is queued on the shared [PendingOverlays] singleton, keyed by key.
         Building the replacement [Step]/[StepTree] is intentionally deferred to
-        StepTree.ApplyPendingOverride() rather than done here: an override commonly reuses
+        StepTree.ApplyPendingOverlay() rather than done here: an overlay commonly reuses
         slugs still held by the subtree it's replacing (e.g. "keep this child, just change its
         parameters"), so the old subtree needs to be unregistered first - which only happens
         once the target node is actually reached during Process().
@@ -42,11 +42,11 @@ class ForgeConfigurationApi {
         a structural replacement: the whole subtree at key, including its children and tags,
         is replaced.
 
-        Yes - we run AFTER - we cannot replace ourself since we are the "override" step that
+        Yes - we run AFTER - we cannot replace ourself since we are the "overlay" step that
         requests the change: our own StepTree node has already begun Process() by the time we run.
 
         .PARAMETER key
-        The slug of the StepTree node/Step this override targets.
+        The slug of the StepTree node/Step this overlay targets.
 
         .PARAMETER config
         A step/section configuration, in the same shape accepted by [StepTree]::new(). Must
@@ -62,15 +62,15 @@ class ForgeConfigurationApi {
         # YAML file's 'root' wrapper is stripped once in Invoke-Forge before anything reaches
         # StepTree/Step, so it never applies to nested step/section configs like this one.
         if ($config.slug -ne $key) {
-            throw [System.ArgumentException]::new("Override for '$key' must provide a configuration with the same slug.")
+            throw [System.ArgumentException]::new("Overlay for '$key' must provide a configuration with the same slug.")
         }
 
-        [PendingOverrides]::GetInstance().Request($key, $config)
+        [PendingOverlays]::GetInstance().Request($key, $config)
     }
 
-    <#################
-     # END Overrides #
-     #################>
+    <################
+     # END Overlays #
+     ################>
 
 
     <################

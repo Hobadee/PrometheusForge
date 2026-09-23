@@ -4,13 +4,13 @@ Describe 'ForgeApi' {
     BeforeEach {
         [Variables]::Reset()
         [Steps]::Reset()
-        [PendingOverrides]::Reset()
+        [PendingOverlays]::Reset()
     }
 
     AfterAll {
         [Variables]::Reset()
         [Steps]::Reset()
-        [PendingOverrides]::Reset()
+        [PendingOverlays]::Reset()
     }
 
     It 'exposes each API category' {
@@ -101,7 +101,7 @@ Describe 'ForgeConfigurationApi' {
         # Other test files reset the plugin registry singleton; make sure the plugin these tests rely on exists.
         [taskPluginRegistry]::GetInstance().RegisterPlugin([TextOutput])
 
-        function New-OverrideStepConfig {
+        function New-OverlayStepConfig {
             param([string] $Slug)
             return @{
                 type       = 'step'
@@ -117,66 +117,66 @@ Describe 'ForgeConfigurationApi' {
         [Log]::Reset()
         [Steps]::Reset()
         [Variables]::Reset()
-        [PendingOverrides]::Reset()
+        [PendingOverlays]::Reset()
         $script:api = [ForgeConfigurationApi]::new()
     }
 
-    Context 'Overrides' {
-        It 'starts with no pending overrides' {
-            [PendingOverrides]::GetInstance().Count() | Should -Be 0
+    Context 'Overlays' {
+        It 'starts with no pending overlays' {
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
         }
 
         It 'queues the raw config as-is, without constructing a Step/StepTree yet' {
-            $script:api.RequestOverride('target', (New-OverrideStepConfig 'target'))
+            $script:api.RequestOverlay('target', (New-OverlayStepConfig 'target'))
 
-            $pendingOverrides = [PendingOverrides]::GetInstance()
-            $pendingOverrides.HasOverride('target') | Should -BeTrue
+            $pendingOverlays = [PendingOverlays]::GetInstance()
+            $pendingOverlays.HasOverlay('target') | Should -BeTrue
 
-            $queued = $pendingOverrides.Drain('target')
+            $queued = $pendingOverlays.Drain('target')
             $queued | Should -Not -BeOfType ([Step])
             $queued.slug | Should -Be 'target'
 
             # No registry side effects yet either - construction is deferred to
-            # StepTree.ApplyPendingOverride(), see its own tests for that behavior.
+            # StepTree.ApplyPendingOverlay(), see its own tests for that behavior.
             [Steps]::GetInstance().Exists('target') | Should -BeFalse
         }
 
-        It 'rejects an empty override key: <Description>' -ForEach @(
+        It 'rejects an empty overlay key: <Description>' -ForEach @(
             @{ Description = 'null'; Key = $null }
             @{ Description = 'empty'; Key = '' }
             @{ Description = 'whitespace'; Key = '   ' }
         ) {
             $exceptionType = [System.ArgumentException]
 
-            { $script:api.RequestOverride($Key, (New-OverrideStepConfig 'target')) } | Should -Throw -ExceptionType $exceptionType
-            [PendingOverrides]::GetInstance().Count() | Should -Be 0
+            { $script:api.RequestOverlay($Key, (New-OverlayStepConfig 'target')) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
         }
 
         It 'rejects a null value' {
             $exceptionType = [System.ArgumentNullException]
 
-            { $script:api.RequestOverride('target', $null) } | Should -Throw -ExceptionType $exceptionType
-            [PendingOverrides]::GetInstance().Count() | Should -Be 0
+            { $script:api.RequestOverlay('target', $null) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
         }
 
         It 'rejects a value whose slug does not match key' {
             $exceptionType = [System.ArgumentException]
 
-            { $script:api.RequestOverride('target', (New-OverrideStepConfig 'different')) } | Should -Throw -ExceptionType $exceptionType
-            [PendingOverrides]::GetInstance().Count() | Should -Be 0
+            { $script:api.RequestOverlay('target', (New-OverlayStepConfig 'different')) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
         }
 
-        It 'warns and keeps only the most recent override when requested twice for the same slug' {
-            $script:api.RequestOverride('target', (New-OverrideStepConfig 'target'))
-            $script:api.RequestOverride('target', @{
+        It 'warns and keeps only the most recent overlay when requested twice for the same slug' {
+            $script:api.RequestOverlay('target', (New-OverlayStepConfig 'target'))
+            $script:api.RequestOverlay('target', @{
                     type  = 'section'
                     name  = 'Target'
                     slug  = 'target'
                 })
 
-            $pendingOverrides = [PendingOverrides]::GetInstance()
-            $pendingOverrides.Count() | Should -Be 1
-            $pendingOverrides.Drain('target').type | Should -Be 'section'
+            $pendingOverlays = [PendingOverlays]::GetInstance()
+            $pendingOverlays.Count() | Should -Be 1
+            $pendingOverlays.Drain('target').type | Should -Be 'section'
 
             $warnings = [Logs]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
             $warnings.Count | Should -BeGreaterOrEqual 1
@@ -213,10 +213,10 @@ Describe 'ForgeConfigurationApi' {
             $script:api.GetPendingInserts().Count | Should -Be 0
         }
 
-        It 'keeps overrides and inserts in separate queues' {
+        It 'keeps overlays and inserts in separate queues' {
             $script:api.Insert(@{ slug = 'inserted' })
 
-            [PendingOverrides]::GetInstance().Count() | Should -Be 0
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
         }
     }
 }

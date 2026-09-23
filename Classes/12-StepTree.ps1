@@ -132,8 +132,8 @@ class StepTree : System.Collections.IEnumerable{
 
         .DESCRIPTION
         Removes every descendant's registered Step first (depth-first), then this node's own
-        registered Step, if any. Used by ApplyPendingOverride() to discard a node's existing
-        content before grafting in a [StepTree]-shaped override, so the override's own
+        registered Step, if any. Used by ApplyPendingOverlay() to discard a node's existing
+        content before grafting in a [StepTree]-shaped overlay, so the overlay's own
         construction has clean slugs to register against and no orphaned Step entries are
         left behind in the registry once this subtree is no longer part of the tree.
 
@@ -150,58 +150,58 @@ class StepTree : System.Collections.IEnumerable{
     }
 
 
-    [void] ApplyPendingOverride() {
+    [void] ApplyPendingOverlay() {
         <#
         .SYNOPSIS
-        Applies a queued override targeting this node's own slug, if one is pending.
+        Applies a queued overlay targeting this node's own slug, if one is pending.
 
         .DESCRIPTION
-        Checked at the start of every Process() call so an override requested by any
+        Checked at the start of every Process() call so an overlay requested by any
         previously-processed step in the run takes effect the next time a node with a matching
         slug is visited - not only for children of the requesting step.
 
         Building the replacement [Step]/[StepTree] happens here, rather than eagerly when the
-        override was requested: a structural (section) override commonly reuses slugs still
+        overlay was requested: a structural (section) overlay commonly reuses slugs still
         held by the subtree it's replacing (e.g. "keep this child, just change its
         parameters"), so the old subtree is unregistered via Remove() FIRST, and only then is
-        the override config actually constructed - giving it clean slugs to register against.
+        the overlay config actually constructed - giving it clean slugs to register against.
 
         A config with type 'step' is a leaf-only replacement: only this slug's registered Step
         is swapped; this node's position, tags and children are untouched. Any other config is
         a structural replacement: this node's own subtree is discarded (via Remove()) and its
-        name/tags/children are replaced with the override's.
+        name/tags/children are replaced with the overlay's.
         #>
-        $pendingOverrides = [PendingOverrides]::GetInstance()
-        if (-not $pendingOverrides.HasOverride($this.slug)) {
+        $pendingOverlays = [PendingOverlays]::GetInstance()
+        if (-not $pendingOverlays.HasOverlay($this.slug)) {
             return
         }
 
-        $config = $pendingOverrides.Drain($this.slug)
+        $config = $pendingOverlays.Drain($this.slug)
 
         if ($config.type -eq 'step') {
             if (-not [Steps]::GetInstance().Exists($this.slug)) {
-                throw [System.ArgumentException]::new("No step with slug '$($this.slug)' exists to override.")
+                throw [System.ArgumentException]::new("No step with slug '$($this.slug)' exists to overlay.")
             }
-            [Log]::Write("[StepTree]::ApplyPendingOverride() - Replacing API-requested step '$($this.slug)'.", "Debug")
+            [Log]::Write("[StepTree]::ApplyPendingOverlay() - Replacing API-requested step '$($this.slug)'.", "Debug")
             [Steps]::GetInstance().Update([Step]::new($config))
             return
         }
         elseif ($config.type -eq 'section') {
-            [Log]::Write("[StepTree]::ApplyPendingOverride() - Replacing subtree '$($this.slug)' with an API-requested override.", "Debug")
+            [Log]::Write("[StepTree]::ApplyPendingOverlay() - Replacing subtree '$($this.slug)' with an API-requested overlay.", "Debug")
             $this.Remove()
-            $override = [StepTree]::new($config)
+            $overlay = [StepTree]::new($config)
 
-            # Replace current node's properties with those from the override
-            # If we add class properties later, make sure to copy them from the override as well
-            $this.name = $override.name
-            $this.tags = $override.tags
-            $this.children = $override.children
+            # Replace current node's properties with those from the overlay
+            # If we add class properties later, make sure to copy them from the overlay as well
+            $this.name = $overlay.name
+            $this.tags = $overlay.tags
+            $this.children = $overlay.children
 
             # Index *SHOULD* still be 0, but in case it isn't, reset the current index to start processing the new children from the beginning.
             $this.currentIndex = 0
         }
         else {
-            throw [System.ArgumentException]::new("Unsupported override type '$($config.type)'.")
+            throw [System.ArgumentException]::new("Unsupported overlay type '$($config.type)'.")
         }
 
     }
@@ -261,10 +261,10 @@ class StepTree : System.Collections.IEnumerable{
         Really a boolean, but PowerShell binding quirks require it to be declared as System.Object.
         #>
 
-        # Apply any override queued for this node's own slug before doing anything else, so a
-        # [StepTree]-shaped override's tags are honored by checkConditionals() below, and a
-        # [Step]-shaped override's plugin is what actually runs.
-        $this.ApplyPendingOverride()
+        # Apply any overlay queued for this node's own slug before doing anything else, so a
+        # [StepTree]-shaped overlay's tags are honored by checkConditionals() below, and a
+        # [Step]-shaped overlay's plugin is what actually runs.
+        $this.ApplyPendingOverlay()
 
         # Check if we even need to run this step, given our conditionals
         if (-not $this.checkConditionals()) {

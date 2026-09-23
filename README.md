@@ -69,7 +69,7 @@ Invoke-Forge -FilePath onboard.yaml -Variables @{ logTerminalLevel = 'debug'} -O
 
 ## Configuration Model
 
-Prometheus Forge applies configuration serially.  Later values override earlier values where supported. Individual steps can be replaced to account for implementation
+Prometheus Forge applies configuration serially.  Later values take precedence over earlier values where supported. Individual steps can be replaced to account for implementation
 differences between clients or environments.
 
 Current execution behavior:
@@ -79,7 +79,7 @@ Current execution behavior:
 - The current built-in example plugin is `TextOutputPlugin`.
 
 
-## Insert vs. Override
+## Insert vs. Overlay
 
 Prometheus Forge has two distinct mechanisms for composing a workflow out of smaller pieces of
 YAML. The terminology below isn't fully locked down yet, so treat the names as descriptive rather
@@ -108,9 +108,9 @@ Inserts are handled by the `ImportConfig` task plugin, which loads a document vi
     sourcePluginName: yamlSource
 ```
 
-### Override
+### Overlay
 
-An **override** replaces a step or section already in the tree, targeted by slug, with a different
+An **overlay** replaces a step or section already in the tree, targeted by slug, with a different
 step or section. Unlike an insert, this removes what's currently there instead of adding alongside
 it.
 
@@ -118,33 +118,33 @@ This is useful when a specific client or department needs a substantially differ
 step or section than the base configuration provides - for example, a client with its own custom
 user-onboarding step - without having to duplicate and maintain the rest of the workflow.
 
-Overrides are requested by a plugin via `Api.Configuration.RequestOverride(slug, config)`. The
-request is queued and applied the next time a tree node with that slug is processed
-(`StepTree.ApplyPendingOverride()`), so the override can target any node in the tree, not only
-children of the requesting step. A `type: step` override swaps only the step's implementation; the
-node's position, tags, and children are left untouched. Any other `type` (e.g. `section`) replaces
-the whole subtree - position, tags, and children included.
+An overlay can be requested two ways:
 
-An override's `type` doesn't need to match what it's replacing:
+- **From YAML**, via the `-Overlay` parameter on `Invoke-Forge` (see Quick Start above): an overlay
+  file's top-level `root` - the same shape as the main YAML's `root` - queues one overlay per entry,
+  targeting its own `slug`, alongside whatever `variables` and tag include/exclude filters that same
+  overlay file sets.
+- **From a plugin**, via `Api.Configuration.RequestOverlay(slug, config)`.
+
+Either way, the request is queued and applied the next time a tree node with that slug is processed
+(`StepTree.ApplyPendingOverlay()`), so the overlay can target any node in the tree, not only
+children of the requesting step (or, for a YAML overlay file, not only nodes under a particular
+location - it can target anywhere in the whole tree). A `type: step` overlay swaps only the step's
+implementation; the node's position, tags, and children are left untouched. Any other `type` (e.g.
+`section`) replaces the whole subtree - position, tags, and children included.
+
+An overlay's `type` doesn't need to match what it's replacing:
 
 - Replacing a step with a `type: section` config (with its own `items`) works directly - the old
   step's registration is cleared before the section is built, so a step-shaped and a section-shaped
   target look the same to the underlying machinery.
 - Replacing a *section* with a bare `type: step` config does **not** work directly - it throws,
-  because a section never registers a `Step` for the leaf-only override path to find. Get the same
+  because a section never registers a `Step` for the leaf-only overlay path to find. Get the same
   effect by wrapping the replacement in a `type: section` config whose `items` contains a single
   `type: step` entry; that goes through the structural path instead, which doesn't care what the
   original target was.
 
-Overrides are the "Robust Overlays" work described in `TODO.md`. A dedicated plugin for requesting
-one declaratively from YAML doesn't exist yet, so today it's only reachable from inside a plugin's
-`Execute()` method.
-
-> **Note:** the `-Overlay` parameter on `Invoke-Forge` (see Quick Start above) is a related but
-> separate concept - it layers *variables* and tag include/exclude filters on top of a base
-> configuration and cannot *YET* add, remove, or replace steps/sections. "Overlay" and "override" are
-> used close to interchangeably in places right now; expect this terminology to get tightened up as
-> the override feature matures.
+This kind of overlay is the "Robust Overlays" work described in `TODO.md`.
 
 ## Plugin Development
 
