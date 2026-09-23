@@ -125,6 +125,17 @@ children of the requesting step. A `type: step` override swaps only the step's i
 node's position, tags, and children are left untouched. Any other `type` (e.g. `section`) replaces
 the whole subtree - position, tags, and children included.
 
+An override's `type` doesn't need to match what it's replacing:
+
+- Replacing a step with a `type: section` config (with its own `items`) works directly - the old
+  step's registration is cleared before the section is built, so a step-shaped and a section-shaped
+  target look the same to the underlying machinery.
+- Replacing a *section* with a bare `type: step` config does **not** work directly - it throws,
+  because a section never registers a `Step` for the leaf-only override path to find. Get the same
+  effect by wrapping the replacement in a `type: section` config whose `items` contains a single
+  `type: step` entry; that goes through the structural path instead, which doesn't care what the
+  original target was.
+
 Overrides are the "Robust Overlays" work described in `TODO.md`. A dedicated plugin for requesting
 one declaratively from YAML doesn't exist yet, so today it's only reachable from inside a plugin's
 `Execute()` method.

@@ -49,20 +49,9 @@ Plugins should declare which `ForgeApi` categories they actually use (e.g. via a
 
 
 ## Step replacement overlays
-Replace steps/actions with imported steps/actions.
-
-The idea behind this, is that if we have for example a "Install" step that
-works completely different for Client A and Client B, we can easily replace the
-entire action without having to rebuild everything. With this feature, overlays
-can do more than simply inject new items and variables; they can replace
-existing steps.
-
-Replacement of sections will remain out-of-scope for now.  Section-level
-modifications can be done via exluding the section and importing a new section.
-
-Implementation will be done by splitting out the data into 2 sections;
-- tree/step layer containing original ordering/hirearchy with a name reference
-- Action objects, keyed by name
+DONE - see `README.md` ("Insert vs. Override") for usage. Implemented via the `PendingOverrides`
+singleton + `StepTree.ApplyPendingOverride()`, not the tree/action-registry split originally
+sketched here; section replacement (originally scoped out) ended up in scope too.
 
 
 ## Step names
@@ -108,13 +97,10 @@ Notes:
 ## Step addon overlays
 The basic YAML-import flow is working, but the remaining design questions are about insertion semantics and long-term behavior rather than the parser itself.
 
-Ideally, we should be able to eventually complete all the following types of overlays:
-- Step -> Step
-- Section -> Section
-- Step -> Section
-- Section -> Step
-
-The first 2 should be fairly easy.  Polymorphic overlays will be more difficult.
+Polymorphic overlay replacement (Step->Step, Section->Section, Step->Section) is DONE.
+Section->Step needs a workaround, not a direct path - see `README.md` ("Insert vs. Override") for
+what's supported and why. Open decision: whether to relax the `type: step` guard so it can replace
+a section directly instead of needing that workaround (see `PROJECT_STATUS.md` Open Questions) - low priority.
 
 Remaining work:
 - define how imported steps/sections are inserted into the current `StepTree` location
@@ -172,6 +158,24 @@ Additionally we can store return information in the StepTree's [Step] object.  N
 Just like we will be able to pull the logs singleton after a run, we should be able to pull the [Steps] singleton after a run to get result data.
 
 Not sure the best interface for this.
+
+
+## Rethink include tags
+Current `tagsInclude`/`tagsExclude` behavior only excludes based on tags; it doesn't
+restrict a run to *only* tagged steps.
+
+Potentially: if any include tags are set, ONLY run a step if it includes that tag.
+
+This could skip a TON of things on accident (or on purpose) though - needs careful
+thought about the blast radius before changing default behavior.
+
+
+## Start-at-slug option
+Add an option to skip ahead until a specific slug is reached, e.g. `start-at-slug: step5`,
+so a run can resume partway through the tree instead of always starting from the top.
+
+This could have fallout with variables, as necessary return values may not be set.
+Likely leave this up to the user to resolve with CLI variables.
 
 
 # Cleanup Items
