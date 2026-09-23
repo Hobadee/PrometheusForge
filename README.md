@@ -118,18 +118,36 @@ This is useful when a specific client or department needs a substantially differ
 step or section than the base configuration provides - for example, a client with its own custom
 user-onboarding step - without having to duplicate and maintain the rest of the workflow.
 
-An overlay can be requested two ways:
+An overlay can be requested three ways:
 
-- **From YAML**, via the `-Overlay` parameter on `Invoke-Forge` (see Quick Start above): an overlay
-  file's top-level `root` - the same shape as the main YAML's `root` - queues one overlay per entry,
-  targeting its own `slug`, alongside whatever `variables` and tag include/exclude filters that same
-  overlay file sets.
-- **From a plugin**, via `Api.Configuration.RequestOverlay(slug, config)`.
+- **From the CLI**, via the `-Overlay` parameter on `Invoke-Forge` (see Quick Start above): an
+  overlay file's top-level `root` - the same shape as the main YAML's `root` - queues one overlay
+  per entry, targeting its own `slug`, alongside whatever `variables` and tag include/exclude
+  filters that same overlay file sets.
+- **From within a workflow**, via the `OverlayConfig` task plugin: it loads a document via a source
+  plugin (e.g. `yamlSource`), applies any top-level `variables` the same way `ImportConfig` does,
+  and queues each `root` entry as an overlay instead of inserting it as a child:
 
-Either way, the request is queued and applied the next time a tree node with that slug is processed
-(`StepTree.ApplyPendingOverlay()`), so the overlay can target any node in the tree, not only
-children of the requesting step (or, for a YAML overlay file, not only nodes under a particular
-location - it can target anywhere in the whole tree). A `type: step` overlay swaps only the step's
+  ```yaml
+  - type: step
+    name: Apply Client Overlay
+    slug: apply-client-overlay
+    plugin: OverlayConfig
+    parameters:
+      uri: "./overlays/clientA.yaml"
+      sourcePluginName: yamlSource
+  ```
+
+  This is the declarative counterpart to `Api.Configuration.RequestOverlay()` below - useful when
+  the set of overlays to apply should live in the workflow YAML itself (e.g. a conditional step
+  that only overlays certain slugs when a tag/variable matches) rather than requiring a `-Overlay`
+  CLI argument at invocation time.
+- **From a plugin's own code**, via `Api.Configuration.RequestOverlay(slug, config)`.
+
+Whichever way it's requested, the request is queued and applied the next time a tree node with
+that slug is processed (`StepTree.ApplyPendingOverlay()`), so the overlay can target any node in
+the tree - not only nodes under a particular location, and not only children of the requesting
+step; it can target anywhere in the whole tree. A `type: step` overlay swaps only the step's
 implementation; the node's position, tags, and children are left untouched. Any other `type` (e.g.
 `section`) replaces the whole subtree - position, tags, and children included.
 

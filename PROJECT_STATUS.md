@@ -17,6 +17,14 @@ The project is operating as a working MVP for workflow automation and Asana inte
 
 
 # Recent Changes
+- Added the `OverlayConfig` task plugin (`Classes/Plugins/Task/Core/OverlayConfig.ps1`), the
+  declarative counterpart to the `-Overlay` CLI parameter: it loads a document via a source
+  plugin (like `ImportConfig` does), applies the document's `variables` through `Api.Variables`,
+  and queues each `root` entry as an overlay via `Api.Configuration.RequestOverlay()` instead of
+  inserting it as a child. Lets a workflow apply overlays from inside itself (e.g. conditionally,
+  based on a tag/variable) rather than only via a `-Overlay` file passed at invocation time. See
+  `README.md` ("Insert vs. Overlay") for usage; tests in
+  `Tests/Private/Classes/Plugins/Task/Core/OverlayConfig.tests.ps1`.
 - Confirmed polymorphic overlay support is already in place (Step->Step, Section->Section,
   Step->Section direct; Section->Step via a documented workaround) - no code change, just
   verification. See `README.md` ("Insert vs. Overlay") for the usage-level explanation.
