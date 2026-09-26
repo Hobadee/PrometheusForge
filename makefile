@@ -95,7 +95,8 @@ doInstallProduction:
 	$(CMD_PWSH) -c 'Install-Module -Name powershell-yaml -MinimumVersion 0.4.12 -Scope CurrentUser -Force'
 
 clean:
-	$(CMD_DEL) $(ODIR)/*
+	# Use PowerShell to remove, since `rm` on *NIX will fail to remove the "Formats" subdirectory
+	$(CMD_PWSH) -NoProfile -c 'Remove-Item -Path $(ODIR)/* -Recurse -Force -ErrorAction SilentlyContinue'
 
 release: clean build-module test
 #	$(CMD_PWSH) -c 'Publish-Module -Path ./$(ODIR) -Scope CurrentUser -Force'
