@@ -17,7 +17,7 @@ BeforeAll {
                 name       = "Step $Slug"
                 slug       = $Slug
                 plugin     = 'TextOutput'
-                parameters = @{ message = 'hello'; method = 'Trace' }
+                parameters = @{ message = 'hello'; level = 'Trace' }
             })
     }
 }

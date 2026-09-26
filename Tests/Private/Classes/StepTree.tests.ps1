@@ -31,7 +31,7 @@ Describe 'StepTree configuration overlays' {
                     name = 'Request replacement'
                     slug = 'request-replacement'
                     plugin = 'TextOutput'
-                    parameters = @{ message = 'requesting replacement'; method = 'Info' }
+                    parameters = @{ message = 'requesting replacement'; level = 'Info' }
                 },
                 @{
                     type = 'step'
@@ -39,7 +39,7 @@ Describe 'StepTree configuration overlays' {
                     slug = 'target'
                     plugin = 'TextOutput'
                     result = 'originalResult'
-                    parameters = @{ message = 'original'; method = 'Info' }
+                    parameters = @{ message = 'original'; level = 'Info' }
                 }
             )
         }
@@ -49,7 +49,7 @@ Describe 'StepTree configuration overlays' {
             slug = 'target'
             plugin = 'TextOutput'
             result = 'replacementResult'
-            parameters = @{ message = 'replacement'; method = 'Info' }
+            parameters = @{ message = 'replacement'; level = 'Info' }
         }
 
         $tree = [StepTree]::new($rootConfig)
@@ -175,7 +175,7 @@ Describe 'StepTree construction' {
             name  = 'Root'
             slug  = 'root'
             items = @(
-                @{ type = 'step'; name = 'Child'; slug = 'child'; plugin = 'TextOutput'; parameters = @{ message = 'hi'; method = 'Trace' } }
+                @{ type = 'step'; name = 'Child'; slug = 'child'; plugin = 'TextOutput'; parameters = @{ message = 'hi'; level = 'Trace' } }
             )
         })
 
@@ -301,7 +301,7 @@ Describe 'StepTree Process' {
                 slug       = $Slug
                 plugin     = 'TextOutput'
                 result     = $Result
-                parameters = @{ message = "message from $Slug"; method = 'Trace' }
+                parameters = @{ message = "message from $Slug"; level = 'Trace' }
             }
         }
 

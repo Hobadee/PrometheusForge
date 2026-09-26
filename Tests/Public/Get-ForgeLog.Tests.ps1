@@ -30,7 +30,7 @@ root:
       plugin: TextOutput
       parameters:
         message: hello from the first run
-        method: Info
+        level: Info
 '@
 
         $script:secondWorkflow = New-Workflow 'second.yaml' @'
@@ -47,7 +47,7 @@ root:
       plugin: TextOutput
       parameters:
         message: goodbye from the second run
-        method: Info
+        level: Info
 '@
 
         $missing = Join-Path $TestDrive 'does-not-exist.yaml'

@@ -246,14 +246,14 @@ root:
       plugin: TextOutput
       parameters:
         message: hello there
-        method: Info
+        level: Info
     - type: step
       name: Say problem
       slug: say-problem
       plugin: TextOutput
       parameters:
         message: something went wrong
-        method: Error
+        level: Error
 '@ | Set-Content -Path $script:workflow -Encoding utf8
         }
 

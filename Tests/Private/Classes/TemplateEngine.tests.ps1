@@ -167,7 +167,7 @@ Describe 'TemplateEngine edge cases' {
                 name       = $Slug
                 slug       = $Slug
                 plugin     = 'TextOutput'
-                parameters = @{ message = 'unused'; method = 'Trace' }
+                parameters = @{ message = 'unused'; level = 'Trace' }
             })
             $step.result = $Result
             [Steps]::GetInstance().Add($step)

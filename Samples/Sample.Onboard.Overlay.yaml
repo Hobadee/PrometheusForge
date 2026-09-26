@@ -48,7 +48,7 @@ variables:
 #    plugin: TextOutput
 #    parameters:
 #      message: Purchasing Zoom license (Enterprise tier) for {{ fullName }}...
-#      method: "{{globalMethod}}"
+#      level: "{{globalLevel}}"
 #    tags:
 #      - Purchase
 #      - Zoom

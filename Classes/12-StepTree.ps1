@@ -182,12 +182,12 @@ class StepTree : System.Collections.IEnumerable{
             if (-not [Steps]::GetInstance().Exists($this.slug)) {
                 throw [System.ArgumentException]::new("No step with slug '$($this.slug)' exists to overlay.")
             }
-            [Log]::Write("[StepTree]::ApplyPendingOverlay() - Replacing API-requested step '$($this.slug)'.", "Debug")
+            [Log]::Debug("[StepTree]::ApplyPendingOverlay() - Replacing API-requested step '$($this.slug)'.")
             [Steps]::GetInstance().Update([Step]::new($config))
             return
         }
         elseif ($config.type -eq 'section') {
-            [Log]::Write("[StepTree]::ApplyPendingOverlay() - Replacing subtree '$($this.slug)' with an API-requested overlay.", "Debug")
+            [Log]::Debug("[StepTree]::ApplyPendingOverlay() - Replacing subtree '$($this.slug)' with an API-requested overlay.")
             $this.Remove()
             $overlay = [StepTree]::new($config)
 
@@ -233,7 +233,7 @@ class StepTree : System.Collections.IEnumerable{
         $matchesInclude = $includeTags.Count() -gt 0 -and $this.tags.HasTags($includeTags.GetTags())
         $matchesExclude = $excludeTags.Count() -gt 0 -and $this.tags.HasTags($excludeTags.GetTags())
 
-        [Log]::Write("[StepTree]::checkConditionals() - $($this.name) matchesInclude=$matchesInclude matchesExclude=$matchesExclude", "Trace")
+        [Log]::Trace("[StepTree]::checkConditionals() - $($this.name) matchesInclude=$matchesInclude matchesExclude=$matchesExclude")
 
         # Run by default if no conditionals trigger
         $rtn = $true
@@ -306,7 +306,7 @@ class StepTree : System.Collections.IEnumerable{
             $null {
                 # Step was not found, so we don't count it as a step
                 # This is actually expected for sections, which do not have a corresponding step in the registry.
-                [Log]::Write("[StepTree]::Process() - Step '$($this.name)' not found.", "debug")
+                [Log]::Debug("[StepTree]::Process() - Step '$($this.name)' not found.")
             }
         }
 
@@ -318,7 +318,7 @@ class StepTree : System.Collections.IEnumerable{
         # queued config becomes its own child here, added in the same order Insert() was called.
         if ($null -ne $step.plugin.Api) {
             foreach ($insertedConfig in $step.plugin.Api.Configuration.GetPendingInserts()) {
-                [Log]::Write("[StepTree]::Process() - Inserting API-requested child config '$($insertedConfig.name)' under '$($this.name)'", "Debug")
+                [Log]::Debug("[StepTree]::Process() - Inserting API-requested child config '$($insertedConfig.name)' under '$($this.name)'")
                 $this.Add([StepTree]::new($insertedConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingInserts()
@@ -342,7 +342,7 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
-        [Log]::Write("[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed.", "Trace")
+        [Log]::Trace("[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed.")
 
         if ($stepFailure -gt 0) {
             return $false

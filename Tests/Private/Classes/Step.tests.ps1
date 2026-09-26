@@ -61,7 +61,7 @@ Describe 'Step' {
                 name       = 'Test step'
                 slug       = 'test-step'
                 plugin     = 'TextOutput'
-                parameters = @{ message = 'hello'; method = 'Trace' }
+                parameters = @{ message = 'hello'; level = 'Trace' }
             }
             foreach ($key in $Override.Keys) { $config[$key] = $Override[$key] }
             return $config
@@ -180,7 +180,7 @@ Describe 'Step' {
         It 'expands templates in top-level parameters' {
             [Variables]::GetInstance().Set('who', 'Ada')
 
-            $step = [Step]::new((New-StepConfig @{ parameters = @{ message = 'Hello {{ who }}'; method = 'Trace' } }))
+            $step = [Step]::new((New-StepConfig @{ parameters = @{ message = 'Hello {{ who }}'; level = 'Trace' } }))
 
             $step.plugin.parameters.message | Should -Be 'Hello Ada'
         }
@@ -323,7 +323,7 @@ Describe 'Step' {
             $step = [Step]::new((New-StepConfig @{
                 defer_binding = $true
                 result        = 'lateResult'
-                parameters    = @{ message = '{{ late }}'; method = 'Trace' }
+                parameters    = @{ message = '{{ late }}'; level = 'Trace' }
             }))
             $step.plugin | Should -BeNullOrEmpty
 

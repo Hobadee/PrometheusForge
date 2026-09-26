@@ -6,12 +6,13 @@ class TextOutput : TaskPluginInterface {
     .PARAMETER message
     The text to write to the log stream. This is the primary output payload.
 
-    .PARAMETER method
-    Optional log level or method name to pass to [Log]::Write(), such as 'Info', 'Warn', 'Error', or 'Trace'.
+    .PARAMETER level
+    Optional log level to write the message at: any [LogLevel] name, such as 'Trace', 'Info', 'Warning',
+    or 'Error'. Defaults to 'Info'.
     #>
 
     [string] $message = $null
-    [string] $method = $null
+    [string] $level = $null
 
     TextOutput() : base(){
         <#
@@ -35,7 +36,7 @@ class TextOutput : TaskPluginInterface {
         #>
         return @{
             name = "TextOutput"
-            version = "1.0.1"
+            version = "1.1.0"
         }
     }
 
@@ -64,8 +65,8 @@ class TextOutput : TaskPluginInterface {
         The instance of the TextOutput class after execution.
         #>
 
-        if ($null -eq $this.parameters.method) {
-            $this.parameters.method = "Info"
+        if ($null -eq $this.parameters.level) {
+            $this.parameters.level = "Info"
         }
 
         # Note: in a default run, this will NOT output to the terminal!
@@ -73,7 +74,7 @@ class TextOutput : TaskPluginInterface {
         # defaults to [LogLevel]::Info.
         # Not sure if there is a better way to handle things.  Ignore for now.
         # TODO: Resolve this issue.
-        [Log]::Write($this.parameters.message, $this.parameters.method)
+        [Log]::Write($this.parameters.message, $this.parameters.level)
 
         return $this
     }

@@ -8,7 +8,7 @@ metadata:
 
 variables:
   domainName: "corp.example.com"
-  globalMethod: "Info"
+  globalLevel: "Info"
   sampleImportPath: "./Samples/Sample.Onboard.ImportedSection.yaml"
   logTerminalLevel: "Debug"
   # See Sample.Onboard.Overlay.yaml for an example of how to set these variables from an overlay
@@ -102,7 +102,7 @@ root:
             plugin: TextOutput
             parameters:
               message: Purchasing Zoom license for {{ fullName }}...
-              method: "{{globalMethod}}"
+              level: "{{globalLevel}}"
             tags:
               - Purchase
               - Zoom
@@ -113,7 +113,7 @@ root:
             plugin: TextOutput
             parameters:
               message: Pre-creation steps complete for {{ fullName }}.
-              method: "{{globalMethod}}"
+              level: "{{globalLevel}}"
             tags:
               - milestone
       - type: step
@@ -137,7 +137,7 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: Password for {{ fullName }} is {{ password.object.generatedPassword }}
-                    #method: Info
+                    #level: Info
           - type: section
             name: Assign user Okta applications
             slug: assign-user-okta-applications
@@ -150,7 +150,7 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: Assigning Google applications to {{ fullName }}...
-                  #method: Debug
+                  #level: Debug
                 tags:
                   - Google
               - type: step
@@ -159,7 +159,7 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: Assigning Office365 applications to {{ fullName }}...
-                  method: "{{globalMethod}}"
+                  level: "{{globalLevel}}"
                 tags:
                   - Office
               - type: step
@@ -168,7 +168,7 @@ root:
                 plugin: TextOutput
                 parameters:
                   message: Assigning Zoom applications to {{ fullName }}...
-                  method: "{{globalMethod}}"
+                  level: "{{globalLevel}}"
                 tags:
                   - Zoom
       - type: section

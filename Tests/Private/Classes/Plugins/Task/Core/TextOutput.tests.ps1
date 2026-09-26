@@ -32,7 +32,7 @@ Describe 'TextOutput Plugin' {
             $info = [TextOutput]::PluginInfo()
 
             $info['name'] | Should -Be 'TextOutput'
-            $info['version'] | Should -Be '1.0.1'
+            $info['version'] | Should -Be '1.1.0'
         }
 
         It 'Should be registered in taskPluginRegistry' {
@@ -67,7 +67,7 @@ Describe 'TextOutput Plugin' {
     Context 'Execute' {
         It 'Should log the message at the requested level' {
             $plugin = [TextOutput]::new()
-            $plugin.SetParameters(@{ message = 'a warning'; method = 'Warning' })
+            $plugin.SetParameters(@{ message = 'a warning'; level = 'Warning' })
 
             $plugin.Execute() | Out-Null
 
@@ -76,19 +76,19 @@ Describe 'TextOutput Plugin' {
             $entry.GetLevel() | Should -Be ([LogLevel]::Warning)
         }
 
-        It 'Should default the log level to Info when no method is given' {
+        It 'Should default the log level to Info when no level is given' {
             $plugin = [TextOutput]::new()
             $plugin.SetParameters(@{ message = 'an info message' })
 
             $plugin.Execute() | Out-Null
 
             @([Log]::GetInstance())[0].GetLevel() | Should -Be ([LogLevel]::Info)
-            $plugin.parameters.method | Should -Be 'Info'
+            $plugin.parameters.level | Should -Be 'Info'
         }
 
         It 'Should return the plugin instance so callers can inspect its parameters' {
             $plugin = [TextOutput]::new()
-            $plugin.SetParameters(@{ message = 'hello'; method = 'Trace' })
+            $plugin.SetParameters(@{ message = 'hello'; level = 'Trace' })
 
             $result = $plugin.Execute()
 
@@ -97,16 +97,16 @@ Describe 'TextOutput Plugin' {
 
         It 'Should write messages at or above the terminal level to the console' {
             $plugin = [TextOutput]::new()
-            $plugin.SetParameters(@{ message = 'visible message'; method = 'Error' })
+            $plugin.SetParameters(@{ message = 'visible message'; level = 'Error' })
 
             $plugin.Execute() | Out-Null
 
             $script:writer.ToString() | Should -Match '\[ERROR\] visible message'
         }
 
-        It 'Should report an unknown method as a failed task via RunTask()' {
+        It 'Should report an unknown level as a failed task via RunTask()' {
             $plugin = [TextOutput]::new()
-            $plugin.SetParameters(@{ message = 'bad level'; method = 'NotALevel' })
+            $plugin.SetParameters(@{ message = 'bad level'; level = 'NotALevel' })
 
             $result = $plugin.RunTask()
 

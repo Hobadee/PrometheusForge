@@ -17,6 +17,13 @@ The project is operating as a working MVP for workflow automation and Asana inte
 
 
 # Recent Changes
+- Converted the remaining `[Log]::Write(msg, "<level>")` calls in `Classes/12-StepTree.ps1` to the
+  level-specific helpers (`[Log]::Debug()` / `[Log]::Trace()`). Remaining `[Log]::Write` uses are
+  intentional: the `[Log]` helpers themselves, `Log.tests.ps1` (tests `Write` directly), and
+  `TextOutput`, which forwards a user-configured level string.
+- **Breaking (YAML):** renamed the `TextOutput` plugin's `method` parameter to `level` (plugin version 1.0.1 -> 1.1.0). Samples and
+  tests updated; the Onboard samples' `globalMethod` variable is now `globalLevel`. No fallback for
+  the old `method` key - a step still using it silently logs at the default `Info` level.
 - Added the `OverlayConfig` task plugin (`Classes/Plugins/Task/Core/OverlayConfig.ps1`), the
   declarative counterpart to the `-Overlay` CLI parameter: it loads a document via a source
   plugin (like `ImportConfig` does), applies the document's `variables` through `Api.Variables`,

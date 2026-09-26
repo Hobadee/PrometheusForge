@@ -85,7 +85,7 @@ root:
       plugin: TextOutput
       parameters:
         message: hello
-        method: Trace
+        level: Trace
 '@
         }
 
@@ -125,14 +125,14 @@ root:
     plugin: TextOutput
     parameters:
       message: one
-      method: Trace
+      level: Trace
   - type: step
     name: Second
     slug: second
     plugin: TextOutput
     parameters:
       message: two
-      method: Trace
+      level: Trace
 '@
 
             $tree = [SourceFactory]::Create((New-SourceConfig $uri @{ name = 'My import'; slug = 'my-import' }))
@@ -191,7 +191,7 @@ root:
   plugin: TextOutput
   parameters:
     message: alone
-    method: Trace
+    level: Trace
 '@
 
             $tree = [SourceFactory]::Create((New-SourceConfig $uri))
@@ -210,7 +210,7 @@ root:
   plugin: TextOutput
   parameters:
     message: anonymous
-    method: Trace
+    level: Trace
 '@
 
             # The wrapper section gets the defaults; the step inside still needs a valid slug of its own.

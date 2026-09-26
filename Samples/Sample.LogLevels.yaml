@@ -1,0 +1,81 @@
+name: Sample LogLevels
+version: 1.0
+description: Basic test of the log levels
+
+metadata:
+  author: Eric Kincl
+  created: 2026-07-10
+
+# Show every level on the terminal; the default only shows Warning and above.
+# Override from the command line with: -Variables @{ logTerminalLevel = 'Warning' }
+variables:
+  logTerminalLevel: Trace
+
+root:
+  - type: section
+    name: root
+    slug: root
+    items:
+      - type: step
+        name: trace
+        slug: trace
+        plugin: TextOutput
+        parameters:
+          message: Example Trace Message
+          level: Trace
+      - type: step
+        name: debug
+        slug: debug
+        plugin: TextOutput
+        parameters:
+          message: Example Debug Message
+          level: Debug
+      - type: step
+        name: info
+        slug: info
+        plugin: TextOutput
+        parameters:
+          message: Example Info Message
+          level: Info
+      - type: step
+        name: notice
+        slug: notice
+        plugin: TextOutput
+        parameters:
+          message: Example Notice Message
+          level: Notice
+      - type: step
+        name: warning
+        slug: warning
+        plugin: TextOutput
+        parameters:
+          message: Example Warning Message
+          level: Warning
+      - type: step
+        name: error
+        slug: error
+        plugin: TextOutput
+        parameters:
+          message: Example Error Message
+          level: Error
+      - type: step
+        name: critical
+        slug: critical
+        plugin: TextOutput
+        parameters:
+          message: Example Critical Message
+          level: Critical
+      - type: step
+        name: alert
+        slug: alert
+        plugin: TextOutput
+        parameters:
+          message: Example Alert Message
+          level: Alert
+      - type: step
+        name: emergency
+        slug: emergency
+        plugin: TextOutput
+        parameters:
+          message: Example Emergency Message
+          level: Emergency

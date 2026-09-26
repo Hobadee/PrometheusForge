@@ -553,7 +553,7 @@ root:
       plugin: TextOutput
       parameters:
         message: hello
-        method: Trace
+        level: Trace
 '@
     }
 
@@ -683,7 +683,7 @@ root:
       result: alwaysResult
       parameters:
         message: always
-        method: Trace
+        level: Trace
     - type: step
       name: Skipped
       slug: skipped
@@ -692,7 +692,7 @@ root:
       tags: [skipme]
       parameters:
         message: skipped
-        method: Trace
+        level: Trace
 '@
 
             Invoke-Forge -FilePath $path -Variables @{ tagsExclude = @('skipme') }

@@ -120,7 +120,7 @@ Describe 'ForgeConfigurationApi' {
                 name       = "Output $Slug"
                 slug       = $Slug
                 plugin     = 'TextOutput'
-                parameters = @{ message = "message from $Slug"; method = 'Trace' }
+                parameters = @{ message = "message from $Slug"; level = 'Trace' }
             }
         }
     }
