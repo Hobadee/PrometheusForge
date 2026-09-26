@@ -2,10 +2,7 @@
 
 Describe 'TemplateEngine' {
     BeforeEach {
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
     }
 
     Context 'ExpandString' {
@@ -153,6 +150,161 @@ Describe 'TemplateEngine' {
             $expanded.Count | Should -Be 1
             $expanded[0].message | Should -Be 'Hello Ada Lovelace'
             $expanded[0].nested.label | Should -Be '{{fullName}}'
+        }
+    }
+}
+
+Describe 'TemplateEngine edge cases' {
+    BeforeAll {
+        # Other test files reset the plugin registry singleton; make sure the plugin these tests rely on exists.
+        [taskPluginRegistry]::GetInstance().RegisterPlugin([TextOutput])
+
+        function Add-TestStep {
+            # Registers a step and gives it a result, as if it had already run.
+            param([string] $Slug, [object] $Result)
+            $step = [Step]::new(@{
+                type       = 'step'
+                name       = $Slug
+                slug       = $Slug
+                plugin     = 'TextOutput'
+                parameters = @{ message = 'unused'; level = 'Trace' }
+            })
+            $step.result = $Result
+            [Steps]::GetInstance().Add($step)
+        }
+    }
+
+    BeforeEach {
+        [Variables]::Reset()
+        [Steps]::Reset()
+    }
+
+    AfterAll {
+        [Variables]::Reset()
+        [Steps]::Reset()
+    }
+
+    Context 'ExpandString' {
+        It 'returns an empty string for an empty template' {
+            [TemplateEngine]::ExpandString('', [Variables]::GetInstance()) | Should -Be ''
+        }
+
+        It 'returns an empty string for a null template' {
+            [TemplateEngine]::ExpandString($null, [Variables]::GetInstance()) | Should -Be ''
+        }
+
+        It 'leaves text without tokens untouched' {
+            [TemplateEngine]::ExpandString('no tokens here', [Variables]::GetInstance()) | Should -Be 'no tokens here'
+        }
+    }
+
+    Context 'ExpandTopLevelValues' {
+        It 'returns $null for a null input' {
+            [TemplateEngine]::ExpandTopLevelValues($null, [Variables]::GetInstance()) | Should -BeNullOrEmpty
+        }
+
+        It 'expands a bare string' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('name', 'Ada')
+
+            [TemplateEngine]::ExpandTopLevelValues('Hi {{ name }}', $configuration) | Should -Be 'Hi Ada'
+        }
+
+        It 'returns non-string scalars unchanged: <Description>' -ForEach @(
+            @{ Description = 'integer'; Value = 42 }
+            @{ Description = 'boolean'; Value = $true }
+            @{ Description = 'datetime'; Value = [datetime]'2026-01-02' }
+        ) {
+            [TemplateEngine]::ExpandTopLevelValues($Value, [Variables]::GetInstance()) | Should -Be $Value
+        }
+    }
+
+    Context 'ResolvePath' {
+        It 'returns $null for an empty path' {
+            [TemplateEngine]::ResolvePath('', [Variables]::GetInstance()) | Should -BeNullOrEmpty
+        }
+
+        It 'returns $null when no variables instance is supplied' {
+            [TemplateEngine]::ResolvePath('anything', $null) | Should -BeNullOrEmpty
+        }
+
+        It 'returns $null when a path continues past a null value' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('nothing', $null)
+
+            [TemplateEngine]::ResolvePath('nothing.child', $configuration) | Should -BeNullOrEmpty
+        }
+
+        It 'returns $null when a dictionary segment is missing' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('map', @{ present = 'yes' })
+
+            [TemplateEngine]::ResolvePath('map.absent', $configuration) | Should -BeNullOrEmpty
+            [TemplateEngine]::ResolvePath('map.present', $configuration) | Should -Be 'yes'
+        }
+
+        It 'returns $null when an object property segment is missing' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('obj', [pscustomobject]@{ present = 'yes' })
+
+            [TemplateEngine]::ResolvePath('obj.absent', $configuration) | Should -BeNullOrEmpty
+            [TemplateEngine]::ResolvePath('obj.present', $configuration) | Should -Be 'yes'
+        }
+
+        It 'returns $null when the path descends past a scalar value' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('scalar', 'text')
+
+            [TemplateEngine]::ResolvePath('scalar.child.deeper', $configuration) | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'step paths' {
+        It 'returns $null for a bare "step" path' {
+            [TemplateEngine]::ResolvePath('step', [Variables]::GetInstance()) | Should -BeNullOrEmpty
+        }
+
+        It 'returns $null for an unknown step slug' {
+            [TemplateEngine]::ResolvePath('step.missing', [Variables]::GetInstance()) | Should -BeNullOrEmpty
+        }
+
+        It 'returns the whole result for step.<slug>' {
+            Add-TestStep 'fetch' @{ success = $true; object = @{ value = 42 } }
+
+            $result = [TemplateEngine]::ResolvePath('step.fetch', [Variables]::GetInstance())
+
+            $result.success | Should -BeTrue
+        }
+
+        It 'traverses into the result for step.<slug>.<path>' {
+            Add-TestStep 'fetch' @{ success = $true; object = @{ value = 42 } }
+            $configuration = [Variables]::GetInstance()
+
+            [TemplateEngine]::ResolvePath('step.fetch.success', $configuration) | Should -BeTrue
+            [TemplateEngine]::ResolvePath('step.fetch.object.value', $configuration) | Should -Be 42
+            [TemplateEngine]::ResolvePath('step.fetch.object.absent', $configuration) | Should -BeNullOrEmpty
+        }
+
+        It 'returns $null for a step that has not run yet' {
+            Add-TestStep 'pending' $null
+
+            [TemplateEngine]::ResolvePath('step.pending', [Variables]::GetInstance()) | Should -BeNullOrEmpty
+            [TemplateEngine]::ResolvePath('step.pending.success', [Variables]::GetInstance()) | Should -BeNullOrEmpty
+        }
+
+        It 'does not resolve step paths from Variables' {
+            $configuration = [Variables]::GetInstance()
+            $configuration.Set('step', @{ fetch = 'from variables' })
+
+            [TemplateEngine]::ResolvePath('step.fetch', $configuration) | Should -BeNullOrEmpty
+        }
+
+        It 'expands step results inside templates' {
+            Add-TestStep 'fetch' @{ success = $true; object = @{ value = 42 } }
+
+            $rendered = [TemplateEngine]::ExpandString('value={{ step.fetch.object.value }}', [Variables]::GetInstance())
+
+            $rendered | Should -Be 'value=42'
         }
     }
 }

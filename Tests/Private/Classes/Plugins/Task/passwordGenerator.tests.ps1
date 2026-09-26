@@ -601,3 +601,51 @@ Describe 'PasswordGenerator Plugin - Integration and Edge Cases' {
     }
 }
 
+
+Describe 'PasswordGenerator Plugin - Parameter Validation' {
+    BeforeEach {
+        $script:plugin = [PasswordGenerator]::new()
+    }
+
+    Context 'length' {
+        It 'Should reject a length below 1: <Length>' -ForEach @(
+            @{ Length = 0 }
+            @{ Length = -3 }
+        ) {
+            $exceptionType = [System.ArgumentException]
+
+            { $script:plugin.ValidateParameters(@{ length = $Length }) } | Should -Throw -ExceptionType $exceptionType
+        }
+
+        It 'Should reject a length that is not an integer' {
+            { $script:plugin.ValidateParameters(@{ length = 'not-a-number' }) } | Should -Throw "*must be a valid integer*"
+        }
+
+        It 'Should accept a numeric string as the length' {
+            $script:plugin.ValidateParameters(@{ length = '12' })
+
+            $script:plugin.length | Should -Be 12
+        }
+    }
+
+    Context 'character classes' {
+        It 'Should reject disabling every character class' {
+            $params = @{ includeLowercase = $false; includeUppercase = $false; includeNumbers = $false; includeSpecial = $false }
+            $exceptionType = [System.ArgumentException]
+
+            { $script:plugin.ValidateParameters($params) } | Should -Throw -ExceptionType $exceptionType
+        }
+
+        It 'Should accept a single enabled character class' {
+            $params = @{ includeLowercase = $false; includeUppercase = $false; includeNumbers = $false; includeSpecial = $true }
+
+            { $script:plugin.ValidateParameters($params) } | Should -Not -Throw
+        }
+    }
+
+    Context 'SetParameters' {
+        It 'Should surface validation errors before the plugin is used' {
+            { $script:plugin.SetParameters(@{ length = 0 }) } | Should -Throw
+        }
+    }
+}

@@ -60,6 +60,12 @@ Invoke-Pester
 - The tests directory has 2 top level directories; Public and Private.  Tests for public functions go in the `Public` directory, and tests for internal/private functions or classes go in the `Private` directory.
   Tests inside the respective public or private directories should follow the directory structure of the code being tested.  For example, if testing `Classes/Plugins/TaskPluginInterface.ps1`,
   the test should be located at `Tests/Private/Classes/Plugins/TaskPluginInterface.Tests.ps1` (or `Public` if testing a public function).
+- `[Log]` writes to the terminal with `[System.Console]::Out.WriteLine()`, which Pester does not capture.  Any test that
+  causes logging (steps, plugins, `Invoke-Forge`, etc.) must redirect console output with the helper in
+  `Tests/Helpers/ConsoleCapture.ps1` (`Start-ConsoleCapture` / `Stop-ConsoleCapture`), or raw log lines will print into the
+  test results.  The helper's header comment has usage examples for silencing a whole file or inspecting output per test.
+  Dot-source it from a file-level `BeforeAll`, adjusting the number of `../` for the test's depth:
+  `. (Join-Path $PSScriptRoot '../../Helpers/ConsoleCapture.ps1')`
 - When debugging test failures, prefer the built module from `build/PrometheusForge/PrometheusForge.psd1` and run `Build-Module; Import-Module .\build\PrometheusForge\PrometheusForge.psd1 -Force` before Pester so you are testing the same code that the module loader sees.
 - If a failure only appears in one shell path, compare raw PowerShell vs `make` from WSL. The repo commands may work manually in PowerShell while `make` in WSL exercises a different shell/runtime boundary.
 

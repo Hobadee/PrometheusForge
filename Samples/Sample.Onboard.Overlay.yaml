@@ -2,8 +2,10 @@ name: Sample Onboard - Custom Overlay
 version: 1.0
 description: |
   Example overlay demonstrating tag-based filtering and variable setting.
-  Overlays can only filter sections/steps by tags and define/override variables.
-  They cannot add, remove, or modify the structure of sections and steps.
+  Overlays can filter sections/steps by tags, define/change variables, and queue
+  step/section overlays via a top-level `root` (see below) - just like the base
+  config's `root`, but an overlay's `root` is never run as its own tree. Instead, each
+  entry replaces whatever the base config registered under a matching `slug`.
 
 metadata:
   author: Eric
@@ -11,7 +13,7 @@ metadata:
   baseConfig: SampleOnboard.yaml
 
 # Variables that can be referenced throughout the workflow
-# These override any defaults in the base configuration
+# These take precedence over any defaults in the base configuration
 variables:
   userName: "jdoe_overlay"
   fullName: "John Doe - Pulled from Overlay Variables"
@@ -33,3 +35,20 @@ variables:
   # When a step's tags match both tagsInclude and tagsExclude, tagsPrecedence decides
   # whether it runs ("include") or is skipped ("exclude"). Unset/empty defaults to "include".
   #tagsPrecedence: include
+
+# Step/section overlays. Each entry must be a full step/section config (same shape as a
+# root.items entry) whose `slug` matches the node it's replacing in the base configuration.
+# A `type: step` entry swaps only that step's plugin/parameters; a `type: section` entry
+# replaces the whole subtree - including its children - at that slug. A single entry doesn't
+# need to be wrapped in a list; an overlay containing only `root` (no `variables`) is valid.
+#root:
+#  - type: step
+#    name: Purchase Zoom license
+#    slug: purchase-zoom-license
+#    plugin: TextOutput
+#    parameters:
+#      message: Purchasing Zoom license (Enterprise tier) for {{ fullName }}...
+#      level: "{{globalLevel}}"
+#    tags:
+#      - Purchase
+#      - Zoom

@@ -1,0 +1,234 @@
+Using Module "../../../../build/PrometheusForge/PrometheusForge.psd1"
+
+BeforeAll {
+    . (Join-Path $PSScriptRoot '../../../Helpers/ConsoleCapture.ps1')
+
+    # Overlay handling logs warnings through [System.Console]::Out, which Pester does not capture; discard it
+    # so expected warnings from these tests don't clutter the test output.
+    $script:capture = Start-ConsoleCapture
+}
+
+AfterAll {
+    [void] (Stop-ConsoleCapture $script:capture)
+}
+
+Describe 'ForgeApi' {
+    BeforeEach {
+        [Variables]::Reset()
+        [Steps]::Reset()
+        [PendingOverlays]::Reset()
+    }
+
+    AfterAll {
+        [Variables]::Reset()
+        [Steps]::Reset()
+        [PendingOverlays]::Reset()
+    }
+
+    It 'exposes each API category' {
+        $api = [ForgeApi]::new()
+
+        $api.Variables | Should -BeOfType ([ForgeVariableApi])
+        $api.Configuration | Should -BeOfType ([ForgeConfigurationApi])
+        $api.Template | Should -BeOfType ([ForgeTemplateApi])
+    }
+
+    It 'gives each instance its own configuration queues' {
+        $first = [ForgeApi]::new()
+        $second = [ForgeApi]::new()
+
+        $first.Configuration.Insert(@{ slug = 'queued' })
+
+        $first.Configuration.GetPendingInserts().Count | Should -Be 1
+        $second.Configuration.GetPendingInserts().Count | Should -Be 0
+    }
+}
+
+Describe 'ForgeVariableApi' {
+    BeforeEach {
+        [Variables]::Reset()
+        $script:api = [ForgeVariableApi]::new()
+    }
+
+    AfterAll {
+        [Variables]::Reset()
+    }
+
+    It 'reads values from the Variables singleton' {
+        [Variables]::GetInstance().Set('fromEngine', 'engine value')
+
+        $script:api.Get('fromEngine') | Should -Be 'engine value'
+    }
+
+    It 'writes values to the Variables singleton' {
+        $script:api.Set('fromPlugin', 'plugin value')
+
+        [Variables]::GetInstance().Get('fromPlugin') | Should -Be 'plugin value'
+    }
+
+    It 'reports whether a key exists' {
+        $script:api.HasKey('present') | Should -BeFalse
+
+        $script:api.Set('present', 1)
+
+        $script:api.HasKey('present') | Should -BeTrue
+    }
+
+    It 'sets many values at once' {
+        $script:api.SetMany(@{ one = 1; two = 2 })
+
+        [Variables]::GetInstance().Get('one') | Should -Be 1
+        [Variables]::GetInstance().Get('two') | Should -Be 2
+    }
+}
+
+Describe 'ForgeTemplateApi' {
+    BeforeEach {
+        [Variables]::Reset()
+        $script:api = [ForgeTemplateApi]::new()
+    }
+
+    AfterAll {
+        [Variables]::Reset()
+    }
+
+    It 'expands templates against the Variables singleton' {
+        [Variables]::GetInstance().Set('name', 'Ada')
+
+        $script:api.ExpandString('Hello {{ name }}') | Should -Be 'Hello Ada'
+    }
+
+    It 'expands top-level values in a hashtable' {
+        [Variables]::GetInstance().Set('name', 'Ada')
+
+        $expanded = $script:api.ExpandTopLevelValues(@{ greeting = 'Hello {{ name }}'; count = 2 })
+
+        $expanded.greeting | Should -Be 'Hello Ada'
+        $expanded.count | Should -Be 2
+    }
+}
+
+Describe 'ForgeConfigurationApi' {
+    BeforeAll {
+        # Other test files reset the plugin registry singleton; make sure the plugin these tests rely on exists.
+        [taskPluginRegistry]::GetInstance().RegisterPlugin([TextOutput])
+
+        function New-OverlayStepConfig {
+            param([string] $Slug)
+            return @{
+                type       = 'step'
+                name       = "Output $Slug"
+                slug       = $Slug
+                plugin     = 'TextOutput'
+                parameters = @{ message = "message from $Slug"; level = 'Trace' }
+            }
+        }
+    }
+
+    BeforeEach {
+        [Log]::Reset()
+        [Steps]::Reset()
+        [Variables]::Reset()
+        [PendingOverlays]::Reset()
+        $script:api = [ForgeConfigurationApi]::new()
+    }
+
+    Context 'Overlays' {
+        It 'starts with no pending overlays' {
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
+        }
+
+        It 'queues the raw config as-is, without constructing a Step/StepTree yet' {
+            $script:api.RequestOverlay('target', (New-OverlayStepConfig 'target'))
+
+            $pendingOverlays = [PendingOverlays]::GetInstance()
+            $pendingOverlays.HasOverlay('target') | Should -BeTrue
+
+            $queued = $pendingOverlays.Drain('target')
+            $queued | Should -Not -BeOfType ([Step])
+            $queued.slug | Should -Be 'target'
+
+            # No registry side effects yet either - construction is deferred to
+            # StepTree.ApplyPendingOverlay(), see its own tests for that behavior.
+            [Steps]::GetInstance().Exists('target') | Should -BeFalse
+        }
+
+        It 'rejects an empty overlay key: <Description>' -ForEach @(
+            @{ Description = 'null'; Key = $null }
+            @{ Description = 'empty'; Key = '' }
+            @{ Description = 'whitespace'; Key = '   ' }
+        ) {
+            $exceptionType = [System.ArgumentException]
+
+            { $script:api.RequestOverlay($Key, (New-OverlayStepConfig 'target')) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
+        }
+
+        It 'rejects a null value' {
+            $exceptionType = [System.ArgumentNullException]
+
+            { $script:api.RequestOverlay('target', $null) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
+        }
+
+        It 'rejects a value whose slug does not match key' {
+            $exceptionType = [System.ArgumentException]
+
+            { $script:api.RequestOverlay('target', (New-OverlayStepConfig 'different')) } | Should -Throw -ExceptionType $exceptionType
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
+        }
+
+        It 'warns and keeps only the most recent overlay when requested twice for the same slug' {
+            $script:api.RequestOverlay('target', (New-OverlayStepConfig 'target'))
+            $script:api.RequestOverlay('target', @{
+                    type  = 'section'
+                    name  = 'Target'
+                    slug  = 'target'
+                })
+
+            $pendingOverlays = [PendingOverlays]::GetInstance()
+            $pendingOverlays.Count() | Should -Be 1
+            $pendingOverlays.Drain('target').type | Should -Be 'section'
+
+            $warnings = [Log]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
+            $warnings.Count | Should -BeGreaterOrEqual 1
+        }
+    }
+
+    Context 'Inserts' {
+        It 'starts with no pending inserts' {
+            $script:api.GetPendingInserts().Count | Should -Be 0
+        }
+
+        It 'queues inserted configs in call order' {
+            $script:api.Insert(@{ slug = 'first' })
+            $script:api.Insert(@{ slug = 'second' })
+
+            $pending = $script:api.GetPendingInserts()
+            $pending.Count | Should -Be 2
+            $pending[0].slug | Should -Be 'first'
+            $pending[1].slug | Should -Be 'second'
+        }
+
+        It 'rejects a null config' {
+            $exceptionType = [System.ArgumentNullException]
+
+            { $script:api.Insert($null) } | Should -Throw -ExceptionType $exceptionType
+            $script:api.GetPendingInserts().Count | Should -Be 0
+        }
+
+        It 'clears pending inserts' {
+            $script:api.Insert(@{ slug = 'first' })
+
+            $script:api.ClearPendingInserts()
+
+            $script:api.GetPendingInserts().Count | Should -Be 0
+        }
+
+        It 'keeps overlays and inserts in separate queues' {
+            $script:api.Insert(@{ slug = 'inserted' })
+
+            [PendingOverlays]::GetInstance().Count() | Should -Be 0
+        }
+    }
+}

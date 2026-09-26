@@ -125,6 +125,88 @@ class StepTree : System.Collections.IEnumerable{
     }
 
 
+    [void] Remove() {
+        <#
+        .SYNOPSIS
+        Recursively unregisters this subtree's steps from the Steps registry.
+
+        .DESCRIPTION
+        Removes every descendant's registered Step first (depth-first), then this node's own
+        registered Step, if any. Used by ApplyPendingOverlay() to discard a node's existing
+        content before grafting in a [StepTree]-shaped overlay, so the overlay's own
+        construction has clean slugs to register against and no orphaned Step entries are
+        left behind in the registry once this subtree is no longer part of the tree.
+
+        .NOTES
+        Does not touch $this.children itself - the caller is responsible for
+        detaching/replacing this node afterward.
+        #>
+        foreach ($child in $this.children) {
+            $child.Remove()
+        }
+
+        [Steps]::GetInstance().RemoveIfExists($this.slug)
+
+    }
+
+
+    [void] ApplyPendingOverlay() {
+        <#
+        .SYNOPSIS
+        Applies a queued overlay targeting this node's own slug, if one is pending.
+
+        .DESCRIPTION
+        Checked at the start of every Process() call so an overlay requested by any
+        previously-processed step in the run takes effect the next time a node with a matching
+        slug is visited - not only for children of the requesting step.
+
+        Building the replacement [Step]/[StepTree] happens here, rather than eagerly when the
+        overlay was requested: a structural (section) overlay commonly reuses slugs still
+        held by the subtree it's replacing (e.g. "keep this child, just change its
+        parameters"), so the old subtree is unregistered via Remove() FIRST, and only then is
+        the overlay config actually constructed - giving it clean slugs to register against.
+
+        A config with type 'step' is a leaf-only replacement: only this slug's registered Step
+        is swapped; this node's position, tags and children are untouched. Any other config is
+        a structural replacement: this node's own subtree is discarded (via Remove()) and its
+        name/tags/children are replaced with the overlay's.
+        #>
+        $pendingOverlays = [PendingOverlays]::GetInstance()
+        if (-not $pendingOverlays.HasOverlay($this.slug)) {
+            return
+        }
+
+        $config = $pendingOverlays.Drain($this.slug)
+
+        if ($config.type -eq 'step') {
+            if (-not [Steps]::GetInstance().Exists($this.slug)) {
+                throw [System.ArgumentException]::new("No step with slug '$($this.slug)' exists to overlay.")
+            }
+            [Log]::Debug("[StepTree]::ApplyPendingOverlay() - Replacing API-requested step '$($this.slug)'.")
+            [Steps]::GetInstance().Update([Step]::new($config))
+            return
+        }
+        elseif ($config.type -eq 'section') {
+            [Log]::Debug("[StepTree]::ApplyPendingOverlay() - Replacing subtree '$($this.slug)' with an API-requested overlay.")
+            $this.Remove()
+            $overlay = [StepTree]::new($config)
+
+            # Replace current node's properties with those from the overlay
+            # If we add class properties later, make sure to copy them from the overlay as well
+            $this.name = $overlay.name
+            $this.tags = $overlay.tags
+            $this.children = $overlay.children
+
+            # Index *SHOULD* still be 0, but in case it isn't, reset the current index to start processing the new children from the beginning.
+            $this.currentIndex = 0
+        }
+        else {
+            throw [System.ArgumentException]::new("Unsupported overlay type '$($config.type)'.")
+        }
+
+    }
+
+
     [bool] checkConditionals() {
         <#
         .SYNOPSIS
@@ -144,13 +226,14 @@ class StepTree : System.Collections.IEnumerable{
         .OUTPUTS
         [bool] True if all conditionals are met, false otherwise
         #>
-        $includeTags = [Variables]::IncludeTags
-        $excludeTags = [Variables]::ExcludeTags
+        $variables = [Variables]::GetInstance()
+        $includeTags = $variables.IncludeTags
+        $excludeTags = $variables.ExcludeTags
 
         $matchesInclude = $includeTags.Count() -gt 0 -and $this.tags.HasTags($includeTags.GetTags())
         $matchesExclude = $excludeTags.Count() -gt 0 -and $this.tags.HasTags($excludeTags.GetTags())
 
-        [Log]::Write("[StepTree]::checkConditionals() - $($this.name) matchesInclude=$matchesInclude matchesExclude=$matchesExclude", "Trace")
+        [Log]::Trace("[StepTree]::checkConditionals() - $($this.name) matchesInclude=$matchesInclude matchesExclude=$matchesExclude")
 
         # Run by default if no conditionals trigger
         $rtn = $true
@@ -177,6 +260,11 @@ class StepTree : System.Collections.IEnumerable{
         System.Object
         Really a boolean, but PowerShell binding quirks require it to be declared as System.Object.
         #>
+
+        # Apply any overlay queued for this node's own slug before doing anything else, so a
+        # [StepTree]-shaped overlay's tags are honored by checkConditionals() below, and a
+        # [Step]-shaped overlay's plugin is what actually runs.
+        $this.ApplyPendingOverlay()
 
         # Check if we even need to run this step, given our conditionals
         if (-not $this.checkConditionals()) {
@@ -218,31 +306,8 @@ class StepTree : System.Collections.IEnumerable{
             $null {
                 # Step was not found, so we don't count it as a step
                 # This is actually expected for sections, which do not have a corresponding step in the registry.
-                [Log]::Write("[StepTree]::Process() - Step '$($this.name)' not found.", "debug")
+                [Log]::Debug("[StepTree]::Process() - Step '$($this.name)' not found.")
             }
-        }
-
-        # Apply plugin-requested replacements before traversing children, so an overridden
-        # child runs with its new configuration during this same processing pass.
-        if ($null -ne $step.plugin.Api) {
-            foreach ($requestedOverride in $step.plugin.Api.Configuration.GetPendingOverrides()) {
-                $overrideSlug = $requestedOverride.key
-                $overrideConfig = $requestedOverride.value
-
-                if ($null -eq $overrideConfig -or $overrideConfig.type -ne 'step') {
-                    throw [System.NotSupportedException]::new("Override '$overrideSlug' must provide a step configuration.")
-                }
-                if ($overrideConfig.slug -ne $overrideSlug) {
-                    throw [System.ArgumentException]::new("Override '$overrideSlug' must provide a step configuration with the same slug.")
-                }
-                if (-not [Steps]::GetInstance().Exists($overrideSlug)) {
-                    throw [System.ArgumentException]::new("No step with slug '$overrideSlug' exists to override.")
-                }
-
-                [Log]::Write("[StepTree]::Process() - Replacing API-requested step '$overrideSlug'", "Debug")
-                [Steps]::GetInstance().Update([Step]::new($overrideConfig))
-            }
-            $step.plugin.Api.Configuration.ClearPendingOverrides()
         }
 
         # Drain any configs the plugin queued via Api.Configuration.Insert() during its own step,
@@ -253,7 +318,7 @@ class StepTree : System.Collections.IEnumerable{
         # queued config becomes its own child here, added in the same order Insert() was called.
         if ($null -ne $step.plugin.Api) {
             foreach ($insertedConfig in $step.plugin.Api.Configuration.GetPendingInserts()) {
-                [Log]::Write("[StepTree]::Process() - Inserting API-requested child config '$($insertedConfig.name)' under '$($this.name)'", "Debug")
+                [Log]::Debug("[StepTree]::Process() - Inserting API-requested child config '$($insertedConfig.name)' under '$($this.name)'")
                 $this.Add([StepTree]::new($insertedConfig))
             }
             $step.plugin.Api.Configuration.ClearPendingInserts()
@@ -277,7 +342,7 @@ class StepTree : System.Collections.IEnumerable{
             }
         }
 
-        [Log]::Write("[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed.", "Trace")
+        [Log]::Trace("[StepTree]::Process() - '$($this.name)' - Processed $stepTotal steps: $stepSuccess succeeded, $stepFailure failed.")
 
         if ($stepFailure -gt 0) {
             return $false

@@ -1,6 +1,14 @@
 class sourcePluginRegistry {
+
     static [sourcePluginRegistry] $Instance = $null
     [System.Collections.Generic.Dictionary[string, [Type]]] $PluginRegistry
+
+
+    # Hidden constructor to enforce singleton pattern
+    hidden sourcePluginRegistry() {
+        $this.PluginRegistry = [System.Collections.Generic.Dictionary[string, [Type]]]::new()
+    }
+
 
     static [sourcePluginRegistry] GetInstance() {
         if ($null -eq [sourcePluginRegistry]::Instance) {
@@ -9,9 +17,6 @@ class sourcePluginRegistry {
         return [sourcePluginRegistry]::Instance
     }
 
-    sourcePluginRegistry() {
-        $this.PluginRegistry = [System.Collections.Generic.Dictionary[string, [Type]]]::new()
-    }
 
     [void] RegisterPlugin([Type] $pluginType) {
         if ($null -eq $pluginType) {
@@ -47,7 +52,10 @@ class sourcePluginRegistry {
         $this.PluginRegistry[$info.Name] = $pluginType
     }
 
+
     [bool] IsRegistered([string] $name) {
         return $this.PluginRegistry.ContainsKey($name)
     }
+
+
 }

@@ -4,10 +4,7 @@
 Describe 'Variables Singleton Pattern' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
     }
 
     Context 'GetInstance' {
@@ -25,20 +22,20 @@ Describe 'Variables Singleton Pattern' {
         It 'Should initialize KeyValueStore as empty dictionary' {
             [Variables]::GetInstance()
             $expectedType = [System.Collections.Generic.Dictionary[string, object]]
-            [Variables]::KeyValueStore | Should -BeOfType $expectedType
-            [Variables]::KeyValueStore.Count | Should -Be 0
+            [Variables]::GetInstance().KeyValueStore | Should -BeOfType $expectedType
+            [Variables]::GetInstance().KeyValueStore.Count | Should -Be 0
         }
 
         It 'Should initialize IncludeTags as tags object' {
             [Variables]::GetInstance()
             $expectedType = [tags]
-            [Variables]::IncludeTags | Should -BeOfType $expectedType
+            [Variables]::GetInstance().IncludeTags | Should -BeOfType $expectedType
         }
 
         It 'Should initialize ExcludeTags as tags object' {
             [Variables]::GetInstance()
             $expectedType = [tags]
-            [Variables]::ExcludeTags | Should -BeOfType $expectedType
+            [Variables]::GetInstance().ExcludeTags | Should -BeOfType $expectedType
         }
     }
 }
@@ -46,10 +43,7 @@ Describe 'Variables Singleton Pattern' {
 Describe 'Key/Value Store Operations' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
         $config = [Variables]::GetInstance()
     }
 
@@ -126,7 +120,7 @@ Describe 'Key/Value Store Operations' {
 
         It 'Should do nothing when SetMany receives null' {
             $config.SetMany($null)
-            [Variables]::KeyValueStore.Count | Should -Be 0
+            [Variables]::GetInstance().KeyValueStore.Count | Should -Be 0
         }
 
         It 'Should throw when SetMany receives a non-dictionary value' {
@@ -200,10 +194,7 @@ Describe 'Key/Value Store Operations' {
 Describe 'Key Validation' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
         $config = [Variables]::GetInstance()
     }
 
@@ -277,10 +268,7 @@ Describe 'Key Validation' {
 Describe 'Include Tag Operations' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
         $config = [Variables]::GetInstance()
     }
 
@@ -349,10 +337,7 @@ Describe 'Include Tag Operations' {
 Describe 'Exclude Tag Operations' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
         $config = [Variables]::GetInstance()
     }
 
@@ -421,10 +406,7 @@ Describe 'Exclude Tag Operations' {
 Describe 'Tag Isolation' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
         $config = [Variables]::GetInstance()
     }
 
@@ -457,10 +439,7 @@ Describe 'Tag Isolation' {
 Describe 'Variables State Persistence' {
     BeforeEach {
         # Reset the singleton instance before each test
-        [Variables]::Instance = $null
-        [Variables]::KeyValueStore = $null
-        [Variables]::IncludeTags = $null
-        [Variables]::ExcludeTags = $null
+        [Variables]::Reset()
     }
 
     Context 'State Across Multiple Operations' {

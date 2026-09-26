@@ -5,7 +5,7 @@ class Steps {
     [System.Collections.Generic.Dictionary[string, [Step]]] $Steps  # List of steps
 
 
-    Steps() {
+    hidden Steps() {
         <#
         .SYNOPSIS
         Initializes the Steps collection
@@ -62,6 +62,22 @@ class Steps {
             throw [System.ArgumentException]::new("No step with the slug '$slug' exists to remove.")
         }
         $this.Steps.Remove($slug)
+    }
+
+
+    [bool] RemoveIfExists([string]$slug) {
+        <#
+        .SYNOPSIS
+        Removes a step by slug if it exists
+
+        .PARAMETER slug
+        The slug of the step to remove
+        #>
+        if ($this.Exists($slug)) {
+            $this.Steps.Remove($slug)
+            return $true
+        }
+        return $false
     }
 
 
@@ -179,6 +195,7 @@ class Steps {
         #>
         return $this.Steps.ContainsKey($slug)
     }
+
 
     static [void] Reset() {
         <#
