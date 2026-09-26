@@ -180,6 +180,17 @@ Potentially: if any include tags are set, ONLY run a step if it includes that ta
 This could skip a TON of things on accident (or on purpose) though - needs careful
 thought about the blast radius before changing default behavior.
 
+I keep thinking this incorrect in my head... Doing this effectively would require
+each item to have a include/exclude tag list, instead of a master include/exclude
+list, then you would simply add/remove tags during the run (potentially just as
+boolean variables) and each item would check against include/exclude.  Except this
+wouldn't work like we want it to either.
+
+Really we need dual-sided tags.  Both the run itself, and each item, should have
+include/exclude tags, as well as an independant set of tags that dictates the
+actions of the other.  This will require significant thought to properly design,
+as well as a rather large refactor in both code and YAML design.
+
 
 ## Start-at-slug option
 Add an option to skip ahead until a specific slug is reached, e.g. `start-at-slug: step5`,
