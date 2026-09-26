@@ -71,7 +71,7 @@ Describe 'TextOutput Plugin' {
 
             $plugin.Execute() | Out-Null
 
-            $entry = @([Logs]::GetInstance())[0]
+            $entry = @([Log]::GetInstance())[0]
             $entry.GetMessage() | Should -Be 'a warning'
             $entry.GetLevel() | Should -Be ([LogLevel]::Warning)
         }
@@ -82,7 +82,7 @@ Describe 'TextOutput Plugin' {
 
             $plugin.Execute() | Out-Null
 
-            @([Logs]::GetInstance())[0].GetLevel() | Should -Be ([LogLevel]::Info)
+            @([Log]::GetInstance())[0].GetLevel() | Should -Be ([LogLevel]::Info)
             $plugin.parameters.method | Should -Be 'Info'
         }
 

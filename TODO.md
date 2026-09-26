@@ -155,6 +155,12 @@ some external system.
 This is a VERY LOW priority.
 
 
+## User Plugin Registration
+Add a way of registering non-compiled plugins for end-users, so it's a TRUE plugin system.
+
+NOTE: Will need to test this!  I hope/suspect this will work, but it may not!
+
+
 # Cleanup Items
 
 ## Test Coverage

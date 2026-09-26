@@ -107,7 +107,7 @@
     $stepTree.Process() | Out-Null
 
     if ($OutputLogs) {
-        return [Logs]::GetInstance()
+        return [Log]::GetInstance()
     }
     
 }
