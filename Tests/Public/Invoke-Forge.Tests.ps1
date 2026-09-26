@@ -2,9 +2,18 @@ Using Module "../../build/PrometheusForge/PrometheusForge.psd1"
 
 BeforeAll {
     . (Join-Path $PSScriptRoot '../Helpers/ConsoleCapture.ps1')
+
+    # Overlay handling logs warnings through [System.Console]::Out, which Pester does not capture; discard it
+    # so expected warnings from these tests don't clutter the test output.
+    $script:capture = Start-ConsoleCapture
+
     Remove-Module PrometheusForge -ErrorAction SilentlyContinue
     $modulePath = Join-Path $PSScriptRoot '..\..\build\PrometheusForge\PrometheusForge.psd1'
     Import-Module $modulePath -Force
+}
+
+AfterAll {
+    [void] (Stop-ConsoleCapture $script:capture)
 }
 
 Describe 'Invoke-Forge' {

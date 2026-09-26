@@ -1,5 +1,17 @@
 Using Module "../../../../build/PrometheusForge/PrometheusForge.psd1"
 
+BeforeAll {
+    . (Join-Path $PSScriptRoot '../../../Helpers/ConsoleCapture.ps1')
+
+    # Overlay handling logs warnings through [System.Console]::Out, which Pester does not capture; discard it
+    # so expected warnings from these tests don't clutter the test output.
+    $script:capture = Start-ConsoleCapture
+}
+
+AfterAll {
+    [void] (Stop-ConsoleCapture $script:capture)
+}
+
 Describe 'ForgeApi' {
     BeforeEach {
         [Variables]::Reset()
@@ -178,7 +190,7 @@ Describe 'ForgeConfigurationApi' {
             $pendingOverlays.Count() | Should -Be 1
             $pendingOverlays.Drain('target').type | Should -Be 'section'
 
-            $warnings = [Logs]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
+            $warnings = [Log]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
             $warnings.Count | Should -BeGreaterOrEqual 1
         }
     }

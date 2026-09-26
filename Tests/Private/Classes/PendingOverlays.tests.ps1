@@ -1,6 +1,12 @@
 Using Module "../../../build/PrometheusForge/PrometheusForge.psd1"
 
 BeforeAll {
+    . (Join-Path $PSScriptRoot '../../Helpers/ConsoleCapture.ps1')
+
+    # Overlay handling logs warnings through [System.Console]::Out, which Pester does not capture; discard it
+    # so expected warnings from these tests don't clutter the test output.
+    $script:capture = Start-ConsoleCapture
+
     # Other test files reset the plugin registry singleton; make sure the plugin these tests rely on exists.
     [taskPluginRegistry]::GetInstance().RegisterPlugin([TextOutput])
 
@@ -14,6 +20,10 @@ BeforeAll {
                 parameters = @{ message = 'hello'; method = 'Trace' }
             })
     }
+}
+
+AfterAll {
+    [void] (Stop-ConsoleCapture $script:capture)
 }
 
 Describe 'PendingOverlays' {
@@ -83,7 +93,7 @@ Describe 'PendingOverlays' {
             [PendingOverlays]::GetInstance().Count() | Should -Be 1
             [object]::ReferenceEquals([PendingOverlays]::GetInstance().Drain('step-a'), $second) | Should -BeTrue
 
-            $warnings = [Logs]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
+            $warnings = [Log]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
             $warnings.Count | Should -BeGreaterOrEqual 1
         }
 
@@ -91,7 +101,7 @@ Describe 'PendingOverlays' {
             [PendingOverlays]::GetInstance().Request('step-a', (New-TestStep 'step-a'))
             [PendingOverlays]::GetInstance().Request('step-b', (New-TestStep 'step-b'))
 
-            $warnings = [Logs]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
+            $warnings = [Log]::GetInstance().Entries | Where-Object { $_.GetLevel() -eq [LogLevel]::Warning }
             $warnings.Count | Should -Be 0
         }
     }
