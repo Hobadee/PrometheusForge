@@ -13,10 +13,11 @@ AfterAll {
 }
 
 
-Describe 'StepTree configuration overrides' {
+Describe 'StepTree configuration overlays' {
     BeforeEach {
         [Steps]::Reset()
         [Variables]::Reset()
+        [PendingOverlays]::Reset()
     }
 
     It 'replaces a matching step with the requested step configuration' {
@@ -53,7 +54,7 @@ Describe 'StepTree configuration overrides' {
 
         $tree = [StepTree]::new($rootConfig)
         $requestingStep = [Steps]::GetInstance().Get('request-replacement')
-        $requestingStep.plugin.Api.Configuration.RequestOverride('target', $replacementConfig)
+        $requestingStep.plugin.Api.Configuration.RequestOverlay('target', $replacementConfig)
 
         $tree.Process() | Should -BeTrue
 
@@ -68,6 +69,7 @@ Describe 'StepTree tags' {
     BeforeEach {
         [Steps]::Reset()
         [Variables]::Reset()
+        [PendingOverlays]::Reset()
     }
 
     It 'populates tags from the item config' {
@@ -86,6 +88,7 @@ Describe 'StepTree checkConditionals' {
     BeforeEach {
         [Steps]::Reset()
         [Variables]::Reset()
+        [PendingOverlays]::Reset()
     }
 
     It 'runs when tags match neither include nor exclude' {
@@ -141,6 +144,7 @@ Describe 'StepTree construction' {
     BeforeEach {
         [Steps]::Reset()
         [Variables]::Reset()
+        [PendingOverlays]::Reset()
     }
 
     It 'rejects an invalid slug: <Description>' -ForEach @(
@@ -206,6 +210,7 @@ Describe 'StepTree children and enumeration' {
     BeforeEach {
         [Steps]::Reset()
         [Variables]::Reset()
+        [PendingOverlays]::Reset()
         $script:tree = [StepTree]::new(@{
             type  = 'section'
             name  = 'Root'
@@ -318,6 +323,7 @@ Describe 'StepTree Process' {
     BeforeEach {
         [Steps]::Reset()
         [Variables]::Reset()
+        [PendingOverlays]::Reset()
     }
 
     It 'succeeds for a section without a step of its own' {
@@ -409,7 +415,7 @@ Describe 'StepTree Process' {
         $requester.plugin.Api.Configuration.GetPendingInserts().Count | Should -Be 0
     }
 
-    Context 'requested overrides' {
+    Context 'requested overlays' {
         BeforeEach {
             $script:tree = [StepTree]::new(@{
                 type  = 'section'
@@ -420,37 +426,80 @@ Describe 'StepTree Process' {
             $script:api = [Steps]::GetInstance().Get('requester').plugin.Api
         }
 
-        It 'rejects an override that is not a step configuration: <Description>' -ForEach @(
-            @{ Description = 'null'; Config = $null }
-            @{ Description = 'a section'; Config = @{ type = 'section'; name = 'Target'; slug = 'target' } }
-        ) {
-            $script:api.Configuration.RequestOverride('target', $Config)
-            $exceptionType = [System.NotSupportedException]
+        It 'rejects a null overlay value' {
+            $exceptionType = [System.ArgumentNullException]
 
-            { $script:tree.Process() } | Should -Throw -ExceptionType $exceptionType
+            { $script:api.Configuration.RequestOverlay('target', $null) } | Should -Throw -ExceptionType $exceptionType
         }
 
-        It 'rejects an override whose slug differs from the requested key' {
-            $script:api.Configuration.RequestOverride('target', (New-OutputStep 'different' 'differentResult'))
+        It 'rejects an overlay whose slug differs from the requested key' {
             $exceptionType = [System.ArgumentException]
 
-            { $script:tree.Process() } | Should -Throw -ExceptionType $exceptionType
+            { $script:api.Configuration.RequestOverlay('target', (New-OutputStep 'different' 'differentResult')) } | Should -Throw -ExceptionType $exceptionType
         }
 
-        It 'rejects an override for a step that does not exist' {
-            $script:api.Configuration.RequestOverride('ghost', (New-OutputStep 'ghost' 'ghostResult'))
-            $exceptionType = [System.ArgumentException]
-
-            { $script:tree.Process() } | Should -Throw -ExceptionType $exceptionType
-        }
-
-        It 'clears the pending overrides once they are applied' {
-            $script:api.Configuration.RequestOverride('target', (New-OutputStep 'target' 'replacedResult'))
+        It 'leaves an overlay queued, without throwing, when its target slug is never visited' {
+            $script:api.Configuration.RequestOverlay('ghost', (New-OutputStep 'ghost' 'ghostResult'))
 
             $script:tree.Process() | Should -BeTrue
 
-            $script:api.Configuration.GetPendingOverrides().Count | Should -Be 0
+            [PendingOverlays]::GetInstance().HasOverlay('ghost') | Should -BeTrue
+        }
+
+        It 'applies a [Step]-shaped overlay in place and clears it once applied' {
+            $script:api.Configuration.RequestOverlay('target', (New-OutputStep 'target' 'replacedResult'))
+
+            $script:tree.Process() | Should -BeTrue
+
+            [PendingOverlays]::GetInstance().HasOverlay('target') | Should -BeFalse
+            [Variables]::GetInstance().HasKey('targetResult') | Should -BeFalse
             [Variables]::GetInstance().Get('replacedResult').success | Should -BeTrue
+        }
+
+        It 'applies a [StepTree]-shaped overlay, replacing the target subtree' {
+            $script:tree.children[1].Add([StepTree]::new((New-OutputStep 'target-child-old' 'targetChildOldResult')))
+
+            $script:api.Configuration.RequestOverlay('target', @{
+                    type  = 'section'
+                    name  = 'Replacement target'
+                    slug  = 'target'
+                    tags  = @('replaced')
+                    items = @((New-OutputStep 'target-child-new' 'targetChildNewResult'))
+                })
+
+            $script:tree.Process() | Should -BeTrue
+
+            [PendingOverlays]::GetInstance().HasOverlay('target') | Should -BeFalse
+            [Steps]::GetInstance().Exists('target-child-old') | Should -BeFalse
+            [Variables]::GetInstance().HasKey('targetChildOldResult') | Should -BeFalse
+            [Variables]::GetInstance().Get('targetChildNewResult').success | Should -BeTrue
+
+            $target = $script:tree.children[1]
+            $target.name | Should -Be 'Replacement target'
+            $target.tags.HasTag('replaced') | Should -BeTrue
+            $target.Count() | Should -Be 1
+            $target.children[0].slug | Should -Be 'target-child-new'
+        }
+
+        It 'applies a [StepTree]-shaped overlay that reuses one of the old subtree''s own child slugs' {
+            # This is the common overlay case: keep a child's slug, just change its config.
+            # Building the overlay eagerly (before the old subtree is unregistered) would
+            # collide with the still-registered 'target-child' slug; construction is deferred
+            # until after Remove() clears it (see StepTree.ApplyPendingOverlay()).
+            $script:tree.children[1].Add([StepTree]::new((New-OutputStep 'target-child' 'targetChildOldResult')))
+
+            $script:api.Configuration.RequestOverlay('target', @{
+                    type  = 'section'
+                    name  = 'Replacement target'
+                    slug  = 'target'
+                    items = @((New-OutputStep 'target-child' 'targetChildNewResult'))
+                })
+
+            $script:tree.Process() | Should -BeTrue
+
+            [Steps]::GetInstance().Exists('target-child') | Should -BeTrue
+            [Variables]::GetInstance().HasKey('targetChildOldResult') | Should -BeFalse
+            [Variables]::GetInstance().Get('targetChildNewResult').success | Should -BeTrue
         }
     }
 }

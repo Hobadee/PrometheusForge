@@ -2,6 +2,12 @@
 This document serves as a list of things that we need or want to be completed at some point.  Eventually this will move to GitHub issues or similar
 but during heavy dev it's helpful to have a scratchpad on the local machine.
 
+## Lazy Loading
+Switch everything to lazy loading.  Possibly split validation into 2 parts - light validation that is done at load-time, and deep validation done at runtime.
+
+Perhaps some way of validating before variables are expanded, since that's the
+main reason we can't validate at load right now?
+
 ## Variable Checking
 Variable names MUST adhere to the same REGEX as slugs, otherwise we won't be able to resolve results.  Add appropriate checks and minimize code duplication.
 
@@ -43,20 +49,9 @@ Plugins should declare which `ForgeApi` categories they actually use (e.g. via a
 
 
 ## Step replacement overlays
-Replace steps/actions with imported steps/actions.
-
-The idea behind this, is that if we have for example a "Install" step that
-works completely different for Client A and Client B, we can easily replace the
-entire action without having to rebuild everything. With this feature, overlays
-can do more than simply inject new items and variables; they can replace
-existing steps.
-
-Replacement of sections will remain out-of-scope for now.  Section-level
-modifications can be done via exluding the section and importing a new section.
-
-Implementation will be done by splitting out the data into 2 sections;
-- tree/step layer containing original ordering/hirearchy with a name reference
-- Action objects, keyed by name
+DONE - see `README.md` ("Insert vs. Overlay") for usage. Implemented via the `PendingOverlays`
+singleton + `StepTree.ApplyPendingOverlay()`, not the tree/action-registry split originally
+sketched here; section replacement (originally scoped out) ended up in scope too.
 
 
 ## Step names
@@ -102,13 +97,10 @@ Notes:
 ## Step addon overlays
 The basic YAML-import flow is working, but the remaining design questions are about insertion semantics and long-term behavior rather than the parser itself.
 
-Ideally, we should be able to eventually complete all the following types of overlays:
-- Step -> Step
-- Section -> Section
-- Step -> Section
-- Section -> Step
-
-The first 2 should be fairly easy.  Polymorphic overlays will be more difficult.
+Polymorphic overlay replacement (Step->Step, Section->Section, Step->Section) is DONE.
+Section->Step needs a workaround, not a direct path - see `README.md` ("Insert vs. Overlay") for
+what's supported and why. Open decision: whether to relax the `type: step` guard so it can replace
+a section directly instead of needing that workaround (see `PROJECT_STATUS.md` Open Questions) - low priority.
 
 Remaining work:
 - define how imported steps/sections are inserted into the current `StepTree` location
@@ -164,6 +156,37 @@ NOTE: Will need to test this!  I hope/suspect this will work, but it may not!
 ## Fix Conditional Tags
 IncludeTags should run IF AND ONLY IF the tag is included - skip run if tag is NOT included!
 If both include and exclude, still take priority variable
+
+
+## Section data as Steps
+As noted elsewhere, conditionals and tags should move into [Step] objects and be tracked via [Steps].  The logical following is that
+each [StepTree] object should also contain a matching entry in [Steps].  We can then easily update conditionals/tags on inserts/overlays.
+
+Additionally we can store return information in the StepTree's [Step] object.  Not sure how we would best access this later, but we could!
+
+
+## Functions to get step return data
+Just like we will be able to pull the logs singleton after a run, we should be able to pull the [Steps] singleton after a run to get result data.
+
+Not sure the best interface for this.
+
+
+## Rethink include tags
+Current `tagsInclude`/`tagsExclude` behavior only excludes based on tags; it doesn't
+restrict a run to *only* tagged steps.
+
+Potentially: if any include tags are set, ONLY run a step if it includes that tag.
+
+This could skip a TON of things on accident (or on purpose) though - needs careful
+thought about the blast radius before changing default behavior.
+
+
+## Start-at-slug option
+Add an option to skip ahead until a specific slug is reached, e.g. `start-at-slug: step5`,
+so a run can resume partway through the tree instead of always starting from the top.
+
+This could have fallout with variables, as necessary return values may not be set.
+Likely leave this up to the user to resolve with CLI variables.
 
 
 # Cleanup Items

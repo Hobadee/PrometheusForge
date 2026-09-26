@@ -69,7 +69,7 @@ Invoke-Forge -FilePath onboard.yaml -Variables @{ logTerminalLevel = 'debug'} -O
 
 ## Configuration Model
 
-Prometheus Forge applies configuration serially.  Later values override earlier values where supported. Individual steps can be replaced to account for implementation
+Prometheus Forge applies configuration serially.  Later values take precedence over earlier values where supported. Individual steps can be replaced to account for implementation
 differences between clients or environments.
 
 Current execution behavior:
@@ -78,6 +78,91 @@ Current execution behavior:
 - The default run mode is non-interactive and aborts on error.
 - The current built-in example plugin is `TextOutputPlugin`.
 
+
+## Insert vs. Overlay
+
+Prometheus Forge has two distinct mechanisms for composing a workflow out of smaller pieces of
+YAML. The terminology below isn't fully locked down yet, so treat the names as descriptive rather
+than final.
+
+### Insert
+
+An **insert** loads a separate YAML document and adds it as a new child at the current location in
+the tree, alongside whatever is already there. Nothing existing is removed or replaced.
+
+Inserts are useful for splitting a large workflow into smaller, reusable files and collecting them
+back together into a single master configuration - for example, keeping "create user", "enroll
+device", and "install software" as their own files and composing them from a top-level
+`onboard.yaml`.
+
+Inserts are handled by the `ImportConfig` task plugin, which loads a document via a source plugin
+(e.g. `yamlSource`) and queues it for insertion with `Api.Configuration.Insert()`:
+
+```yaml
+- type: step
+  name: Enroll Device
+  slug: enroll-device
+  plugin: ImportConfig
+  parameters:
+    uri: "./sections/enroll-device.yaml"
+    sourcePluginName: yamlSource
+```
+
+### Overlay
+
+An **overlay** replaces a step or section already in the tree, targeted by slug, with a different
+step or section. Unlike an insert, this removes what's currently there instead of adding alongside
+it.
+
+This is useful when a specific client or department needs a substantially different version of a
+step or section than the base configuration provides - for example, a client with its own custom
+user-onboarding step - without having to duplicate and maintain the rest of the workflow.
+
+An overlay can be requested three ways:
+
+- **From the CLI**, via the `-Overlay` parameter on `Invoke-Forge` (see Quick Start above): an
+  overlay file's top-level `root` - the same shape as the main YAML's `root` - queues one overlay
+  per entry, targeting its own `slug`, alongside whatever `variables` and tag include/exclude
+  filters that same overlay file sets.
+- **From within a workflow**, via the `OverlayConfig` task plugin: it loads a document via a source
+  plugin (e.g. `yamlSource`), applies any top-level `variables` the same way `ImportConfig` does,
+  and queues each `root` entry as an overlay instead of inserting it as a child:
+
+  ```yaml
+  - type: step
+    name: Apply Client Overlay
+    slug: apply-client-overlay
+    plugin: OverlayConfig
+    parameters:
+      uri: "./overlays/clientA.yaml"
+      sourcePluginName: yamlSource
+  ```
+
+  This is the declarative counterpart to `Api.Configuration.RequestOverlay()` below - useful when
+  the set of overlays to apply should live in the workflow YAML itself (e.g. a conditional step
+  that only overlays certain slugs when a tag/variable matches) rather than requiring a `-Overlay`
+  CLI argument at invocation time.
+- **From a plugin's own code**, via `Api.Configuration.RequestOverlay(slug, config)`.
+
+Whichever way it's requested, the request is queued and applied the next time a tree node with
+that slug is processed (`StepTree.ApplyPendingOverlay()`), so the overlay can target any node in
+the tree - not only nodes under a particular location, and not only children of the requesting
+step; it can target anywhere in the whole tree. A `type: step` overlay swaps only the step's
+implementation; the node's position, tags, and children are left untouched. Any other `type` (e.g.
+`section`) replaces the whole subtree - position, tags, and children included.
+
+An overlay's `type` doesn't need to match what it's replacing:
+
+- Replacing a step with a `type: section` config (with its own `items`) works directly - the old
+  step's registration is cleared before the section is built, so a step-shaped and a section-shaped
+  target look the same to the underlying machinery.
+- Replacing a *section* with a bare `type: step` config does **not** work directly - it throws,
+  because a section never registers a `Step` for the leaf-only overlay path to find. Get the same
+  effect by wrapping the replacement in a `type: section` config whose `items` contains a single
+  `type: step` entry; that goes through the structural path instead, which doesn't care what the
+  original target was.
+
+This kind of overlay is the "Robust Overlays" work described in `TODO.md`.
 
 ## Plugin Development
 

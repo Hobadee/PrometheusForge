@@ -289,4 +289,11 @@ Describe 'sourcePluginInterface ValidateConfig' {
 
         $script:plugin.ValidateConfig() | Should -BeTrue
     }
+
+    It 'throws when only an unrecognized top-level section is present' {
+        $script:plugin.LoadedConfig = @{ version = 1.0; metadata = @{ author = 'Eric' } }
+        $exceptionType = [System.InvalidOperationException]
+
+        { $script:plugin.ValidateConfig() } | Should -Throw -ExceptionType $exceptionType
+    }
 }
