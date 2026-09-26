@@ -17,12 +17,14 @@ class Log : System.Collections.IEnumerable{
 
     # Class Variables
     static [Log] $Instance = $null
+    static [LogLevel] $DefaultTerminalLevel = [LogLevel]::Warning
 
     # Instance Variables
     [LogEntries] $Entries = $null
     [long] $sequence = 1
+    [int] $currentIndex = 0
 
-    
+
     <#######################>
     <# Lifecycle Functions #>
     <#######################>
@@ -49,8 +51,35 @@ class Log : System.Collections.IEnumerable{
     }
 
     
+    # Returns a snapshot of every entry recorded this run, which can be searched and filtered.
+    # A snapshot is returned so callers can't add entries to the shared set and bypass sequencing and terminal output.
+    static [LogEntries] GetEntries() {
+        return [Log]::GetInstance().Entries.Snapshot()
+    }
+
+
+    <#############################
+    # IEnumerable implementation #
+    #############################>
+
+
+    # Everything simply passes through to the underlying Entries IEnumerable implementation.
+    [System.Collections.IEnumerator] GetEnumerator() {
+        return $this.Entries.GetEnumerator()
+    }
+    [void] SetCurrentIndex([int] $index) {
+        $this.Entries.SetCurrentIndex($index)
+    }
+    [LogEntry] GetCurrentItem() {
+        return $this.Entries.GetCurrentItem()
+    }
+    [int] Count() {
+        return $this.Entries.Count()
+    }
+
+
     <####################>
-    <#                  #>
+    <# Recording Entries #>
     <####################>
 
 
@@ -61,7 +90,7 @@ class Log : System.Collections.IEnumerable{
         $this.Entries.Add($entry)
 
         # For now we will default to outputting all log entries to the terminal
-        $this.Output($entry)
+        [Log]::Output($entry)
     }
 
     
@@ -224,10 +253,10 @@ class Log : System.Collections.IEnumerable{
     #>
 
 
-    [void] Output([LogEntry] $entry) {
+    static [void] Output([LogEntry] $entry) {
 
         # Default terminal log level, if none specified
-        $terminalLevel = [LogLevel]::Warning
+        $terminalLevel = [Log]::DefaultTerminalLevel
 
         $variables = [Variables]::GetInstance()
         if ($variables.HasKey('logTerminalLevel')) {
@@ -237,7 +266,7 @@ class Log : System.Collections.IEnumerable{
 
         # If the log level is below or equal to the terminal log level, output the message to the terminal
         if ([int] $entry.GetLevel() -le [int] $terminalLevel) {
-            $this.WriteToTerminal($entry)
+            [Log]::WriteToTerminal($entry)
         }
 
     }
@@ -246,7 +275,7 @@ class Log : System.Collections.IEnumerable{
     # Writes one entry to the terminal in the standard log format and level color, whatever its level.
     # Output() decides *whether* an entry is shown; this only shows it.
     # This should eventually be moved to a terminal-output handler class.
-    [void] WriteToTerminal([LogEntry] $entry) {
+    static[void] WriteToTerminal([LogEntry] $entry) {
         if ($null -eq $entry) {
             throw [System.ArgumentNullException]::new('entry', 'Entry cannot be null')
         }
@@ -255,7 +284,7 @@ class Log : System.Collections.IEnumerable{
         $levelName = $entry.GetLevel().ToString().ToUpperInvariant()
         $originalColor = [System.Console]::ForegroundColor
         try {
-            [System.Console]::ForegroundColor = $this.GetColor($entry.GetLevel())
+            [System.Console]::ForegroundColor = [Log]::GetColor($entry.GetLevel())
             # Entries logged from within a step carry that step's slug as their source
             $sourceTag = ''
             if (-not [string]::IsNullOrEmpty($entry.GetSource())) {
@@ -269,7 +298,7 @@ class Log : System.Collections.IEnumerable{
     }
 
 
-    [System.ConsoleColor] GetColor([LogLevel] $level) {
+    static [System.ConsoleColor] GetColor([LogLevel] $level) {
         <#
         .SYNOPSIS
         Gets the console color associated with a specific log level.
@@ -294,11 +323,6 @@ class Log : System.Collections.IEnumerable{
 
         # Unknown log level, default to white color
         return [System.ConsoleColor]::White
-    }
-
-
-    [System.Collections.IEnumerator] GetEnumerator() {
-        return $this.Entries.GetEnumerator()
     }
 
 

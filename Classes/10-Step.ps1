@@ -204,6 +204,7 @@ class Step{
             # If we did not succeed or run out of retries, sleep before the
             # next attempt
             if(-not ($res.success -or $i -ge $retries)){
+                [Log]::Warning("Attempt $($i + 1) of $retries failed; retrying in $delay second(s)")
                 Start-Sleep -Seconds $delay
             }
 
@@ -218,13 +219,17 @@ class Step{
                 $onError = $this.config.onError
             }
             if ($onError -eq "abort"){
-                throw [System.Exception]::new("$($this.config.name) failed after $i attempts with result: $($res.error | Out-String)")
+                [Log]::Emergency("Aborting after $i attempts with result: $($res.error | Out-String)")
+                throw [System.Exception]::new("$($this.config.name) aborting after $i attempts with result: $($res.error | Out-String)")
             }
             if ($onError -eq "fail"){
                 # Don't throw an exception; just allow the failure to be recorded and continue
+                [Log]::Error("Failed after $i attempt(s): $($res.error)")
             }
         }
-
+        else {
+            [Log]::Trace("Completed successfully in $([math]::Round($res.ExecutionTime, 3)) second(s) after $i attempt(s).")
+        }
 
         # Check if we need to register the result
         if ($this.config.result -and $this.config.result -is [string]){

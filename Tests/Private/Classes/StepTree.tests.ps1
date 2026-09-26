@@ -1,5 +1,18 @@
 Using Module "../../../build/PrometheusForge/PrometheusForge.psd1"
 
+BeforeAll {
+    . (Join-Path $PSScriptRoot '../../Helpers/ConsoleCapture.ps1')
+
+    # Steps log through [System.Console]::Out, which Pester does not capture; discard it so
+    # expected warnings and errors from these tests don't clutter the test output.
+    $script:capture = Start-ConsoleCapture
+}
+
+AfterAll {
+    [void] (Stop-ConsoleCapture $script:capture)
+}
+
+
 Describe 'StepTree configuration overrides' {
     BeforeEach {
         [Steps]::Reset()

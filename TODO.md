@@ -161,6 +161,11 @@ Add a way of registering non-compiled plugins for end-users, so it's a TRUE plug
 NOTE: Will need to test this!  I hope/suspect this will work, but it may not!
 
 
+## Fix Conditional Tags
+IncludeTags should run IF AND ONLY IF the tag is included - skip run if tag is NOT included!
+If both include and exclude, still take priority variable
+
+
 # Cleanup Items
 
 ## Test Coverage

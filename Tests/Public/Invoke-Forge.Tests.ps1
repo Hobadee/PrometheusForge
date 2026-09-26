@@ -1,6 +1,7 @@
-﻿Using Module "../../build/PrometheusForge/PrometheusForge.psd1"
+Using Module "../../build/PrometheusForge/PrometheusForge.psd1"
 
 BeforeAll {
+    . (Join-Path $PSScriptRoot '../Helpers/ConsoleCapture.ps1')
     Remove-Module PrometheusForge -ErrorAction SilentlyContinue
     $modulePath = Join-Path $PSScriptRoot '..\..\build\PrometheusForge\PrometheusForge.psd1'
     Import-Module $modulePath -Force
@@ -389,14 +390,11 @@ root:
         [Steps]::Reset()
 
         # Keep terminal log output from leaking into the Pester output.
-        $script:writer = [System.IO.StringWriter]::new()
-        $script:originalWriter = [System.Console]::Out
-        [System.Console]::SetOut($script:writer)
+        $script:writer = Start-ConsoleCapture
     }
 
     AfterEach {
-        [System.Console]::SetOut($script:originalWriter)
-        $script:writer.Dispose()
+        [void] (Stop-ConsoleCapture $script:writer)
     }
 
     AfterAll {

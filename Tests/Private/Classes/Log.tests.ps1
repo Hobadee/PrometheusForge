@@ -1,4 +1,7 @@
 Using Module "../../../build/PrometheusForge/PrometheusForge.psd1"
+BeforeAll {
+    . (Join-Path $PSScriptRoot '../../Helpers/ConsoleCapture.ps1')
+}
 
 Describe 'Log' {
     BeforeAll {
@@ -20,14 +23,11 @@ Describe 'Log' {
         [Variables]::Reset()
 
         # Capture console output so entries at or above the terminal level don't leak into Pester output.
-        $script:writer = [System.IO.StringWriter]::new()
-        $script:originalWriter = [System.Console]::Out
-        [System.Console]::SetOut($script:writer)
+        $script:writer = Start-ConsoleCapture
     }
 
     AfterEach {
-        [System.Console]::SetOut($script:originalWriter)
-        $script:writer.Dispose()
+        [void] (Stop-ConsoleCapture $script:writer)
     }
 
     AfterAll {
@@ -213,6 +213,32 @@ Describe 'Log' {
         }
     }
 
+    Context 'GetEntries' {
+        It 'returns the recorded entries' {
+            [Log]::Info('one')
+            [Log]::Info('two')
+
+            @([Log]::GetEntries() | ForEach-Object { $_.GetMessage() }) | Should -Be @('one', 'two')
+        }
+
+        It 'returns a snapshot, so adding to it does not change the log' {
+            [Log]::Info('one')
+
+            $snapshot = [Log]::GetEntries()
+            $snapshot.Add((New-TestEntry -Message 'sneaky'))
+
+            [Log]::GetInstance().Entries.Count() | Should -Be 1
+        }
+
+        It 'does not include entries recorded after it was taken' {
+            [Log]::Info('one')
+            $snapshot = [Log]::GetEntries()
+            [Log]::Info('two')
+
+            $snapshot.Count() | Should -Be 1
+        }
+    }
+
     Context 'Searching the recorded entries' {
         It 'supports filtering through the Entries property' {
             [Log]::Info('starting')
@@ -272,14 +298,14 @@ Describe 'Log' {
         }
 
         It 'WriteToTerminal shows an entry regardless of its level' {
-            [Log]::GetInstance().WriteToTerminal((New-TestEntry -Message 'forced' -Level ([LogLevel]::Trace)))
+            [Log]::WriteToTerminal((New-TestEntry -Message 'forced' -Level ([LogLevel]::Trace)))
 
             $script:writer.ToString() | Should -Match '\[TRACE\] forced'
         }
 
         It 'WriteToTerminal throws on a null entry' {
             $exceptionType = [System.ArgumentNullException]
-            { [Log]::GetInstance().WriteToTerminal($null) } | Should -Throw -ExceptionType $exceptionType
+            { [Log]::WriteToTerminal($null) } | Should -Throw -ExceptionType $exceptionType
         }
 
         It 'restores the console color even when the write fails' {
@@ -288,7 +314,7 @@ Describe 'Log' {
             $throwingWriter.Dispose()
             [System.Console]::SetOut($throwingWriter)
 
-            { [Log]::GetInstance().WriteToTerminal((New-TestEntry -Level ([LogLevel]::Error))) } | Should -Throw
+            { [Log]::WriteToTerminal((New-TestEntry -Level ([LogLevel]::Error))) } | Should -Throw
             [System.Console]::ForegroundColor | Should -Be $originalColor
         }
     }
@@ -305,14 +331,14 @@ Describe 'Log' {
             @{ Level = [LogLevel]::Debug; Color = [System.ConsoleColor]::Gray }
             @{ Level = [LogLevel]::Trace; Color = [System.ConsoleColor]::DarkGray }
         ) {
-            [Log]::GetInstance().GetColor($Level) | Should -Be $Color
+            [Log]::GetColor($Level) | Should -Be $Color
         }
 
         It 'falls back to white for an unknown level' {
             # A plain [LogLevel]99 cast is rejected by PowerShell, so build the undefined value explicitly.
             $unknownLevel = [System.Enum]::ToObject([LogLevel], 99)
 
-            [Log]::GetInstance().GetColor($unknownLevel) | Should -Be ([System.ConsoleColor]::White)
+            [Log]::GetColor($unknownLevel) | Should -Be ([System.ConsoleColor]::White)
         }
     }
 }

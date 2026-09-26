@@ -1,4 +1,7 @@
 Using Module "../../../../../../build/PrometheusForge/PrometheusForge.psd1"
+BeforeAll {
+    . (Join-Path $PSScriptRoot '../../../../../Helpers/ConsoleCapture.ps1')
+}
 
 Describe 'TextOutput Plugin' {
     BeforeEach {
@@ -6,14 +9,11 @@ Describe 'TextOutput Plugin' {
         [Variables]::Reset()
 
         # Silence terminal output so logged messages don't leak into the Pester output.
-        $script:writer = [System.IO.StringWriter]::new()
-        $script:originalWriter = [System.Console]::Out
-        [System.Console]::SetOut($script:writer)
+        $script:writer = Start-ConsoleCapture
     }
 
     AfterEach {
-        [System.Console]::SetOut($script:originalWriter)
-        $script:writer.Dispose()
+        [void] (Stop-ConsoleCapture $script:writer)
     }
 
     AfterAll {

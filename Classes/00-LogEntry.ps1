@@ -25,7 +25,8 @@ class LogEntry{
     [LogLevel] $level =  [LogLevel]::Info
 
     # Other Parameters
-    [System.Management.Automation.CallStackFrame[]] $trace = $null
+    # Hidden so Format-List, Select-Object and Export-Csv don't dump the call stack; read it with GetTrace()
+    hidden [System.Management.Automation.CallStackFrame[]] $trace = $null
     [string] $source = $null
     [long] $sequence = 0
 

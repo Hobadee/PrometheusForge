@@ -1,5 +1,18 @@
 Using Module "../../../build/PrometheusForge/PrometheusForge.psd1"
 
+BeforeAll {
+    . (Join-Path $PSScriptRoot '../../Helpers/ConsoleCapture.ps1')
+
+    # Steps log through [System.Console]::Out, which Pester does not capture; discard it so
+    # expected warnings and errors from these tests don't clutter the test output.
+    $script:capture = Start-ConsoleCapture
+}
+
+AfterAll {
+    [void] (Stop-ConsoleCapture $script:capture)
+}
+
+
 # Plugin whose RunTask() results are scripted by the test, so retry/error handling can be exercised
 # without depending on a real plugin that can fail on demand.
 class ScriptedTaskPlugin : TaskPluginInterface {
@@ -285,7 +298,7 @@ Describe 'Step' {
         It 'throws when onError is "abort" and retries are exhausted' {
             $step = New-ScriptedStep @{ onError = 'abort'; retry = @{ retries = 2 } } -Results @(@{ success = $false; error = 'boom' })
 
-            { $step.Process() } | Should -Throw '*Test step failed after 2 attempts*'
+            { $step.Process() } | Should -Throw '*Test step aborting after 2 attempts*'
             $step.plugin.Calls | Should -Be 2
         }
 
