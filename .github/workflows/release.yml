@@ -3,7 +3,7 @@ name: Build and package PowerShell module
 on:
   push:
     branches:
-      - main
+      - master
     tags:
       - 'v*'
   workflow_dispatch:
@@ -35,7 +35,15 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          Build-Module
+
+          # On tag builds, stamp the manifest version from the tag (v1.2.3 or v1.2.3-beta1)
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $semVer = $env:GITHUB_REF_NAME -replace '^v', ''
+            Write-Host "Building version $semVer from tag $env:GITHUB_REF_NAME"
+            Build-Module -SemVer $semVer
+          } else {
+            Build-Module
+          }
 
           $moduleRoot = Join-Path $PWD 'build/PrometheusForge'
           if (-not (Test-Path $moduleRoot)) {
