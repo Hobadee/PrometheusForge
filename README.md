@@ -76,7 +76,8 @@ Current execution behavior:
 
 - Workflows run serially in dependency order.
 - The default run mode is non-interactive and aborts on error.
-- The current built-in example plugin is `TextOutputPlugin`.
+- Built-in plugins (core utilities, Asana, and the YAML source) and their parameters are documented in
+  Asana) and [SOURCE_PLUGINS.md](SOURCE_PLUGINS.md) (document loaders such as `yamlSource`).
 
 
 ## Insert vs. Overlay
@@ -165,6 +166,9 @@ An overlay's `type` doesn't need to match what it's replacing:
 This kind of overlay is the "Robust Overlays" work described in `TODO.md`.
 
 ## Plugin Development
+
+For the plugins that ship with Prometheus Forge and their parameters, see [TASK_PLUGINS.md](TASK_PLUGINS.md) and
+[SOURCE_PLUGINS.md](SOURCE_PLUGINS.md).
 
 Task plugins implement the `taskPluginInterface` contract. Existing plugin examples are available in
 `Classes/Plugins/Task/`, and the interface is defined in `Classes/Plugins/00-taskPluginInterface.ps1`.

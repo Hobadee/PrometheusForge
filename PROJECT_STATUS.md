@@ -1,6 +1,6 @@
 ﻿# Project Status
 
-Last updated: 2026-09-22
+Last updated: 2026-10-01
 
 Prometheus Forge is now a YAML-driven workflow engine built around a `StepTree` execution model, a run-scoped `Steps` registry, and plugin-based source/task execution. The project currently supports loading and processing configuration trees from YAML, applying base and overlay variables, resolving templated values, and running steps with tag-based include/exclude filtering and plugin-requested overlays/inserts.
 
@@ -17,6 +17,8 @@ The project is operating as a working MVP for workflow automation and Asana inte
 
 
 # Recent Changes
+- Added `TASK_PLUGINS.md` (Core + Asana task plugins) and `SOURCE_PLUGINS.md` (`yamlSource`) documenting every built-in plugin, with parameters,
+  validation rules, and examples; linked from `README.md`. Keep them in sync when plugin parameters change.
 - Converted the remaining `[Log]::Write(msg, "<level>")` calls in `Classes/12-StepTree.ps1` to the
   level-specific helpers (`[Log]::Debug()` / `[Log]::Trace()`). Remaining `[Log]::Write` uses are
   intentional: the `[Log]` helpers themselves, `Log.tests.ps1` (tests `Write` directly), and
