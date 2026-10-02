@@ -1,6 +1,6 @@
 ﻿# Project Status
 
-Last updated: 2026-10-01
+Last updated: 2026-10-02
 
 Prometheus Forge is now a YAML-driven workflow engine built around a `StepTree` execution model, a run-scoped `Steps` registry, and plugin-based source/task execution. The project currently supports loading and processing configuration trees from YAML, applying base and overlay variables, resolving templated values, and running steps with tag-based include/exclude filtering and plugin-requested overlays/inserts.
 
@@ -17,6 +17,12 @@ The project is operating as a working MVP for workflow automation and Asana inte
 
 
 # Recent Changes
+- Added the public `Get-ForgeStepResults -Slug <slug>` function (`Public/Get-ForgeStepResults.ps1`), which returns a step's entire result object
+  (as the task plugin returned it) from the run-scoped `Steps` singleton. `-Slug` is mandatory, positional, and accepts pipeline input. An unknown slug
+  throws a terminating `StepNotFound` error; a step that exists but has not run returns nothing. The result is emitted as a single object (not unrolled).
+  Tests in `Tests/Public/Get-ForgeStepResults.Tests.ps1` (10 passing). Not yet documented in `README.md`.
+  - The test "does not return results from a previous run after a new run starts" only proves a result is still readable after a second `Invoke-Forge`;
+    it does not prove the first run's data was discarded.
 - Added `TASK_PLUGINS.md` (Core + Asana task plugins) and `SOURCE_PLUGINS.md` (`yamlSource`) documenting every built-in plugin, with parameters,
   validation rules, and examples; linked from `README.md`. Keep them in sync when plugin parameters change.
 - Converted the remaining `[Log]::Write(msg, "<level>")` calls in `Classes/12-StepTree.ps1` to the
