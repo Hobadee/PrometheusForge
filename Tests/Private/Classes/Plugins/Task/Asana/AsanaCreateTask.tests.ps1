@@ -51,7 +51,12 @@ Describe 'AsanaCreateTask Plugin - Parameter Validation' {
 }
 
 Describe 'AsanaCreateTask Plugin - Execution' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot '../../../../../Helpers/ConsoleCapture.ps1')
+    }
+
     BeforeEach {
+        $script:writer = Start-ConsoleCapture
         [Variables]::Reset()
         [AsanaApiClient]::Reset()
         [Variables]::GetInstance().Set('Plugin_Asana_PAT', 'test-personal-access-token')
@@ -59,6 +64,7 @@ Describe 'AsanaCreateTask Plugin - Execution' {
     }
 
     AfterEach {
+        [void] (Stop-ConsoleCapture $script:writer)
         [Variables]::Reset()
         [AsanaApiClient]::Reset()
     }
@@ -108,8 +114,41 @@ Describe 'AsanaCreateTask Plugin - Execution' {
 }
 
 Describe 'AsanaCreateTask Plugin - Additional Validation' {
+    BeforeAll {
+        . (Join-Path $PSScriptRoot '../../../../../Helpers/ConsoleCapture.ps1')
+    }
+
     BeforeEach {
         $script:plugin = [AsanaCreateTask]::new()
+        $script:writer = Start-ConsoleCapture
+    }
+
+    AfterEach {
+        [void] (Stop-ConsoleCapture $script:writer)
+    }
+
+    It 'Should warn, but not throw, when both projects and parent are provided' {
+        $params = @{ name = 'Subtask'; projects = @('12345'); parent = '67890' }
+
+        { $script:plugin.ValidateParameters($params) } | Should -Not -Throw
+
+        $output = $script:writer.ToString()
+        $output | Should -Match '\[WARNING\]'
+        $output | Should -Match "Both 'projects' and 'parent' parameters are specified"
+    }
+
+    It 'Should not warn when only <Field> is provided' -ForEach @(
+        @{ Field = 'projects'; Value = @('12345') }
+        @{ Field = 'parent'; Value = '67890' }
+    ) {
+        $params = @{ name = 'Task' }
+        $params[$Field] = $Value
+
+        { $script:plugin.ValidateParameters($params) } | Should -Not -Throw
+
+        $output = $script:writer.ToString()
+        $output | Should -Not -Match '\[WARNING\]'
+        $output | Should -Not -Match "Both 'projects' and 'parent' parameters are specified"
     }
 
     It 'Should reject an empty <Field>' -ForEach @(

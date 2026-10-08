@@ -159,6 +159,10 @@ class AsanaCreateTask : AsanaTaskPluginBase {
                 throw [System.ArgumentException]::new("Parameter 'projects' must contain non-empty project gids.", 'projects')
             }
         }
+
+        if ($null -ne $params.projects -and $null -ne $params.parent) {
+            [Log]::Warning("Both 'projects' and 'parent' parameters are specified in '$($params.name)'. This may cause odd behavior.", "AsanaCreateTask::ValidateAsanaParameters()")
+        }
     }
 
     [object] Execute() {
