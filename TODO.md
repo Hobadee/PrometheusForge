@@ -211,8 +211,7 @@ by simply inputting it's name as a tag.
 
 
 ## Forge API Additions
-Additionaly Forge APIs should be made available for plugins to use
-
+Additional Forge APIs should be made available for plugins to use
 
 ### Halt Processing
 A halt processing API call should halt Forge processing at the current step.  This is explicitely NOT an error
@@ -229,13 +228,23 @@ Note: This may already be possible by simply making a user-interactive plugin.  
 want to monitor plugins and kill them if they run too long, in which case an API would be required to override
 this behaviour.
 
+### Find Me
+Keep track of the current location in the run tree, and make it available via API call
+Options for:
+- Current slug
+- Parent slug
+- Entire slug path (as string or array)
+
 
 ## Public Plugin Functions
-To be *truely* pluginable, and not require pre-compiled plugins, we should add public functions that allow
+To be *truely* pluginable, and not require pre-compiled plugins, we should add public methods that allow
 registering plugins.
 
-Also consider adding an API and task to register new plugins mid-run - plugin registration could be done as-needed
-as part of the config
+Ways we should allow registering plugins:
+- Plugin/API to register new plugins mid-run (allowing manual lazy-load of plugins)
+- PowerShell command (add to singleton instance)
+- CLI argument in `Invoke-Forge`
+- YAML configuration directive (completely new section?)
 
 
 # Cleanup Items

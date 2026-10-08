@@ -63,6 +63,7 @@ Read TODO.md for further information on a particular item
 1. Advanced templating coverage beyond the current MVP
 2. Conditional section/step execution
 3. Lazy-Load everything by default
+4. Better tag handling
 
 
 # Open Questions
