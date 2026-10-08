@@ -33,6 +33,7 @@ Possibly implement sinks as plugins?
 
 Create LogEntry class and store each entry there with timestamp, facility, message, trace, and other metrics, allowing us to replay, filter, or bulk flush logs to a sink later
 
+
 ### Complicating issue:
 How do we set a log location?  We can make the plugin a singleton, but how is
 the config passed to it initally?  Passing via normal plugin config args has
@@ -165,17 +166,19 @@ each [StepTree] object should also contain a matching entry in [Steps].  We can 
 Additionally we can store return information in the StepTree's [Step] object.  Not sure how we would best access this later, but we could!
 
 
-## Functions to get step return data
-Just like we will be able to pull the logs singleton after a run, we should be able to pull the [Steps] singleton after a run to get result data.
+## Variables
+Variables read from YAML should support arrays, and possibly also dictionaries.
 
-Not sure the best interface for this.
+Arrays would be fairly easy to implement, although dictionaries would be harder.
+
+Not sure how templating arrays or dictionaries would work - need to think on it some.
 
 
 ## Rethink include tags
 Current `tagsInclude`/`tagsExclude` behavior only excludes based on tags; it doesn't
 restrict a run to *only* tagged steps.
 
-Potentially: if any include tags are set, ONLY run a step if it includes that tag.
+Potentially: if any tags are set, ONLY run said step if it includes in include tag.
 
 This could skip a TON of things on accident (or on purpose) though - needs careful
 thought about the blast radius before changing default behavior.
@@ -186,10 +189,12 @@ list, then you would simply add/remove tags during the run (potentially just as
 boolean variables) and each item would check against include/exclude.  Except this
 wouldn't work like we want it to either.
 
-Really we need dual-sided tags.  Both the run itself, and each item, should have
+Really we would need dual-sided tags.  Both the run itself, and each item, would need
 include/exclude tags, as well as an independant set of tags that dictates the
-actions of the other.  This will require significant thought to properly design,
+actions of the other.  This would require significant thought to properly design,
 as well as a rather large refactor in both code and YAML design.
+
+Claude recommends we stick with the current implementation for several good reasons.
 
 
 ## Start-at-slug option
@@ -198,6 +203,39 @@ so a run can resume partway through the tree instead of always starting from the
 
 This could have fallout with variables, as necessary return values may not be set.
 Likely leave this up to the user to resolve with CLI variables.
+
+
+## Slugs double as tags
+Slugs should double as tags.  Simple as that.  You should be able to skip or include a specific slug
+by simply inputting it's name as a tag.
+
+
+## Forge API Additions
+Additionaly Forge APIs should be made available for plugins to use
+
+
+### Halt Processing
+A halt processing API call should halt Forge processing at the current step.  This is explicitely NOT an error
+or exception halt, but rather an intentional halting of execution either due to finishing early, or required
+manual interaction that is out-of-scope of a standard run.  It is highly likely that this will be paired with
+the "Start-at-slug" option later.  (Halt a run, do some stuff, restart at slug that was halted)
+
+### Interactive Step
+An API to allow user-interaction.  While Prometheus Forge is generally designed for autonomous runs, there
+is nothing specifically precluding the ability for user-interactive runs.  An API call to allow some form of
+user interaction could be helpful.
+
+Note: This may already be possible by simply making a user-interactive plugin.  Presumably we would eventually
+want to monitor plugins and kill them if they run too long, in which case an API would be required to override
+this behaviour.
+
+
+## Public Plugin Functions
+To be *truely* pluginable, and not require pre-compiled plugins, we should add public functions that allow
+registering plugins.
+
+Also consider adding an API and task to register new plugins mid-run - plugin registration could be done as-needed
+as part of the config
 
 
 # Cleanup Items

@@ -60,12 +60,9 @@ The project is operating as a working MVP for workflow automation and Asana inte
 These are items from TODO.md that we should work on next.
 Read TODO.md for further information on a particular item
 
-1. ~~Full test-suite coverage~~ (done - see Recent Changes)
-3. ~~Robust Overlays~~ (largely done - polymorphic overlaying and section overlays work; see
-   `README.md` for usage and TODO.md's "Step addon overlays" for the remaining insertion-semantics
-   and `type: step`-guard decisions)
-2. Advanced templating coverage beyond the current MVP
-4. Conditional section/step execution
+1. Advanced templating coverage beyond the current MVP
+2. Conditional section/step execution
+3. Lazy-Load everything by default
 
 
 # Open Questions
