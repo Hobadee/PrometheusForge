@@ -1,6 +1,6 @@
 # Quick context
 - Repo: `Prometheus Forge` — a PowerShell 7+ module that implements a class-based workflow engine driven by YAML configs.
-- A working project-status file is maintained at `PROJECT_STATUS.md` for session handoffs, progress tracking, and future-agent context. Review and update it before finishing a session.
+- A working project-status file is maintained at `PROJECT_STATUS.md` for session handoffs, future-agent context, and for the sake of the meatbag who runs this project and can't remember what he was working on when returning to the project after some time. Keep it up-to-date with a VERY BRIEF summary of what we are currently working on in broad terms.  (Unless asked to be more specific)  Keep it trimmed by deleting notes about things we were working on once we have completed them.
 - Key entry point: `Invoke-Forge` (run a workflow)
 - Module is built from multiple independant files using the `Build-Module` command and follows the PoshCode conventions.
 
