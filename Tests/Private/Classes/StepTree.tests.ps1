@@ -503,3 +503,178 @@ Describe 'StepTree Process' {
         }
     }
 }
+
+
+Describe 'StepTree StartAtSlug' {
+    BeforeAll {
+        [taskPluginRegistry]::GetInstance().RegisterPlugin([TextOutput])
+
+        function New-StartAtStep {
+            param([string] $Slug)
+            return @{
+                type       = 'step'
+                name       = "Step $Slug"
+                slug       = $Slug
+                plugin     = 'TextOutput'
+                parameters = @{ message = "message from $Slug"; level = 'Trace' }
+            }
+        }
+
+        # root
+        # |- a
+        # |- sec1
+        # |  |- b
+        # |  |- sec2
+        # |  |  |- c
+        # |  |  |- d
+        # |  |- e
+        # |- f
+        function New-StartAtTree {
+            return [StepTree]::new(@{
+                    type  = 'section'; name = 'Root'; slug = 'root'
+                    items = @(
+                        (New-StartAtStep 'a')
+                        @{
+                            type  = 'section'; name = 'Sec1'; slug = 'sec1'
+                            items = @(
+                                (New-StartAtStep 'b')
+                                @{
+                                    type  = 'section'; name = 'Sec2'; slug = 'sec2'
+                                    items = @((New-StartAtStep 'c'), (New-StartAtStep 'd'))
+                                }
+                                (New-StartAtStep 'e')
+                            )
+                        }
+                        (New-StartAtStep 'f')
+                    )
+                })
+        }
+
+        function Get-ProcessedSlugs {
+            return @('a', 'b', 'c', 'd', 'e', 'f') | Where-Object { [Steps]::GetInstance().IsProcessed($_) }
+        }
+    }
+
+    BeforeEach {
+        [Log]::Reset()
+        [Steps]::Reset()
+        [Variables]::Reset()
+        [PendingOverlays]::Reset()
+        $script:tree = New-StartAtTree
+    }
+
+    It 'runs every step when no start-at slug is set' {
+        $script:tree.Process() | Should -BeTrue
+
+        Get-ProcessedSlugs | Should -Be @('a', 'b', 'c', 'd', 'e', 'f')
+    }
+
+    It 'skips steps before a top-level start-at slug' {
+        [ForgeProcessApi]::new().SetStartAtSlug('f')
+
+        $script:tree.Process() | Should -BeTrue
+
+        Get-ProcessedSlugs | Should -Be @('f')
+    }
+
+    It 'runs everything when the start-at slug is the first step' {
+        [ForgeProcessApi]::new().SetStartAtSlug('a')
+
+        $script:tree.Process() | Out-Null
+
+        Get-ProcessedSlugs | Should -Be @('a', 'b', 'c', 'd', 'e', 'f')
+    }
+
+    It 'finds a start-at slug nested inside sections and runs everything after it' {
+        [ForgeProcessApi]::new().SetStartAtSlug('d')
+
+        $script:tree.Process() | Should -BeTrue
+
+        Get-ProcessedSlugs | Should -Be @('d', 'e', 'f')
+    }
+
+    It 'runs the start-at step itself' {
+        [ForgeProcessApi]::new().SetStartAtSlug('c')
+
+        $script:tree.Process() | Out-Null
+
+        [Steps]::GetInstance().IsProcessed('c') | Should -BeTrue
+        [Steps]::GetInstance().IsProcessed('b') | Should -BeFalse
+    }
+
+    It 'clears the pending start-at slug once it is reached' {
+        $api = [ForgeProcessApi]::new()
+        $api.SetStartAtSlug('c')
+
+        $script:tree.Process() | Out-Null
+
+        $api.HasStartAtSlug() | Should -BeFalse
+    }
+
+    It 'leaves the start-at slug pending and runs nothing if it is never reached' {
+        [Variables]::GetInstance().AddExcludeTag('skipme')
+        [Steps]::Reset()
+        $tree = [StepTree]::new(@{
+                type  = 'section'; name = 'Root'; slug = 'root'
+                items = @(
+                    (New-StartAtStep 'a')
+                    @{
+                        type  = 'section'; name = 'Excluded'; slug = 'excluded'; tags = @('skipme')
+                        items = @((New-StartAtStep 'd'))
+                    }
+                )
+            })
+        $api = [ForgeProcessApi]::new()
+        $api.SetStartAtSlug('d')
+
+        $tree.Process() | Out-Null
+
+        $api.HasStartAtSlug() | Should -BeTrue
+        [Steps]::GetInstance().IsProcessed('a') | Should -BeFalse
+        [Steps]::GetInstance().IsProcessed('d') | Should -BeFalse
+    }
+
+    It 'honors conditionals once processing has resumed' {
+        [Variables]::GetInstance().AddExcludeTag('skipme')
+        [Steps]::Reset()
+        $tree = [StepTree]::new(@{
+                type  = 'section'; name = 'Root'; slug = 'root'
+                items = @(
+                    (New-StartAtStep 'a')
+                    (New-StartAtStep 'b')
+                    @{
+                        type  = 'section'; name = 'Excluded'; slug = 'excluded'; tags = @('skipme')
+                        items = @((New-StartAtStep 'c'))
+                    }
+                    (New-StartAtStep 'd')
+                )
+            })
+        [ForgeProcessApi]::new().SetStartAtSlug('b')
+
+        $tree.Process() | Out-Null
+
+        [Steps]::GetInstance().IsProcessed('a') | Should -BeFalse
+        [Steps]::GetInstance().IsProcessed('b') | Should -BeTrue
+        [Steps]::GetInstance().IsProcessed('c') | Should -BeFalse
+        [Steps]::GetInstance().IsProcessed('d') | Should -BeTrue
+    }
+
+    It 'applies a structural overlay on a section that is only being walked through' {
+        [ForgeProcessApi]::new().SetStartAtSlug('d')
+        [ForgeConfigurationApi]::new().RequestOverlay('sec2', @{
+                type  = 'section'; name = 'Sec2 overlay'; slug = 'sec2'
+                items = @((New-StartAtStep 'c'), (New-StartAtStep 'd'))
+            })
+
+        $script:tree.Process() | Out-Null
+
+        [PendingOverlays]::GetInstance().HasOverlay('sec2') | Should -BeFalse
+        Get-ProcessedSlugs | Should -Be @('d', 'e', 'f')
+    }
+
+    It 'does not count skipped steps as failures' {
+        [ForgeProcessApi]::new().SetStartAtSlug('f')
+
+        $script:tree.Process() | Should -BeTrue
+    }
+}

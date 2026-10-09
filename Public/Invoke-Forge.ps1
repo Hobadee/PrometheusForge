@@ -25,6 +25,10 @@
     .PARAMETER Variables
     A hashtable of variable names and values to set in the configuration. These variables overwrite any previously set values from the main YAML file or overlays.
 
+    .PARAMETER StartAtSlug
+    The slug of a step at which to begin processing. Steps before it are skipped; the tree is
+    still walked so the slug may be nested at any depth.
+
     .OUTPUTS
     System.Boolean
     Returns $true when the workflow items complete successfully.
@@ -53,6 +57,8 @@
 
         [string[]] $Overlay = @(),
         [hashtable] $Variables = @{},
+
+        [string] $StartAtSlug,
 
         [switch] $OutputLogs
     )
@@ -131,8 +137,21 @@
             $configurationApi.RequestOverlay($overlayConfig.slug, $overlayConfig)
         }
     }
+    
+    $processApi = [ForgeProcessApi]::new()
+
+    # Use PSBoundParameters: an unbound [string] parameter is '' rather than $null.
+    # SetStartAtSlug throws if the slug is empty or does not match a registered step.
+    if ($PSBoundParameters.ContainsKey('StartAtSlug')) {
+        $processApi.SetStartAtSlug($StartAtSlug)
+    }
 
     $stepTree.Process() | Out-Null
+
+    # The start-at slug was never reached (e.g. its branch was excluded by tags), so nothing ran.
+    if ($processApi.HasStartAtSlug()) {
+        [Log]::Warning("The start-at slug '$($processApi.GetStartAtSlug())' was never reached; no steps were executed.")
+    }
 
     # Surface any overlay that was requested but never had a matching slug to apply to
     # (typo'd target, or a target that was skipped by conditionals).

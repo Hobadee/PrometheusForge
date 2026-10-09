@@ -16,10 +16,12 @@ class ForgeApi {
     [ForgeVariableApi] $Variables
     [ForgeConfigurationApi] $Configuration
     [ForgeTemplateApi] $Template
+    [ForgeProcessApi] $Process
 
     ForgeApi() {
         $this.Variables = [ForgeVariableApi]::new()
         $this.Configuration = [ForgeConfigurationApi]::new()
         $this.Template = [ForgeTemplateApi]::new()
+        $this.Process = [ForgeProcessApi]::new()
     }
 }

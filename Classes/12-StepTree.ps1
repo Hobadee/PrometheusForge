@@ -264,7 +264,26 @@ class StepTree : System.Collections.IEnumerable{
         # Apply any overlay queued for this node's own slug before doing anything else, so a
         # [StepTree]-shaped overlay's tags are honored by checkConditionals() below, and a
         # [Step]-shaped overlay's plugin is what actually runs.
+        # This is also done before the StartAtSlug check on purpose: a structural overlay on a
+        # node we are only walking through (to reach the start-at slug) must still replace its
+        # children, or we would descend into the stale subtree.
         $this.ApplyPendingOverlay()
+
+        # While a StartAtSlug is pending, nodes are still walked (the target may be nested at any
+        # depth) but their own step is not executed. The first node whose slug matches clears the
+        # pending state and processing resumes from there, including that node's children.
+        $processApi = [ForgeProcessApi]::new()
+        $skipOwnStep = $false
+        if ($processApi.HasStartAtSlug()) {
+            if ($this.slug -eq $processApi.GetStartAtSlug()) {
+                [Log]::Debug("[StepTree]::Process() - $($this.name) is the start-at slug. Resuming execution.")
+                $processApi.ClearStartAtSlug()
+            }
+            else {
+                [Log]::Debug("[StepTree]::Process() - $($this.name) is not the start-at slug. Skipping its own execution.")
+                $skipOwnStep = $true
+            }
+        }
 
         # Check if we even need to run this step, given our conditionals
         if (-not $this.checkConditionals()) {
@@ -288,25 +307,31 @@ class StepTree : System.Collections.IEnumerable{
         # Note: DO NOT wrap this in a try/catch as [Step]::Process() SHOULD
         # throw an unhandled exception if set to "abort" on error.
         # Only call Process() if the step exists (sections have no step in the registry)
-        if ($null -ne $step) {
+        # While walking toward a StartAtSlug, this node's own step is neither run nor counted.
+        if ($skipOwnStep) {
+            $res = $true
+        }
+        elseif ($null -ne $step) {
             $res = $step.Process()
         } else {
             $res = $null
         }
 
-        switch ($res) {
-            $true {
-                $stepSuccess++
-                $stepTotal++
-            }
-            $false {
-                $stepFailure++
-                $stepTotal++
-            }
-            $null {
-                # Step was not found, so we don't count it as a step
-                # This is actually expected for sections, which do not have a corresponding step in the registry.
-                [Log]::Debug("[StepTree]::Process() - Step '$($this.name)' not found.")
+        if (-not $skipOwnStep) {
+            switch ($res) {
+                $true {
+                    $stepSuccess++
+                    $stepTotal++
+                }
+                $false {
+                    $stepFailure++
+                    $stepTotal++
+                }
+                $null {
+                    # Step was not found, so we don't count it as a step
+                    # This is actually expected for sections, which do not have a corresponding step in the registry.
+                    [Log]::Debug("[StepTree]::Process() - Step '$($this.name)' not found.")
+                }
             }
         }
 
@@ -316,6 +341,7 @@ class StepTree : System.Collections.IEnumerable{
         # when $step (e.g. sections have none) or $step.plugin is $null.
         # Insert() may have been called multiple times (per Execute() or across retries); each
         # queued config becomes its own child here, added in the same order Insert() was called.
+        # We *WILL* run any pending inserts even if the step itself was skipped, as they are considered additional children of this node.
         if ($null -ne $step.plugin.Api) {
             foreach ($insertedConfig in $step.plugin.Api.Configuration.GetPendingInserts()) {
                 [Log]::Debug("[StepTree]::Process() - Inserting API-requested child config '$($insertedConfig.name)' under '$($this.name)'")

@@ -702,3 +702,67 @@ root:
         }
     }
 }
+
+
+Describe 'Invoke-Forge -StartAtSlug' {
+    BeforeAll {
+        $script:yamlPath = Join-Path $TestDrive 'workflow-start-at.yaml'
+    @'
+name: Start at workflow
+version: 1.0
+root:
+  type: section
+  name: Root
+  slug: root
+  items:
+    - type: step
+      name: First
+      slug: first
+      plugin: TextOutput
+      parameters:
+        message: first
+    - type: section
+      name: Nested
+      slug: nested
+      items:
+        - type: step
+          name: Second
+          slug: second
+          plugin: TextOutput
+          parameters:
+            message: second
+        - type: step
+          name: Third
+          slug: third
+          plugin: TextOutput
+          parameters:
+            message: third
+'@ | Set-Content -Path $script:yamlPath -Encoding utf8
+    }
+
+    It 'runs every step when -StartAtSlug is not supplied' {
+        Invoke-Forge -FilePath $script:yamlPath
+
+        foreach ($slug in 'first', 'second', 'third') {
+            [Steps]::GetInstance().IsProcessed($slug) | Should -BeTrue
+        }
+    }
+
+    It 'skips steps before a nested -StartAtSlug' {
+        Invoke-Forge -FilePath $script:yamlPath -StartAtSlug 'third'
+
+        [Steps]::GetInstance().IsProcessed('first') | Should -BeFalse
+        [Steps]::GetInstance().IsProcessed('second') | Should -BeFalse
+        [Steps]::GetInstance().IsProcessed('third') | Should -BeTrue
+    }
+
+    It 'throws when -StartAtSlug does not match a step' {
+        { Invoke-Forge -FilePath $script:yamlPath -StartAtSlug 'nope' } | Should -Throw
+    }
+
+    It 'does not leave the start-at slug set after a successful run' {
+        Invoke-Forge -FilePath $script:yamlPath -StartAtSlug 'second'
+
+        [ForgeProcessApi]::new().HasStartAtSlug() | Should -BeFalse
+    }
+}
